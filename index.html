@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>内線トランシーバー</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .id-box {
+      background: #eef2f5;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: bold;
+      word-break: break-all;
+      margin-bottom: 15px;
+    }
+    input, button {
+      font-size: 16px;
+      padding: 12px;
+      margin: 6px 0;
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+    }
+    input { border: 1px solid #ccc; text-align: center; }
+    .btn-connect {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-connect:active { opacity: 0.8; }
+    
+    #talk-btn {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      font-size: 20px;
+      font-weight: bold;
+      background-color: #cccccc;
+      color: white;
+      border: none;
+      margin: 20px auto 10px;
+      display: block;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    #talk-btn.active {
+      background-color: #ff4444 !important;
+      transform: scale(0.96);
+    }
+    #status {
+      font-size: 13px;
+      color: #666;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>内線トランシーバー</h2>
+    
+    <div>あなたの内線ID:</div>
+    <div class="id-box" id="my-id">発行中...</div>
+    
+    <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
+    <button class="btn-connect" id="connect-btn">通話接続</button>
+
+    <button id="talk-btn" disabled>接続待ち</button>
+    <div id="status">マイクの許可を待っています...</div>
+  </div>
+
+  <audio id="remote-audio" autoplay playsinline></audio>
+
+  <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
+  <script>
+    let peer;
+    let localStream;
+    let localAudioTrack;
+    let wakeLock = null;
+
+    const myIdEl = document.getElementById('my-id');
+    const peerIdInput = document.getElementById('peer-id-input');
+    const connectBtn = document.getElementById('connect-btn');
+    const statusEl = document.getElementById('status');
+    const talkBtn = document.getElementById('talk-btn');
+    const remoteAudio = document.getElementById('remote-audio');
+
+    // 1. スリープ防止（画面が消えるのを防ぐ）
+    async function requestWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+        }
+      } catch (err) {
+        console.log('Wake Lock Error:', err);
+      }
+    }
+
+    // 2. マイクの取得とPeerJS初期化
+    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      .then((stream) => {
+        localStream = stream;
+        localAudioTrack = stream.getAudioTracks()[0];
+        localAudioTrack.enabled = false; // 最初はミュート（話すボタンを押すまで音を送らない）
+
+        requestWakeLock();
+        initPeer();
+      })
+      .catch((err) => {
+        statusEl.innerText = 'マイクの使用を許可してください';
+        console.error(err);
+      });
+
+    // 3. PeerJSの接続開始
+    function initPeer() {
+      // クラウドサーバー経由でランダムなIDを発行
+      peer = new Peer();
+
+      // 自分のIDが発行された時
+      peer.on('open', (id) => {
+        myIdEl.innerText = id;
+        statusEl.innerText = '相手のIDを入力して「通話接続」を押してください';
+      });
+
+      // 相手から着信があった時（自動応答するように設定）
+      peer.on('call', (call) => {
+        statusEl.innerText = '着信中... 接続しています';
+        call.answer(localStream); // 自分のマイクストリームを返して接続
+        setupCallListeners(call);
+      });
+
+      peer.on('error', (err) => {
+        statusEl.innerText = '通信エラーが発生しました: ' + err.type;
+        console.error(err);
+      });
+    }
+
+    // 4. 自分から接続ボタンを押した時
+    connectBtn.addEventListener('click', () => {
+      const targetId = peerIdInput.value.trim();
+      if (!targetId) {
+        alert('相手のIDを入力してください');
+        return;
+      }
+      statusEl.innerText = '接続中...';
+      const call = peer.call(targetId, localStream);
+      setupCallListeners(call);
+    });
+
+    // 通話が繋がった後の処理
+    function setupCallListeners(call) {
+      call.on('stream', (remoteStream) => {
+        remoteAudio.srcObject = remoteStream;
+        statusEl.innerText = '通話接続完了！ボタン長押しで話せます';
+        talkBtn.disabled = false;
+        talkBtn.innerText = '長押しで話す';
+      });
+
+      call.on('close', () => {
+        statusEl.innerText = '通話が切断されました';
+        talkBtn.disabled = true;
+        talkBtn.innerText = '切断済';
+      });
+    }
+
+    // 5. ボタン長押し（Push to Talk）の制御
+    const startTalking = (e) => {
+      e.preventDefault(); // スマホの誤作動防止
+      if (localAudioTrack && !talkBtn.disabled) {
+        localAudioTrack.enabled = true; // マイクのミュート解除
+        talkBtn.classList.add('active');
+        talkBtn.innerText = '発言中!!';
+      }
+    };
+
+    const stopTalking = (e) => {
+      e.preventDefault();
+      if (localAudioTrack && !talkBtn.disabled) {
+        localAudioTrack.enabled = false; // 再びミュート
+        talkBtn.classList.remove('active');
+        talkBtn.innerText = '長押しで話す';
+      }
+    };
+
+    // タッチ（スマホ）とクリック（PC）の両方に対応
+    talkBtn.addEventListener('mousedown', startTalking);
+    talkBtn.addEventListener('touchstart', startTalking);
+
+    talkBtn.addEventListener('mouseup', stopTalking);
+    talkBtn.addEventListener('touchend', stopTalking);
+    talkBtn.addEventListener('mouseleave', stopTalking);
+  </script>
+</body>
+</html>
