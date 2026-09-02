@@ -59,7 +59,7 @@
 
     .id-box {
       background: #eef2f5; padding: 8px; border-radius: 8px;
-      font-weight: bold; word-break: break-all; margin: 6px 0 12px; font-size: 13px;
+      font-weight: bold; word-break: break-all; margin: 4px 0 10px; font-size: 13px;
     }
 
     input, .btn-action {
@@ -69,6 +69,7 @@
     input { border: 1px solid #ccc; text-align: center; }
     .btn-action { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
     .btn-action:active { opacity: 0.8; }
+    .btn-action:disabled { background-color: #a0cfff; cursor: not-allowed; }
     .btn-secondary { background-color: #6c757d; }
 
     /* ノイズキャンセリングボタン */
@@ -134,11 +135,14 @@
     .faq-item { margin-bottom: 12px; font-size: 13px; }
     .faq-item strong { display: block; color: #333; margin-bottom: 4px; }
     .faq-item p { margin: 0; color: #666; line-height: 1.5; }
+    
+    .test-server-box { background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px; }
+    .test-server-box h4 { margin: 0 0 8px 0; color: #007bff; font-size: 14px; }
+    .test-server-box ul { margin: 8px 0; padding-left: 20px; font-size: 13px; color: #444; }
   </style>
 </head>
 <body>
 
-  <!-- ヘッダー＆タブエリア -->
   <div class="header-container">
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <button class="help-btn" onclick="openHelp()" title="ヘルプ">❓</button>
@@ -148,27 +152,26 @@
     <div class="section-title">あなたの内線ID:</div>
     <div class="id-box" id="my-id">発行中...</div>
 
-    <!-- 1対1通話エリア -->
+    <div class="section-title">あなたの名前 (チャット用):</div>
+    <input type="text" id="my-name-input" placeholder="名前を入力 (例: 田中)" style="margin-bottom: 10px;">
+
     <div id="direct-panel" style="display: none;">
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
     </div>
 
-    <!-- グループ通話エリア -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
     </div>
 
     <div id="status">初期化中...</div>
 
-    <!-- マイク操作ボタン -->
     <div class="controls">
       <button id="nc-btn">🎧 ノイズキャンセル: ON</button>
       <button id="talk-btn" disabled>準備中...</button>
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
-    <!-- テキストチャットエリア -->
     <div class="chat-section">
       <div class="chat-title">💬 テキストチャット</div>
       <div class="chat-logs" id="chat-logs">
@@ -181,7 +184,6 @@
     </div>
   </div>
 
-  <!-- グループ追加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <h3>グループの作成・参加</h3>
@@ -198,7 +200,6 @@
     </div>
   </div>
 
-  <!-- ヘルプモーダル -->
   <div class="modal-overlay" id="help-modal">
     <div class="modal-box">
       <h3>❓ よくある質問とヘルプ</h3>
@@ -208,8 +209,20 @@
       </div>
       <div class="faq-item">
         <strong>Q. チャット機能の使い方</strong>
-        <p>A. 画面下の入力欄からメッセージを送信すると、同じグループや1対1の接続相手にリアルタイムで届きます。</p>
+        <p>A. 「あなたの名前」を入力した上で下部の入力欄からメッセージを送信してください。テストルーム以外で利用可能です。</p>
       </div>
+
+      <div class="test-server-box">
+        <h4>🧪 テストサーバー情報</h4>
+        <p style="font-size:11px; margin:0; color:#d9534f;">※テストルーム内ではチャット機能は使用できません。</p>
+        <ul>
+          <li>グループ名: <strong>テストルーム</strong></li>
+          <li>グループID: <strong>test-room</strong></li>
+          <li>パスワード: <strong>0000</strong></li>
+        </ul>
+        <button class="btn-action" style="padding: 8px; font-size: 12px;" onclick="addTestGroup()">テストルームをタブに追加して参加</button>
+      </div>
+
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="closeHelp()">閉じる</button>
       </div>
@@ -238,13 +251,14 @@
     let isLocked = false;
     let isNoiseCanceling = true;
 
-    // ★ ブロックするNGワードのリスト（必要に応じて単語を追加・変更してください）
+    // NGワードのリスト
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
 
     let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v5')) || [];
 
     const tabsWrapper = document.getElementById('tabs-wrapper');
     const myIdEl = document.getElementById('my-id');
+    const myNameInput = document.getElementById('my-name-input');
     const directPanel = document.getElementById('direct-panel');
     const groupPanel = document.getElementById('group-panel');
     const peerIdInput = document.getElementById('peer-id-input');
@@ -259,10 +273,27 @@
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send-btn');
 
-    // ★ NGワードが含まれているかチェックする関数
+    // 保存済みの自分の名前を読み込み
+    myNameInput.value = localStorage.getItem('my_naisen_username') || '';
+    myNameInput.addEventListener('input', () => {
+      localStorage.setItem('my_naisen_username', myNameInput.value.trim());
+    });
+
     function containsNGWord(text) {
       if (!text) return false;
       return NG_WORDS.some(word => text.includes(word));
+    }
+
+    function updateChatUI() {
+      if (currentMode === 'group' && currentGroupId === 'test-room') {
+        chatInput.disabled = true;
+        chatSendBtn.disabled = true;
+        chatInput.placeholder = "テストルームではチャットは使用できません";
+      } else {
+        chatInput.disabled = false;
+        chatSendBtn.disabled = false;
+        chatInput.placeholder = "メッセージを入力...";
+      }
     }
 
     // 1. 初期化
@@ -286,6 +317,7 @@
 
         renderTabs();
         startNetworking();
+        updateChatUI();
       } catch (err) {
         statusEl.innerText = 'マイクの使用を許可してください';
       }
@@ -362,6 +394,7 @@
             const call = peer.call(data.peerId, localStream);
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
+            if (currentGroupId === 'test-room') return;
             addChatLog(data.senderName, data.text, false);
           }
         });
@@ -430,6 +463,7 @@
       currentGroupId = null;
 
       renderTabs();
+      updateChatUI();
       directPanel.style.display = 'block';
       groupPanel.style.display = 'none';
 
@@ -457,6 +491,7 @@
       currentGroupId = groupObj.id;
 
       renderTabs();
+      updateChatUI();
       directPanel.style.display = 'none';
       groupPanel.style.display = 'block';
 
@@ -474,31 +509,42 @@
 
     // --- チャットの送信と描画 ---
     function sendChatMessage() {
+      if (currentMode === 'group' && currentGroupId === 'test-room') {
+        return alert('テストルームではチャットは使用できません。');
+      }
+
       const text = chatInput.value.trim();
       if (!text) return;
 
-      // ★ NGワードチェック
+      // 送信者名の取得（未入力の場合はID先頭5文字）
+      let senderName = myNameInput.value.trim();
+      
+      // NGワードチェック（送信名・メッセージ本文）
+      if (containsNGWord(senderName)) {
+        return alert('名前に不適切な単語が含まれています。');
+      }
       if (containsNGWord(text)) {
-        alert('不適切な単語が含まれているため送信できません。');
-        return;
+        return alert('不適切な単語が含まれているため送信できません。');
       }
 
-      const myShortId = myPeerId ? myPeerId.substring(0, 5) : '自分';
+      if (!senderName) {
+        senderName = myPeerId ? myPeerId.substring(0, 5) : '自分';
+      }
 
       if (currentMode === 'group' && currentGroupTopic) {
         mqttClient.publish(currentGroupTopic, JSON.stringify({
           type: 'chat',
           senderId: myPeerId,
-          senderName: myShortId,
+          senderName: senderName,
           text: text
         }));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => {
-          conn.send({ type: 'chat', senderName: myShortId, text: text });
+          conn.send({ type: 'chat', senderName: senderName, text: text });
         });
       }
 
-      addChatLog('自分', text, true);
+      addChatLog(senderName + ' (自分)', text, true);
       chatInput.value = '';
     }
 
@@ -538,12 +584,6 @@
 
       if (!name || !id || !pass) return alert('全項目を入力してください');
 
-      // ★ テストルームのブロック
-      if (id === 'test-room' || name === 'テストルーム') {
-        return alert('「テストルーム」という名前・IDは使用できません。');
-      }
-
-      // ★ グループ名やIDのNGワードチェック
       if (containsNGWord(name) || containsNGWord(id)) {
         return alert('グループ名やIDに不適切な単語が含まれています。');
       }
@@ -571,6 +611,16 @@
 
     function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
     function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
+
+    function addTestGroup() {
+      const testGroup = { id: 'test-room', name: 'テストルーム', pass: '0000' };
+      if (!customGroups.some(g => g.id === testGroup.id)) {
+        customGroups.push(testGroup);
+        localStorage.setItem('my_naisen_groups_v5', JSON.stringify(customGroups));
+      }
+      closeHelp();
+      joinGroup(testGroup);
+    }
 
     function updateStatus() {
       const count = Object.keys(activeCalls).length;
