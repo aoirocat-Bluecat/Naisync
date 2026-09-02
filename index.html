@@ -34,7 +34,6 @@
     .tab.active { background: white; color: #007bff; }
     .tab-add { background: #007bff; color: white; border-radius: 8px; margin-left: auto; padding: 8px 12px; margin-right: 8px;}
 
-    /* 削除ボタン (✕) */
     .tab .btn-del {
       background: rgba(0, 0, 0, 0.15); color: #444; border-radius: 50%;
       width: 18px; height: 18px; font-size: 11px; font-weight: normal;
@@ -43,13 +42,17 @@
     }
     .tab .btn-del:hover { background: #ff4444; color: white; }
 
-    /* ヘルプボタン */
-    .help-btn {
+    /* アイコンボタン群 */
+    .header-btns {
+      display: flex; align-items: center; padding-bottom: 6px; padding-right: 4px;
+    }
+    .icon-btn {
       background: white; border: none; font-size: 18px; cursor: pointer;
-      border-radius: 50%; width: 36px; height: 36px; margin: 0 8px 6px 4px;
+      border-radius: 50%; width: 36px; height: 36px; margin-left: 6px;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; flex-shrink: 0;
     }
+    .icon-btn:hover { background: #f0f0f0; }
 
     .card {
       background: white; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
@@ -62,29 +65,21 @@
       font-weight: bold; word-break: break-all; margin: 4px 0 10px; font-size: 13px;
     }
 
-    input, .btn-action {
+    input[type="text"], input[type="password"], .btn-action {
       font-size: 14px; padding: 10px; margin: 4px 0; width: 100%;
       box-sizing: border-box; border-radius: 8px;
     }
-    input { border: 1px solid #ccc; text-align: center; }
+    input[type="text"], input[type="password"] { border: 1px solid #ccc; text-align: center; }
     .btn-action { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
     .btn-action:active { opacity: 0.8; }
     .btn-action:disabled { background-color: #a0cfff; cursor: not-allowed; }
     .btn-secondary { background-color: #6c757d; }
 
-    /* ノイズキャンセリングボタン */
-    #nc-btn {
-      background-color: #28a745; color: white; border: none; font-weight: bold;
-      padding: 6px 14px; font-size: 12px; border-radius: 20px; cursor: pointer;
-      margin-bottom: 8px; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;
-    }
-    #nc-btn.off { background-color: #6c757d; }
-
     /* マイク操作エリア */
-    .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 10px; }
+    .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 16px; }
     
     #talk-btn {
-      width: 140px; height: 140px; border-radius: 50%; font-size: 16px; font-weight: bold;
+      width: 150px; height: 150px; border-radius: 50%; font-size: 18px; font-weight: bold;
       background-color: #cccccc; color: white; border: none; box-shadow: 0 6px 12px rgba(0,0,0,0.2);
       user-select: none; -webkit-user-select: none; touch-action: manipulation;
     }
@@ -128,14 +123,41 @@
       background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 360px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; max-height: 85vh; overflow-y: auto;
     }
-    .modal-box h3 { margin-top: 0; text-align: center; font-size: 18px; }
-    .modal-box label { font-size: 12px; color: #555; font-weight: bold; margin-top: 8px; display: block; }
-    .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
+    .modal-box h3 { margin-top: 0; text-align: center; font-size: 18px; margin-bottom: 16px; }
+    .modal-box label { font-size: 12px; color: #555; font-weight: bold; margin-top: 12px; display: block; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 24px; }
+
+    /* 設定用トグルスイッチ */
+    .toggle-switch {
+      display: inline-flex; align-items: center; cursor: pointer; margin-top: 8px;
+    }
+    .toggle-switch input { display: none; }
+    .toggle-slider {
+      position: relative; width: 40px; height: 22px; background-color: #ccc;
+      border-radius: 20px; transition: 0.3s; margin-right: 10px;
+    }
+    .toggle-slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px;
+      left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background-color: #28a745; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+    /* 設定用スライダー */
+    input[type=range] {
+      -webkit-appearance: none; width: 100%; background: transparent; margin-top: 8px;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%; height: 6px; cursor: pointer; background: #e0e0e0; border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      height: 18px; width: 18px; border-radius: 50%; background: #007bff;
+      cursor: pointer; -webkit-appearance: none; margin-top: -6px;
+    }
 
     .faq-item { margin-bottom: 12px; font-size: 13px; }
     .faq-item strong { display: block; color: #333; margin-bottom: 4px; }
     .faq-item p { margin: 0; color: #666; line-height: 1.5; }
-    
     .test-server-box { background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px; }
     .test-server-box h4 { margin: 0 0 8px 0; color: #007bff; font-size: 14px; }
     .test-server-box ul { margin: 8px 0; padding-left: 20px; font-size: 13px; color: #444; }
@@ -143,9 +165,13 @@
 </head>
 <body>
 
+  <!-- ヘッダー＆タブエリア -->
   <div class="header-container">
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
-    <button class="help-btn" onclick="openHelp()" title="ヘルプ">❓</button>
+    <div class="header-btns">
+      <button class="icon-btn" onclick="openSettings()" title="設定">⚙️</button>
+      <button class="icon-btn" onclick="openHelp()" title="ヘルプ">❓</button>
+    </div>
   </div>
 
   <div class="card">
@@ -155,23 +181,26 @@
     <div class="section-title">あなたの名前 (チャット用):</div>
     <input type="text" id="my-name-input" placeholder="名前を入力 (例: 田中)" style="margin-bottom: 10px;">
 
+    <!-- 1対1通話エリア -->
     <div id="direct-panel" style="display: none;">
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
     </div>
 
+    <!-- グループ通話エリア -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
     </div>
 
     <div id="status">初期化中...</div>
 
+    <!-- マイク操作ボタン -->
     <div class="controls">
-      <button id="nc-btn">🎧 ノイズキャンセル: ON</button>
       <button id="talk-btn" disabled>準備中...</button>
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
+    <!-- テキストチャットエリア -->
     <div class="chat-section">
       <div class="chat-title">💬 テキストチャット</div>
       <div class="chat-logs" id="chat-logs">
@@ -184,6 +213,33 @@
     </div>
   </div>
 
+  <!-- 【追加】設定モーダル -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-box">
+      <h3>⚙️ 設定</h3>
+      
+      <label>🎤 マイク音量（自分の声の大きさ）</label>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <input type="range" id="mic-volume-slider" min="0" max="2" step="0.1" value="1">
+        <span id="mic-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
+      </div>
+      <p style="font-size:11px; color:#666; margin:4px 0 0 0;">※声が小さいと言われたら右へ動かしてください。</p>
+
+      <label style="margin-top: 24px;">🎧 ノイズキャンセリング</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="nc-checkbox" checked>
+        <div class="toggle-slider"></div>
+        <span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
+      </label>
+      <p style="font-size:11px; color:#666; margin:4px 0 0 0;">※背景の雑音やエコー（やまびこ）を防ぎます。</p>
+
+      <div class="modal-buttons">
+        <button class="btn-action btn-secondary" onclick="closeSettings()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- グループ追加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <h3>グループの作成・参加</h3>
@@ -200,6 +256,7 @@
     </div>
   </div>
 
+  <!-- ヘルプモーダル -->
   <div class="modal-overlay" id="help-modal">
     <div class="modal-box">
       <h3>❓ よくある質問とヘルプ</h3>
@@ -208,8 +265,8 @@
         <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。</p>
       </div>
       <div class="faq-item">
-        <strong>Q. チャット機能の使い方</strong>
-        <p>A. 「あなたの名前」を入力した上で下部の入力欄からメッセージを送信してください。テストルーム以外で利用可能です。</p>
+        <strong>Q. 声が小さい / うるさい</strong>
+        <p>A. 右上の「⚙️ 設定」から、自分のマイク音量を 0%〜200% の間で調整できます。</p>
       </div>
 
       <div class="test-server-box">
@@ -235,7 +292,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
-    const APP_SECRET = 'naisen-app-v5-';
+    const APP_SECRET = 'naisen-app-v6-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -246,15 +303,22 @@
     let activeCalls = {};
     let activeDataConns = {};
 
-    let localStream = null;
-    let localAudioTrack = null;
+    let rawStream = null;
+    let rawAudioTrack = null;
+    
+    // 【追加】音量調整用
+    let audioCtx = null;
+    let gainNode = null;
+    let processedStream = null; // PeerJSで送信するストリーム
+
     let isLocked = false;
-    let isNoiseCanceling = true;
+    
+    // 保存された設定の読み込み
+    let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false'; // デフォルトtrue
+    let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
 
-    // NGワードのリスト
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
-
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v5')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v6')) || [];
 
     const tabsWrapper = document.getElementById('tabs-wrapper');
     const myIdEl = document.getElementById('my-id');
@@ -265,7 +329,6 @@
     const connectBtn = document.getElementById('connect-btn');
     const statusEl = document.getElementById('status');
     const countEl = document.getElementById('member-count');
-    const ncBtn = document.getElementById('nc-btn');
     const talkBtn = document.getElementById('talk-btn');
     const toggleBtn = document.getElementById('toggle-btn');
     const audioContainer = document.getElementById('audio-container');
@@ -273,7 +336,13 @@
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send-btn');
 
-    // 保存済みの自分の名前を読み込み
+    // 設定系UI
+    const ncCheckbox = document.getElementById('nc-checkbox');
+    const ncStatusText = document.getElementById('nc-status-text');
+    const micVolumeSlider = document.getElementById('mic-volume-slider');
+    const micVolumeDisplay = document.getElementById('mic-volume-display');
+
+    // 名前保存
     myNameInput.value = localStorage.getItem('my_naisen_username') || '';
     myNameInput.addEventListener('input', () => {
       localStorage.setItem('my_naisen_username', myNameInput.value.trim());
@@ -296,11 +365,24 @@
       }
     }
 
+    // ブラウザの AudioContext を確実にするための処置
+    function resumeAudioContext() {
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
     // 1. 初期化
     async function init() {
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
+        // UIに初期値を反映
+        ncCheckbox.checked = isNoiseCanceling;
+        ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
+        micVolumeSlider.value = savedMicVolume;
+        micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
+
         const audioConstraints = {
           audio: {
             echoCancellation: isNoiseCanceling,
@@ -310,10 +392,22 @@
           video: false
         };
 
-        const stream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-        localStream = stream;
-        localAudioTrack = stream.getAudioTracks()[0];
-        localAudioTrack.enabled = false;
+        rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+        rawAudioTrack = rawStream.getAudioTracks()[0];
+        rawAudioTrack.enabled = false; // 最初はミュート
+
+        // 【追加】AudioContextを使ってマイク音量を調整できる仕組みを構築
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(rawStream);
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = savedMicVolume; // 音量を設定
+
+        const destination = audioCtx.createMediaStreamDestination();
+        source.connect(gainNode);
+        gainNode.connect(destination);
+
+        // peer.call や peer.answer ではこの処理されたストリームを渡す
+        processedStream = destination.stream;
 
         renderTabs();
         startNetworking();
@@ -323,21 +417,42 @@
       }
     }
 
-    ncBtn.addEventListener('click', async () => {
-      if (!localAudioTrack) return;
-      isNoiseCanceling = !isNoiseCanceling;
-      try {
-        await localAudioTrack.applyConstraints({
-          echoCancellation: isNoiseCanceling,
-          noiseSuppression: isNoiseCanceling,
-          autoGainControl: isNoiseCanceling
-        });
-        ncBtn.classList.toggle('off', !isNoiseCanceling);
-        ncBtn.innerText = isNoiseCanceling ? '🎧 ノイズキャンセル: ON' : '🎧 ノイズキャンセル: OFF';
-      } catch (err) {
-        console.error(err);
+    // --- 設定操作 ---
+    function openSettings() {
+      document.getElementById('settings-modal').style.display = 'flex';
+    }
+    function closeSettings() {
+      document.getElementById('settings-modal').style.display = 'none';
+    }
+
+    // ノイキャン切り替え
+    ncCheckbox.addEventListener('change', async (e) => {
+      isNoiseCanceling = e.target.checked;
+      ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_nc', isNoiseCanceling);
+
+      if (rawAudioTrack) {
+        try {
+          await rawAudioTrack.applyConstraints({
+            echoCancellation: isNoiseCanceling,
+            noiseSuppression: isNoiseCanceling,
+            autoGainControl: isNoiseCanceling
+          });
+        } catch (err) { console.error(err); }
       }
     });
+
+    // マイク音量スライダー操作
+    micVolumeSlider.addEventListener('input', (e) => {
+      resumeAudioContext();
+      const val = parseFloat(e.target.value);
+      if (gainNode) gainNode.gain.value = val;
+      
+      savedMicVolume = val;
+      localStorage.setItem('my_naisen_mic_vol', val);
+      micVolumeDisplay.innerText = Math.round(val * 100) + '%';
+    });
+
 
     // 2. タブ描画
     function renderTabs() {
@@ -369,7 +484,7 @@
 
       const addBtn = document.createElement('button');
       addBtn.className = 'tab tab-add';
-      addBtn.innerText = '＋ グループ作成';
+      addBtn.innerText = '＋ 作成';
       addBtn.onclick = openGroupModal;
       tabsWrapper.appendChild(addBtn);
     }
@@ -382,16 +497,15 @@
         myIdEl.innerText = id;
 
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-        mqttClient.on('connect', () => {
-          switchToDirect();
-        });
+        mqttClient.on('connect', () => switchToDirect());
 
         mqttClient.on('message', (topic, message) => {
           if (currentMode !== 'group') return;
           const data = JSON.parse(message.toString());
           
           if (data.type === 'join' && data.peerId !== myPeerId) {
-            const call = peer.call(data.peerId, localStream);
+            resumeAudioContext();
+            const call = peer.call(data.peerId, processedStream); // 音量処理済みの音を送る
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
             if (currentGroupId === 'test-room') return;
@@ -401,13 +515,12 @@
       });
 
       peer.on('call', (call) => {
-        call.answer(localStream);
+        resumeAudioContext();
+        call.answer(processedStream);
         setupCall(call);
       });
 
-      peer.on('connection', (conn) => {
-        setupDataConn(conn);
-      });
+      peer.on('connection', (conn) => setupDataConn(conn));
     }
 
     function setupCall(call) {
@@ -445,9 +558,7 @@
     }
 
     function closeAllCalls() {
-      if (currentGroupTopic && mqttClient) {
-        mqttClient.unsubscribe(currentGroupTopic);
-      }
+      if (currentGroupTopic && mqttClient) mqttClient.unsubscribe(currentGroupTopic);
       Object.values(activeCalls).forEach(call => call.close());
       Object.values(activeDataConns).forEach(conn => conn.close());
       activeCalls = {};
@@ -461,7 +572,6 @@
       closeAllCalls();
       currentMode = 'direct';
       currentGroupId = null;
-
       renderTabs();
       updateChatUI();
       directPanel.style.display = 'block';
@@ -474,11 +584,12 @@
     }
 
     connectBtn.addEventListener('click', () => {
+      resumeAudioContext();
       const targetId = peerIdInput.value.trim();
       if (!targetId) return alert('相手の内線IDを入力してください');
       statusEl.innerText = '発信中...';
       
-      const call = peer.call(targetId, localStream);
+      const call = peer.call(targetId, processedStream);
       setupCall(call);
 
       const conn = peer.connect(targetId);
@@ -486,6 +597,7 @@
     });
 
     function joinGroup(groupObj) {
+      resumeAudioContext();
       closeAllCalls();
       currentMode = 'group';
       currentGroupId = groupObj.id;
@@ -507,7 +619,7 @@
       updateStatus();
     }
 
-    // --- チャットの送信と描画 ---
+    // --- チャット ---
     function sendChatMessage() {
       if (currentMode === 'group' && currentGroupId === 'test-room') {
         return alert('テストルームではチャットは使用できません。');
@@ -516,27 +628,16 @@
       const text = chatInput.value.trim();
       if (!text) return;
 
-      // 送信者名の取得（未入力の場合はID先頭5文字）
       let senderName = myNameInput.value.trim();
       
-      // NGワードチェック（送信名・メッセージ本文）
-      if (containsNGWord(senderName)) {
-        return alert('名前に不適切な単語が含まれています。');
-      }
-      if (containsNGWord(text)) {
-        return alert('不適切な単語が含まれているため送信できません。');
-      }
+      if (containsNGWord(senderName)) return alert('名前に不適切な単語が含まれています。');
+      if (containsNGWord(text)) return alert('不適切な単語が含まれているため送信できません。');
 
-      if (!senderName) {
-        senderName = myPeerId ? myPeerId.substring(0, 5) : '自分';
-      }
+      if (!senderName) senderName = myPeerId ? myPeerId.substring(0, 5) : '自分';
 
       if (currentMode === 'group' && currentGroupTopic) {
         mqttClient.publish(currentGroupTopic, JSON.stringify({
-          type: 'chat',
-          senderId: myPeerId,
-          senderName: senderName,
-          text: text
+          type: 'chat', senderId: myPeerId, senderName: senderName, text: text
         }));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => {
@@ -565,17 +666,14 @@
       if (e.key === 'Enter') sendChatMessage();
     });
 
-    // --- モーダル操作 ---
+    // --- モーダル・グループ操作 ---
     function openGroupModal() {
       document.getElementById('modal-group-name').value = '';
       document.getElementById('modal-group-id').value = '';
       document.getElementById('modal-group-pass').value = '';
       document.getElementById('group-modal').style.display = 'flex';
     }
-
-    function closeGroupModal() {
-      document.getElementById('group-modal').style.display = 'none';
-    }
+    function closeGroupModal() { document.getElementById('group-modal').style.display = 'none'; }
 
     function saveNewGroup() {
       const name = document.getElementById('modal-group-name').value.trim();
@@ -583,17 +681,14 @@
       const pass = document.getElementById('modal-group-pass').value.trim();
 
       if (!name || !id || !pass) return alert('全項目を入力してください');
-
-      if (containsNGWord(name) || containsNGWord(id)) {
-        return alert('グループ名やIDに不適切な単語が含まれています。');
-      }
+      if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
       const newGroup = { id, name, pass };
       const index = customGroups.findIndex(g => g.id === id);
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v5', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v6', JSON.stringify(customGroups));
       closeGroupModal();
       joinGroup(newGroup);
     }
@@ -603,7 +698,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v5', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v6', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -616,7 +711,7 @@
       const testGroup = { id: 'test-room', name: 'テストルーム', pass: '0000' };
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v5', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v6', JSON.stringify(customGroups));
       }
       closeHelp();
       joinGroup(testGroup);
@@ -634,11 +729,12 @@
       }
     }
 
-    // --- マイク操作 ---
+    // --- マイク操作（ON/OFF） ---
     const startTalking = (e) => {
       e.preventDefault();
-      if (localAudioTrack && !talkBtn.disabled && !isLocked) {
-        localAudioTrack.enabled = true;
+      resumeAudioContext(); // 音声再生コンテキストのロック解除
+      if (rawAudioTrack && !talkBtn.disabled && !isLocked) {
+        rawAudioTrack.enabled = true; // マイクへの入力をONにする
         talkBtn.classList.add('active');
         talkBtn.innerText = '発言中!!';
       }
@@ -646,8 +742,8 @@
 
     const stopTalking = (e) => {
       e.preventDefault();
-      if (localAudioTrack && !talkBtn.disabled && !isLocked) {
-        localAudioTrack.enabled = false;
+      if (rawAudioTrack && !talkBtn.disabled && !isLocked) {
+        rawAudioTrack.enabled = false;
         talkBtn.classList.remove('active');
         talkBtn.innerText = '長押しで話す';
       }
@@ -660,9 +756,11 @@
     talkBtn.addEventListener('mouseleave', stopTalking);
 
     toggleBtn.addEventListener('click', () => {
-      if (!localAudioTrack || toggleBtn.disabled) return;
+      if (!rawAudioTrack || toggleBtn.disabled) return;
+      resumeAudioContext();
+      
       isLocked = !isLocked;
-      localAudioTrack.enabled = isLocked;
+      rawAudioTrack.enabled = isLocked;
 
       if (isLocked) {
         toggleBtn.classList.add('locked');
