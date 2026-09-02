@@ -3,223 +3,216 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>内線トランシーバー</title>
+  <title>グループ内線トランシーバー</title>
   <style>
     body {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      font-family: sans-serif;
-      background-color: #f4f6f9;
-      margin: 0;
-      padding: 20px;
-      box-sizing: border-box;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+      min-height: 100vh; font-family: sans-serif; background-color: #f4f6f9; margin: 0;
     }
-    .card {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 360px;
-      text-align: center;
-    }
-    .id-box {
-      background: #eef2f5;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: bold;
-      word-break: break-all;
-      margin-bottom: 15px;
-    }
-    input, .btn-connect {
-      font-size: 16px;
-      padding: 12px;
-      margin: 6px 0;
-      width: 100%;
-      box-sizing: border-box;
-      border-radius: 8px;
-    }
-    input { border: 1px solid #ccc; text-align: center; }
-    .btn-connect {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-    .btn-connect:active { opacity: 0.8; }
     
-    /* マイク操作エリアのレイアウト */
-    .controls {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
+    /* タブ（グループ切り替え）のUI */
+    .tabs-container {
+      width: 100%; max-width: 400px;
+      display: flex; background: #e0e0e0;
+      padding-top: 10px;
+    }
+    .tab {
+      flex: 1; padding: 15px 0; text-align: center; font-weight: bold;
+      background: #e0e0e0; color: #666; border: none; cursor: pointer;
+      border-radius: 12px 12px 0 0; transition: 0.2s;
+    }
+    .tab.active { background: white; color: #007bff; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+
+    .card {
+      background: white; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      width: 100%; max-width: 400px; text-align: center; box-sizing: border-box;
+      flex-grow: 1;
     }
 
-    /* 長押しトランシーバーボタン */
+    /* マイク操作エリア */
+    .controls { display: flex; flex-direction: column; align-items: center; gap: 20px; margin-top: 20px; }
+    
     #talk-btn {
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      font-size: 18px;
-      font-weight: bold;
-      background-color: #cccccc;
-      color: white;
-      border: none;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
+      width: 160px; height: 160px; border-radius: 50%; font-size: 18px; font-weight: bold;
+      background-color: #cccccc; color: white; border: none; box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      user-select: none; -webkit-user-select: none; touch-action: manipulation;
     }
-    #talk-btn.active {
-      background-color: #ff4444 !important;
-      transform: scale(0.96);
-    }
+    #talk-btn.active { background-color: #ff4444 !important; transform: scale(0.96); }
 
-    /* ロック（切り替え）ボタン */
     #toggle-btn {
-      width: 100%;
-      padding: 15px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 8px;
-      border: 2px solid #cccccc;
-      background-color: white;
-      color: #666;
-      cursor: pointer;
-      user-select: none;
-      -webkit-user-select: none;
+      width: 100%; padding: 15px; font-size: 16px; font-weight: bold; border-radius: 8px;
+      border: 2px solid #cccccc; background-color: white; color: #666; cursor: pointer;
     }
-    /* ロック中（マイクON）のデザイン */
-    #toggle-btn.locked {
-      background-color: #ff4444;
-      border-color: #ff4444;
-      color: white;
-    }
+    #toggle-btn.locked { background-color: #ff4444; border-color: #ff4444; color: white; }
 
-    #status {
-      font-size: 13px;
-      color: #666;
-      margin-top: 15px;
-    }
+    #status { font-size: 14px; color: #333; margin-top: 15px; font-weight: bold; }
+    #member-count { font-size: 12px; color: #888; margin-top: 5px; }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>内線トランシーバー</h2>
-    
-    <div>あなたの内線ID:</div>
-    <div class="id-box" id="my-id">発行中...</div>
-    
-    <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
-    <button class="btn-connect" id="connect-btn">通話接続</button>
-
-    <!-- 操作ボタンエリア -->
-    <div class="controls">
-      <!-- 1. 長押しボタン -->
-      <button id="talk-btn" disabled>接続待ち</button>
-      
-      <!-- 2. 切り替え（トグル）ボタン -->
-      <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
-    </div>
-    
-    <div id="status">マイクの許可を待っています...</div>
+  <!-- グループ切り替えタブ -->
+  <div class="tabs-container">
+    <button class="tab" id="tab-group-A" onclick="joinGroup('group-A')">営業チーム</button>
+    <button class="tab" id="tab-group-B" onclick="joinGroup('group-B')">開発チーム</button>
+    <button class="tab" id="tab-group-C" onclick="joinGroup('group-C')">雑談部屋</button>
   </div>
 
-  <audio id="remote-audio" autoplay playsinline></audio>
+  <div class="card">
+    <div id="status">システム起動中...</div>
+    <div id="member-count">接続中: 0人 (あなただけです)</div>
 
+    <div class="controls">
+      <button id="talk-btn" disabled>準備中...</button>
+      <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
+    </div>
+  </div>
+
+  <!-- 複数人の音声を再生するエリア（非表示） -->
+  <div id="audio-container" style="display: none;"></div>
+
+  <!-- 必要なライブラリの読み込み -->
   <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
-  <script>
-    let peer;
-    let localStream;
-    let localAudioTrack;
-    let wakeLock = null;
-    let isLocked = false; // 常時通話（トグル）の状態を管理
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
-    const myIdEl = document.getElementById('my-id');
-    const peerIdInput = document.getElementById('peer-id-input');
-    const connectBtn = document.getElementById('connect-btn');
+  <script>
+    // --- 基本設定 ---
+    const APP_SECRET = 'naisen-app-xyz2026-'; // 他人と混ざらないための秘密のキーワード
+    let myPeerId = null;
+    let peer = null;
+    let mqttClient = null;
+    
+    let currentGroupId = null;
+    let activeCalls = {}; // 現在繋がっている通話一覧
+    
+    let localStream = null;
+    let localAudioTrack = null;
+    let isLocked = false;
+
     const statusEl = document.getElementById('status');
+    const countEl = document.getElementById('member-count');
     const talkBtn = document.getElementById('talk-btn');
     const toggleBtn = document.getElementById('toggle-btn');
-    const remoteAudio = document.getElementById('remote-audio');
+    const audioContainer = document.getElementById('audio-container');
 
-    async function requestWakeLock() {
+    // 1. 起動とマイクの取得
+    async function init() {
       try {
-        if ('wakeLock' in navigator) {
-          wakeLock = await navigator.wakeLock.request('screen');
-        }
+        if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
+        
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        localStream = stream;
+        localAudioTrack = stream.getAudioTracks()[0];
+        localAudioTrack.enabled = false; // 最初はミュート
+
+        startNetworking();
       } catch (err) {
-        console.log('Wake Lock Error:', err);
+        statusEl.innerText = 'マイクの使用を許可してください';
       }
     }
 
-    navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-      .then((stream) => {
-        localStream = stream;
-        localAudioTrack = stream.getAudioTracks()[0];
-        localAudioTrack.enabled = false; 
-
-        requestWakeLock();
-        initPeer();
-      })
-      .catch((err) => {
-        statusEl.innerText = 'マイクの使用を許可してください';
-      });
-
-    function initPeer() {
+    // 2. 通信ネットワークの構築
+    function startNetworking() {
+      // PeerJSの起動（音声通信用）
       peer = new Peer();
       peer.on('open', (id) => {
-        myIdEl.innerText = id;
-        statusEl.innerText = '相手のIDを入力して接続してください';
+        myPeerId = id;
+        
+        // MQTTの起動（グループのメンバー探し用）
+        // 無料の公開ブローカーを使用しています
+        mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+        
+        mqttClient.on('connect', () => {
+          // 起動時は最初のタブに自動参加
+          joinGroup('group-A');
+        });
+
+        // 誰かが部屋に入ってきた時の処理
+        mqttClient.on('message', (topic, message) => {
+          const data = JSON.parse(message.toString());
+          // 自分がいる部屋に、自分以外が入ってきたら電話をかける
+          if (data.type === 'join' && data.peerId !== myPeerId) {
+            const call = peer.call(data.peerId, localStream);
+            setupCall(call);
+          }
+        });
       });
 
+      // 相手から電話がかかってきた時の処理
       peer.on('call', (call) => {
-        statusEl.innerText = '着信中... 接続しています';
         call.answer(localStream);
-        setupCallListeners(call);
+        setupCall(call);
       });
     }
 
-    connectBtn.addEventListener('click', () => {
-      const targetId = peerIdInput.value.trim();
-      if (!targetId) return alert('相手のIDを入力してください');
+    // 3. 通話の管理（メンバーの追加と削除）
+    function setupCall(call) {
+      if (activeCalls[call.peer]) return; // 既に繋がっていれば無視
       
-      statusEl.innerText = '接続中...';
-      const call = peer.call(targetId, localStream);
-      setupCallListeners(call);
-    });
+      activeCalls[call.peer] = call;
+      updateMemberCount();
 
-    function setupCallListeners(call) {
+      // 相手の音声を受信したら、専用の<audio>タグを作って再生
       call.on('stream', (remoteStream) => {
-        remoteAudio.srcObject = remoteStream;
-        statusEl.innerText = '接続完了！通話可能です';
-        talkBtn.disabled = false;
-        toggleBtn.disabled = false;
-        talkBtn.innerText = '長押しで話す';
+        if (!document.getElementById('audio-' + call.peer)) {
+          const audio = document.createElement('audio');
+          audio.id = 'audio-' + call.peer;
+          audio.srcObject = remoteStream;
+          audio.autoplay = true;
+          audio.playsinline = true;
+          audioContainer.appendChild(audio);
+        }
       });
 
+      // 相手が退出した時
       call.on('close', () => {
-        statusEl.innerText = '通話が切断されました';
-        talkBtn.disabled = true;
-        toggleBtn.disabled = true;
+        const audio = document.getElementById('audio-' + call.peer);
+        if (audio) audio.remove();
+        delete activeCalls[call.peer];
+        updateMemberCount();
       });
     }
 
-    // ==========================================
-    // マイクの制御（トランシーバー ＆ 切り替え）
-    // ==========================================
+    // 4. グループ（タブ）を切り替える処理
+    function joinGroup(groupId) {
+      if (currentGroupId === groupId) return; // 同じ部屋なら何もしない
 
-    // 1. 長押しボタンの制御
+      // 以前の部屋の通話をすべて切断し、部屋から抜ける
+      if (currentGroupId) {
+        mqttClient.unsubscribe(APP_SECRET + currentGroupId);
+        Object.values(activeCalls).forEach(call => call.close());
+        activeCalls = {};
+        audioContainer.innerHTML = '';
+      }
+
+      currentGroupId = groupId;
+
+      // 新しい部屋に参加する
+      mqttClient.subscribe(APP_SECRET + groupId);
+      // 「自分が入室したよ」と部屋全員に知らせる
+      mqttClient.publish(APP_SECRET + groupId, JSON.stringify({ type: 'join', peerId: myPeerId }));
+
+      // タブの見た目を更新
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('tab-' + groupId).classList.add('active');
+      
+      const groupNames = { 'group-A': '営業チーム', 'group-B': '開発チーム', 'group-C': '雑談部屋' };
+      statusEl.innerText = `【${groupNames[groupId]}】に参加中`;
+      
+      talkBtn.disabled = false;
+      toggleBtn.disabled = false;
+      talkBtn.innerText = '長押しで話す';
+      updateMemberCount();
+    }
+
+    function updateMemberCount() {
+      const count = Object.keys(activeCalls).length;
+      countEl.innerText = count > 0 ? `接続中: ほか ${count} 人` : '接続中: 0人 (あなただけです)';
+    }
+
+    // 5. マイクの制御（トランシーバー ＆ 切り替え）
     const startTalking = (e) => {
       e.preventDefault();
-      // 常時通話ロック中は長押し処理を無視
       if (localAudioTrack && !talkBtn.disabled && !isLocked) {
         localAudioTrack.enabled = true;
         talkBtn.classList.add('active');
@@ -242,34 +235,28 @@
     talkBtn.addEventListener('touchend', stopTalking);
     talkBtn.addEventListener('mouseleave', stopTalking);
 
-    // 2. 切り替え（トグル）ボタンの制御
     toggleBtn.addEventListener('click', () => {
       if (!localAudioTrack || toggleBtn.disabled) return;
-
-      isLocked = !isLocked; // 状態を反転
-      localAudioTrack.enabled = isLocked; // マイクのON/OFFを状態に合わせる
+      isLocked = !isLocked;
+      localAudioTrack.enabled = isLocked;
 
       if (isLocked) {
-        // 常時通話ONの時の見た目
         toggleBtn.classList.add('locked');
         toggleBtn.innerText = '常時通話中 (ON) - タップでOFF';
-        
-        // 長押しボタンは使えないようにグレーアウト（視覚的な補助）
         talkBtn.classList.add('active');
         talkBtn.innerText = '常時通話中';
         talkBtn.style.opacity = '0.5';
       } else {
-        // 常時通話OFFの時の見た目
         toggleBtn.classList.remove('locked');
         toggleBtn.innerText = '常時通話に切り替え (OFF)';
-        
-        // 長押しボタンを元の状態に戻す
         talkBtn.classList.remove('active');
         talkBtn.innerText = '長押しで話す';
         talkBtn.style.opacity = '1';
       }
     });
 
+    // 起動
+    init();
   </script>
 </body>
 </html>
