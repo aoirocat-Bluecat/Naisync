@@ -34,7 +34,7 @@
       word-break: break-all;
       margin-bottom: 15px;
     }
-    input, button {
+    input, .btn-connect {
       font-size: 16px;
       padding: 12px;
       margin: 6px 0;
@@ -49,20 +49,28 @@
       border: none;
       font-weight: bold;
       cursor: pointer;
+      margin-bottom: 20px;
     }
     .btn-connect:active { opacity: 0.8; }
     
+    /* マイク操作エリアのレイアウト */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* 長押しトランシーバーボタン */
     #talk-btn {
-      width: 180px;
-      height: 180px;
+      width: 150px;
+      height: 150px;
       border-radius: 50%;
-      font-size: 20px;
+      font-size: 18px;
       font-weight: bold;
       background-color: #cccccc;
       color: white;
       border: none;
-      margin: 20px auto 10px;
-      display: block;
       box-shadow: 0 8px 16px rgba(0,0,0,0.2);
       user-select: none;
       -webkit-user-select: none;
@@ -72,10 +80,32 @@
       background-color: #ff4444 !important;
       transform: scale(0.96);
     }
+
+    /* ロック（切り替え）ボタン */
+    #toggle-btn {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      border: 2px solid #cccccc;
+      background-color: white;
+      color: #666;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    /* ロック中（マイクON）のデザイン */
+    #toggle-btn.locked {
+      background-color: #ff4444;
+      border-color: #ff4444;
+      color: white;
+    }
+
     #status {
       font-size: 13px;
       color: #666;
-      margin-top: 10px;
+      margin-top: 15px;
     }
   </style>
 </head>
@@ -90,7 +120,15 @@
     <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
     <button class="btn-connect" id="connect-btn">通話接続</button>
 
-    <button id="talk-btn" disabled>接続待ち</button>
+    <!-- 操作ボタンエリア -->
+    <div class="controls">
+      <!-- 1. 長押しボタン -->
+      <button id="talk-btn" disabled>接続待ち</button>
+      
+      <!-- 2. 切り替え（トグル）ボタン -->
+      <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
+    </div>
+    
     <div id="status">マイクの許可を待っています...</div>
   </div>
 
@@ -102,15 +140,16 @@
     let localStream;
     let localAudioTrack;
     let wakeLock = null;
+    let isLocked = false; // 常時通話（トグル）の状態を管理
 
     const myIdEl = document.getElementById('my-id');
     const peerIdInput = document.getElementById('peer-id-input');
     const connectBtn = document.getElementById('connect-btn');
     const statusEl = document.getElementById('status');
     const talkBtn = document.getElementById('talk-btn');
+    const toggleBtn = document.getElementById('toggle-btn');
     const remoteAudio = document.getElementById('remote-audio');
 
-    // 1. スリープ防止（画面が消えるのを防ぐ）
     async function requestWakeLock() {
       try {
         if ('wakeLock' in navigator) {
@@ -121,78 +160,68 @@
       }
     }
 
-    // 2. マイクの取得とPeerJS初期化
     navigator.mediaDevices.getUserMedia({ audio: true, video: false })
       .then((stream) => {
         localStream = stream;
         localAudioTrack = stream.getAudioTracks()[0];
-        localAudioTrack.enabled = false; // 最初はミュート（話すボタンを押すまで音を送らない）
+        localAudioTrack.enabled = false; 
 
         requestWakeLock();
         initPeer();
       })
       .catch((err) => {
         statusEl.innerText = 'マイクの使用を許可してください';
-        console.error(err);
       });
 
-    // 3. PeerJSの接続開始
     function initPeer() {
-      // クラウドサーバー経由でランダムなIDを発行
       peer = new Peer();
-
-      // 自分のIDが発行された時
       peer.on('open', (id) => {
         myIdEl.innerText = id;
-        statusEl.innerText = '相手のIDを入力して「通話接続」を押してください';
+        statusEl.innerText = '相手のIDを入力して接続してください';
       });
 
-      // 相手から着信があった時（自動応答するように設定）
       peer.on('call', (call) => {
         statusEl.innerText = '着信中... 接続しています';
-        call.answer(localStream); // 自分のマイクストリームを返して接続
+        call.answer(localStream);
         setupCallListeners(call);
-      });
-
-      peer.on('error', (err) => {
-        statusEl.innerText = '通信エラーが発生しました: ' + err.type;
-        console.error(err);
       });
     }
 
-    // 4. 自分から接続ボタンを押した時
     connectBtn.addEventListener('click', () => {
       const targetId = peerIdInput.value.trim();
-      if (!targetId) {
-        alert('相手のIDを入力してください');
-        return;
-      }
+      if (!targetId) return alert('相手のIDを入力してください');
+      
       statusEl.innerText = '接続中...';
       const call = peer.call(targetId, localStream);
       setupCallListeners(call);
     });
 
-    // 通話が繋がった後の処理
     function setupCallListeners(call) {
       call.on('stream', (remoteStream) => {
         remoteAudio.srcObject = remoteStream;
-        statusEl.innerText = '通話接続完了！ボタン長押しで話せます';
+        statusEl.innerText = '接続完了！通話可能です';
         talkBtn.disabled = false;
+        toggleBtn.disabled = false;
         talkBtn.innerText = '長押しで話す';
       });
 
       call.on('close', () => {
         statusEl.innerText = '通話が切断されました';
         talkBtn.disabled = true;
-        talkBtn.innerText = '切断済';
+        toggleBtn.disabled = true;
       });
     }
 
-    // 5. ボタン長押し（Push to Talk）の制御
+    // ==========================================
+    // マイクの制御（トランシーバー ＆ 切り替え）
+    // ==========================================
+
+    // 1. 長押しボタンの制御
     const startTalking = (e) => {
-      e.preventDefault(); // スマホの誤作動防止
-      if (localAudioTrack && !talkBtn.disabled) {
-        localAudioTrack.enabled = true; // マイクのミュート解除
+      e.preventDefault();
+      // 常時通話ロック中は長押し処理を無視
+      if (localAudioTrack && !talkBtn.disabled && !isLocked) {
+        localAudioTrack.enabled = true;
         talkBtn.classList.add('active');
         talkBtn.innerText = '発言中!!';
       }
@@ -200,20 +229,47 @@
 
     const stopTalking = (e) => {
       e.preventDefault();
-      if (localAudioTrack && !talkBtn.disabled) {
-        localAudioTrack.enabled = false; // 再びミュート
+      if (localAudioTrack && !talkBtn.disabled && !isLocked) {
+        localAudioTrack.enabled = false;
         talkBtn.classList.remove('active');
         talkBtn.innerText = '長押しで話す';
       }
     };
 
-    // タッチ（スマホ）とクリック（PC）の両方に対応
     talkBtn.addEventListener('mousedown', startTalking);
     talkBtn.addEventListener('touchstart', startTalking);
-
     talkBtn.addEventListener('mouseup', stopTalking);
     talkBtn.addEventListener('touchend', stopTalking);
     talkBtn.addEventListener('mouseleave', stopTalking);
+
+    // 2. 切り替え（トグル）ボタンの制御
+    toggleBtn.addEventListener('click', () => {
+      if (!localAudioTrack || toggleBtn.disabled) return;
+
+      isLocked = !isLocked; // 状態を反転
+      localAudioTrack.enabled = isLocked; // マイクのON/OFFを状態に合わせる
+
+      if (isLocked) {
+        // 常時通話ONの時の見た目
+        toggleBtn.classList.add('locked');
+        toggleBtn.innerText = '常時通話中 (ON) - タップでOFF';
+        
+        // 長押しボタンは使えないようにグレーアウト（視覚的な補助）
+        talkBtn.classList.add('active');
+        talkBtn.innerText = '常時通話中';
+        talkBtn.style.opacity = '0.5';
+      } else {
+        // 常時通話OFFの時の見た目
+        toggleBtn.classList.remove('locked');
+        toggleBtn.innerText = '常時通話に切り替え (OFF)';
+        
+        // 長押しボタンを元の状態に戻す
+        talkBtn.classList.remove('active');
+        talkBtn.innerText = '長押しで話す';
+        talkBtn.style.opacity = '1';
+      }
+    });
+
   </script>
 </body>
 </html>
