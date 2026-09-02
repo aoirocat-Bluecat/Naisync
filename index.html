@@ -74,6 +74,7 @@
     .btn-action:active { opacity: 0.8; }
     .btn-action:disabled { background-color: #a0cfff; cursor: not-allowed; }
     .btn-secondary { background-color: #6c757d; }
+    .btn-outline { background-color: white; color: #007bff; border: 1px solid #007bff; }
 
     /* マイク操作エリア */
     .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 16px; }
@@ -223,12 +224,17 @@
     <div class="modal-box">
       <h3>⚙️ 設定</h3>
       
-      <label>🎤 マイク音量（自分の声の大きさ）</label>
+      <label>🎤 自分のマイク音量（相手への声の大きさ）</label>
       <div style="display: flex; align-items: center; gap: 10px;">
         <input type="range" id="mic-volume-slider" min="0" max="2" step="0.1" value="1">
         <span id="mic-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
       </div>
-      <p style="font-size:11px; color:#666; margin:4px 0 0 0;">※声が小さいと言われたら右へ動かしてください。</p>
+
+      <label style="margin-top: 20px;">🔊 相手の音量（受信音量）</label>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <input type="range" id="spk-volume-slider" min="0" max="1" step="0.05" value="1">
+        <span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
+      </div>
 
       <label style="margin-top: 24px;">🎧 ノイズキャンセリング</label>
       <label class="toggle-switch">
@@ -257,7 +263,6 @@
       <label>パスワード</label>
       <input type="password" id="modal-group-pass" placeholder="パスワードを入力">
       
-      <!-- 【追加】リーダー用：名前必須設定 -->
       <label class="checkbox-label">
         <input type="checkbox" id="modal-group-require-name">
         参加者に「名前設定」を必須にする
@@ -287,12 +292,8 @@
       <div class="test-server-box">
         <h4>🧪 テストサーバー情報</h4>
         <p style="font-size:11px; margin:0; color:#d9534f;">※テストルーム内ではチャット機能は使用できません。</p>
-        <ul>
-          <li>グループ名: <strong>テストルーム</strong></li>
-          <li>グループID: <strong>test-room</strong></li>
-          <li>パスワード: <strong>0000</strong></li>
-        </ul>
-        <button class="btn-action" style="padding: 8px; font-size: 12px;" onclick="addTestGroup()">テストルームをタブに追加して参加</button>
+        <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('normal')">通常テストルームを追加 (誰でも可)</button>
+        <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('namereq')">名前必須ルームを追加 (要名前)</button>
       </div>
 
       <div class="modal-buttons">
@@ -307,7 +308,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
-    const APP_SECRET = 'naisen-app-v7-';
+    const APP_SECRET = 'naisen-app-v8-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -325,18 +326,21 @@
     let processedStream = null;
 
     let isLocked = false;
+    
+    // 保存された設定の読み込み
     let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
+    let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    // バージョンアップに伴うデータ移行処理
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v7')) || [];
+    // データ移行
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v8')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v6'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v7'));
       if (oldGroups && oldGroups.length > 0) {
-        customGroups = oldGroups.map(g => ({ ...g, requireName: false }));
-        localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
+        customGroups = oldGroups;
+        localStorage.setItem('my_naisen_groups_v8', JSON.stringify(customGroups));
       }
     }
 
@@ -360,6 +364,8 @@
     const ncStatusText = document.getElementById('nc-status-text');
     const micVolumeSlider = document.getElementById('mic-volume-slider');
     const micVolumeDisplay = document.getElementById('mic-volume-display');
+    const spkVolumeSlider = document.getElementById('spk-volume-slider');
+    const spkVolumeDisplay = document.getElementById('spk-volume-display');
 
     myNameInput.value = localStorage.getItem('my_naisen_username') || '';
     myNameInput.addEventListener('input', () => {
@@ -372,7 +378,7 @@
     }
 
     function updateChatUI() {
-      if (currentMode === 'group' && currentGroupId === 'test-room') {
+      if (currentMode === 'group' && (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom')) {
         chatInput.disabled = true;
         chatSendBtn.disabled = true;
         chatInput.placeholder = "テストルームではチャットは使用できません";
@@ -392,10 +398,13 @@
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
+        // 設定UIの初期化
         ncCheckbox.checked = isNoiseCanceling;
         ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
         micVolumeSlider.value = savedMicVolume;
         micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
+        spkVolumeSlider.value = savedSpeakerVolume;
+        spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
 
         const audioConstraints = {
           audio: {
@@ -455,6 +464,19 @@
       micVolumeDisplay.innerText = Math.round(val * 100) + '%';
     });
 
+    // 相手の音量（受信音量）スライダー操作
+    spkVolumeSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      savedSpeakerVolume = val;
+      localStorage.setItem('my_naisen_spk_vol', val);
+      spkVolumeDisplay.innerText = Math.round(val * 100) + '%';
+      
+      // 現在接続中のすべての相手の音声をリアルタイムに変更
+      document.querySelectorAll('#audio-container audio').forEach(audio => {
+        audio.volume = val;
+      });
+    });
+
 
     // 2. タブ描画
     function renderTabs() {
@@ -509,8 +531,7 @@
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
           if (data.type === 'join' && data.peerId !== myPeerId) {
-            
-            // ★【セキュリティ】相手が名前なしで、このグループが「名前必須」なら通信を拒否
+            // 名前必須ブロック
             if (isNameRequired && !data.senderName) {
               console.log('名前未設定のユーザーの参加をブロックしました');
               return;
@@ -518,11 +539,10 @@
 
             resumeAudioContext();
             const senderName = myNameInput.value.trim();
-            // コールの際に自分の名前情報をメタデータとして送る
             const call = peer.call(data.peerId, processedStream, { metadata: { senderName } });
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
-            if (currentGroupId === 'test-room') return;
+            if (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom') return;
             addChatLog(data.senderName, data.text, false);
           }
         });
@@ -531,14 +551,13 @@
       peer.on('call', (call) => {
         resumeAudioContext();
 
-        // ★【セキュリティ】着信時にも相手の名前をチェック
+        // 着信時の名前必須ブロック
         const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
         const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
         
         if (currentMode === 'group' && isNameRequired) {
           const callerName = call.metadata ? call.metadata.senderName : '';
           if (!callerName) {
-            console.log('名前未設定のユーザーからの着信をブロックしました');
             call.close();
             return;
           }
@@ -563,6 +582,8 @@
           audio.srcObject = remoteStream;
           audio.autoplay = true;
           audio.playsinline = true;
+          // ★ 新しく生成された相手の音声に設定済みの受信音量を適用
+          audio.volume = savedSpeakerVolume; 
           audioContainer.appendChild(audio);
         }
       });
@@ -627,7 +648,6 @@
     });
 
     function joinGroup(groupObj) {
-      // ★ グループ入室前の名前必須チェック
       const myName = myNameInput.value.trim();
       if (groupObj.requireName && !myName) {
         alert(`【${groupObj.name}】はリーダーの設定により、名前の入力が必須になっています。\n「あなたの名前 (チャット用)」を入力してから再度参加してください。`);
@@ -648,7 +668,6 @@
       currentGroupTopic = `${APP_SECRET}${groupObj.id}-${groupObj.pass}`;
 
       mqttClient.subscribe(currentGroupTopic);
-      // MQTTで入室を知らせる際、自分の名前も送信する
       mqttClient.publish(currentGroupTopic, JSON.stringify({ 
         type: 'join', 
         peerId: myPeerId,
@@ -664,7 +683,7 @@
 
     // --- チャット ---
     function sendChatMessage() {
-      if (currentMode === 'group' && currentGroupId === 'test-room') {
+      if (currentMode === 'group' && (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom')) {
         return alert('テストルームではチャットは使用できません。');
       }
 
@@ -714,7 +733,7 @@
       document.getElementById('modal-group-name').value = '';
       document.getElementById('modal-group-id').value = '';
       document.getElementById('modal-group-pass').value = '';
-      document.getElementById('modal-group-require-name').checked = false; // デフォルトはOFF
+      document.getElementById('modal-group-require-name').checked = false; 
       document.getElementById('group-modal').style.display = 'flex';
     }
     function closeGroupModal() { document.getElementById('group-modal').style.display = 'none'; }
@@ -733,7 +752,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v8', JSON.stringify(customGroups));
       closeGroupModal();
       joinGroup(newGroup);
     }
@@ -743,7 +762,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v8', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -752,11 +771,18 @@
     function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
     function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
 
-    function addTestGroup() {
-      const testGroup = { id: 'test-room', name: 'テストルーム', pass: '0000', requireName: false };
+    // テストグループ追加用
+    function addTestGroup(type) {
+      let testGroup;
+      if (type === 'normal') {
+        testGroup = { id: 'test-room', name: '通常テスト', pass: '0000', requireName: false };
+      } else {
+        testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true };
+      }
+      
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v8', JSON.stringify(customGroups));
       }
       closeHelp();
       joinGroup(testGroup);
