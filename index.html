@@ -50,21 +50,20 @@
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; flex-shrink: 0;
     }
-    .help-btn:hover { background: #f0f0f0; }
 
     .card {
-      background: white; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      background: white; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       width: 100%; max-width: 440px; text-align: center; box-sizing: border-box;
       flex-grow: 1; border-radius: 0 0 16px 16px;
     }
 
     .id-box {
-      background: #eef2f5; padding: 10px; border-radius: 8px;
-      font-weight: bold; word-break: break-all; margin: 10px 0 15px; font-size: 14px;
+      background: #eef2f5; padding: 8px; border-radius: 8px;
+      font-weight: bold; word-break: break-all; margin: 6px 0 12px; font-size: 13px;
     }
 
     input, .btn-action {
-      font-size: 15px; padding: 12px; margin: 6px 0; width: 100%;
+      font-size: 14px; padding: 10px; margin: 4px 0; width: 100%;
       box-sizing: border-box; border-radius: 8px;
     }
     input { border: 1px solid #ccc; text-align: center; }
@@ -75,32 +74,50 @@
     /* ノイズキャンセリングボタン */
     #nc-btn {
       background-color: #28a745; color: white; border: none; font-weight: bold;
-      padding: 8px 16px; font-size: 13px; border-radius: 20px; cursor: pointer;
-      margin-bottom: 12px; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; font-size: 12px; border-radius: 20px; cursor: pointer;
+      margin-bottom: 8px; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px;
     }
     #nc-btn.off { background-color: #6c757d; }
 
     /* マイク操作エリア */
-    .controls { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 10px; }
+    .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 10px; }
     
     #talk-btn {
-      width: 160px; height: 160px; border-radius: 50%; font-size: 18px; font-weight: bold;
-      background-color: #cccccc; color: white; border: none; box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      width: 140px; height: 140px; border-radius: 50%; font-size: 16px; font-weight: bold;
+      background-color: #cccccc; color: white; border: none; box-shadow: 0 6px 12px rgba(0,0,0,0.2);
       user-select: none; -webkit-user-select: none; touch-action: manipulation;
     }
     #talk-btn.active { background-color: #ff4444 !important; transform: scale(0.96); }
 
     #toggle-btn {
-      width: 100%; padding: 14px; font-size: 15px; font-weight: bold; border-radius: 8px;
+      width: 100%; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 8px;
       border: 2px solid #cccccc; background-color: white; color: #666; cursor: pointer;
     }
     #toggle-btn.locked { background-color: #ff4444; border-color: #ff4444; color: white; }
 
-    #status { font-size: 14px; color: #333; margin-top: 10px; font-weight: bold; }
-    #member-count { font-size: 12px; color: #888; margin-top: 4px; }
-    .section-title { font-size: 12px; color: #777; text-align: left; margin-top: 10px; }
+    /* チャットエリアUI */
+    .chat-section {
+      margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left;
+    }
+    .chat-title { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 6px; }
+    .chat-logs {
+      height: 100px; background: #fafafa; border: 1px solid #e0e0e0;
+      border-radius: 8px; padding: 8px; overflow-y: auto; font-size: 13px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .chat-msg { word-break: break-all; margin: 2px 0; }
+    .chat-msg .sender { font-weight: bold; color: #007bff; font-size: 11px; margin-right: 4px; }
+    .chat-msg.me .sender { color: #28a745; }
+    
+    .chat-input-box { display: flex; gap: 6px; margin-top: 6px; }
+    .chat-input-box input { text-align: left; margin: 0; padding: 8px; font-size: 13px; flex-grow: 1; }
+    .chat-input-box button { width: auto; padding: 8px 14px; margin: 0; font-size: 13px; white-space: nowrap; }
 
-    /* モーダルダイアログ */
+    #status { font-size: 13px; color: #333; margin-top: 8px; font-weight: bold; }
+    #member-count { font-size: 11px; color: #888; margin-top: 2px; }
+    .section-title { font-size: 11px; color: #777; text-align: left; margin-top: 4px; }
+
+    /* モーダル */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
@@ -108,15 +125,12 @@
     }
     .modal-box {
       background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 360px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left;
-      max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; max-height: 85vh; overflow-y: auto;
     }
     .modal-box h3 { margin-top: 0; text-align: center; font-size: 18px; }
     .modal-box label { font-size: 12px; color: #555; font-weight: bold; margin-top: 8px; display: block; }
-    .modal-box input { text-align: left; font-size: 14px; padding: 10px; }
     .modal-buttons { display: flex; gap: 8px; margin-top: 16px; }
 
-    /* ヘルプモーダル専用スタイル */
     .faq-item { margin-bottom: 12px; font-size: 13px; }
     .faq-item strong { display: block; color: #333; margin-bottom: 4px; }
     .faq-item p { margin: 0; color: #666; line-height: 1.5; }
@@ -127,57 +141,53 @@
 </head>
 <body>
 
-  <!-- ヘッダー＆タブエリア -->
   <div class="header-container">
-    <div class="tabs-wrapper" id="tabs-wrapper">
-      <!-- 動的にタブが生成されます -->
-    </div>
+    <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <button class="help-btn" onclick="openHelp()" title="ヘルプ">❓</button>
   </div>
 
   <div class="card">
-    <!-- 自分のID表示 -->
     <div class="section-title">あなたの内線ID:</div>
     <div class="id-box" id="my-id">発行中...</div>
 
-    <!-- 1対1通話用エリア -->
     <div id="direct-panel" style="display: none;">
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
     </div>
 
-    <!-- グループ通話用エリア -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
     </div>
 
-    <!-- 共通ステータス表示 -->
     <div id="status">初期化中...</div>
 
-    <!-- 共通マイク操作ボタン -->
     <div class="controls">
-      <!-- ノイズキャンセル切り替えボタン -->
       <button id="nc-btn">🎧 ノイズキャンセル: ON</button>
-
       <button id="talk-btn" disabled>準備中...</button>
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
+
+    <div class="chat-section">
+      <div class="chat-title">💬 テキストチャット</div>
+      <div class="chat-logs" id="chat-logs">
+        <div style="color:#aaa; font-size:11px; text-align:center; margin-top:20px;">メッセージはここに表示されます</div>
+      </div>
+      <div class="chat-input-box">
+        <input type="text" id="chat-input" placeholder="メッセージを入力...">
+        <button class="btn-action" id="chat-send-btn">送信</button>
+      </div>
+    </div>
   </div>
 
-  <!-- グループ追加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <h3>グループの作成・参加</h3>
-      
       <label>表示名（画面上のタブ名）</label>
       <input type="text" id="modal-group-name" placeholder="例: 営業チーム">
-
       <label>グループID（半角英数字）</label>
       <input type="text" id="modal-group-id" placeholder="例: room-101">
-
       <label>パスワード</label>
       <input type="password" id="modal-group-pass" placeholder="パスワードを入力">
-
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
         <button class="btn-action" onclick="saveNewGroup()">追加して参加</button>
@@ -185,35 +195,27 @@
     </div>
   </div>
 
-  <!-- ヘルプ＆テストサーバー追加モーダル -->
   <div class="modal-overlay" id="help-modal">
     <div class="modal-box">
       <h3>❓ よくある質問とヘルプ</h3>
-      
       <div class="faq-item">
         <strong>Q. 誰とも繋がらない・音が聞こえない</strong>
-        <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。また、ブラウザの「マイク使用許可」が必要です。</p>
+        <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。</p>
       </div>
       <div class="faq-item">
-        <strong>Q. 新しいグループの作り方は？</strong>
-        <p>A. 「＋ グループ作成」から、好きなグループ名・ID・パスワードを決めて追加するだけで作成完了です。</p>
+        <strong>Q. チャット機能の使い方</strong>
+        <p>A. 画面下の入力欄からメッセージを送信すると、同じグループや1対1の接続相手にリアルタイムで届きます。</p>
       </div>
-      <div class="faq-item">
-        <strong>Q. トランシーバーと常時通話の違いは？</strong>
-        <p>A. デフォルトはトランシーバーモード（ボタンを押している間だけマイクON）です。「常時通話」をONにすると、普通の電話のようにハンズフリーで会話できます。</p>
-      </div>
-
       <div class="test-server-box">
         <h4>🧪 テストサーバー情報</h4>
-        <p style="font-size:12px; margin:0;">動作確認用の公開グループです。別端末と繋がるかテストにお使いください。</p>
+        <p style="font-size:11px; margin:0;">動作確認用のグループです。</p>
         <ul>
           <li>グループ名: <strong>テストルーム</strong></li>
           <li>グループID: <strong>test-room</strong></li>
           <li>パスワード: <strong>0000</strong></li>
         </ul>
-        <button class="btn-action" style="padding: 10px; font-size: 13px;" onclick="addTestGroup()">テストルームをタブに追加して参加</button>
+        <button class="btn-action" style="padding: 8px; font-size: 12px;" onclick="addTestGroup()">テストルームをタブに追加して参加</button>
       </div>
-
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="closeHelp()">閉じる</button>
       </div>
@@ -235,13 +237,13 @@
     let currentGroupId = null;
     let currentGroupTopic = null;
     let activeCalls = {};
+    let activeDataConns = {}; // 1対1チャット用のデータコネクション
 
     let localStream = null;
     let localAudioTrack = null;
     let isLocked = false;
     let isNoiseCanceling = true;
 
-    // カスタムグループ一覧
     let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v4')) || [];
 
     const tabsWrapper = document.getElementById('tabs-wrapper');
@@ -256,6 +258,9 @@
     const talkBtn = document.getElementById('talk-btn');
     const toggleBtn = document.getElementById('toggle-btn');
     const audioContainer = document.getElementById('audio-container');
+    const chatLogs = document.getElementById('chat-logs');
+    const chatInput = document.getElementById('chat-input');
+    const chatSendBtn = document.getElementById('chat-send-btn');
 
     // 1. 初期化
     async function init() {
@@ -283,42 +288,33 @@
       }
     }
 
-    // ノイズキャンセリングの動的切り替え
+    // ノイズキャンセル切り替え
     ncBtn.addEventListener('click', async () => {
       if (!localAudioTrack) return;
       isNoiseCanceling = !isNoiseCanceling;
-
       try {
         await localAudioTrack.applyConstraints({
           echoCancellation: isNoiseCanceling,
           noiseSuppression: isNoiseCanceling,
           autoGainControl: isNoiseCanceling
         });
-
-        if (isNoiseCanceling) {
-          ncBtn.classList.remove('off');
-          ncBtn.innerText = '🎧 ノイズキャンセル: ON';
-        } else {
-          ncBtn.classList.add('off');
-          ncBtn.innerText = '🎧 ノイズキャンセル: OFF';
-        }
+        ncBtn.classList.toggle('off', !isNoiseCanceling);
+        ncBtn.innerText = isNoiseCanceling ? '🎧 ノイズキャンセル: ON' : '🎧 ノイズキャンセル: OFF';
       } catch (err) {
-        console.error('ノイズキャンセルの切り替えに失敗しました', err);
+        console.error(err);
       }
     });
 
-    // 2. タブの描画
+    // 2. タブ描画
     function renderTabs() {
       tabsWrapper.innerHTML = '';
 
-      // ① 1対1通話タブ
       const directTab = document.createElement('button');
       directTab.className = `tab ${currentMode === 'direct' ? 'active' : ''}`;
       directTab.innerText = '1対1通話';
       directTab.onclick = () => switchToDirect();
       tabsWrapper.appendChild(directTab);
 
-      // ② 登録済みグループタブ
       customGroups.forEach(g => {
         const tab = document.createElement('button');
         tab.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
@@ -327,11 +323,9 @@
         label.innerText = g.name;
         tab.appendChild(label);
 
-        // 削除ボタン (✕)
         const delBtn = document.createElement('span');
         delBtn.className = 'btn-del';
         delBtn.innerText = '✕';
-        delBtn.title = 'グループを削除';
         delBtn.onclick = (e) => deleteGroup(g.id, g.name, e);
         tab.appendChild(delBtn);
 
@@ -339,7 +333,6 @@
         tabsWrapper.appendChild(tab);
       });
 
-      // ③ グループ追加ボタン (+)
       const addBtn = document.createElement('button');
       addBtn.className = 'tab tab-add';
       addBtn.innerText = '＋ グループ作成';
@@ -359,19 +352,29 @@
           switchToDirect();
         });
 
+        // MQTTメッセージ受信（グループ通話＆グループチャット用）
         mqttClient.on('message', (topic, message) => {
           if (currentMode !== 'group') return;
           const data = JSON.parse(message.toString());
+          
           if (data.type === 'join' && data.peerId !== myPeerId) {
             const call = peer.call(data.peerId, localStream);
             setupCall(call);
+          } else if (data.type === 'chat' && data.senderId !== myPeerId) {
+            addChatLog(data.senderName, data.text, false);
           }
         });
       });
 
+      // 1対1の電話着信
       peer.on('call', (call) => {
         call.answer(localStream);
         setupCall(call);
+      });
+
+      // 1対1のデータ（チャット）着信
+      peer.on('connection', (conn) => {
+        setupDataConn(conn);
       });
     }
 
@@ -399,18 +402,30 @@
       });
     }
 
+    function setupDataConn(conn) {
+      activeDataConns[conn.peer] = conn;
+      conn.on('data', (data) => {
+        if (data && data.type === 'chat') {
+          addChatLog(data.senderName, data.text, false);
+        }
+      });
+      conn.on('close', () => delete activeDataConns[conn.peer]);
+    }
+
     function closeAllCalls() {
       if (currentGroupTopic && mqttClient) {
         mqttClient.unsubscribe(currentGroupTopic);
       }
       Object.values(activeCalls).forEach(call => call.close());
+      Object.values(activeDataConns).forEach(conn => conn.close());
       activeCalls = {};
+      activeDataConns = {};
       audioContainer.innerHTML = '';
       currentGroupTopic = null;
+      chatLogs.innerHTML = ''; // 部屋移動時にログクリア
     }
 
     // --- モード切り替え ---
-
     function switchToDirect() {
       closeAllCalls();
       currentMode = 'direct';
@@ -430,11 +445,14 @@
       const targetId = peerIdInput.value.trim();
       if (!targetId) return alert('相手の内線IDを入力してください');
       statusEl.innerText = '発信中...';
+      
       const call = peer.call(targetId, localStream);
       setupCall(call);
+
+      const conn = peer.connect(targetId);
+      setupDataConn(conn);
     });
 
-    // グループに参加
     function joinGroup(groupObj) {
       closeAllCalls();
       currentMode = 'group';
@@ -456,7 +474,50 @@
       updateStatus();
     }
 
-    // --- ダイアログ操作 (グループ追加) ---
+    // --- チャットの送信と描画 ---
+    function sendChatMessage() {
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      const myShortId = myPeerId ? myPeerId.substring(0, 5) : '自分';
+
+      if (currentMode === 'group' && currentGroupTopic) {
+        // グループへ送信 (MQTT)
+        mqttClient.publish(currentGroupTopic, JSON.stringify({
+          type: 'chat',
+          senderId: myPeerId,
+          senderName: myShortId,
+          text: text
+        }));
+      } else if (currentMode === 'direct') {
+        // 1対1相手へ送信 (PeerJS DataConnection)
+        Object.values(activeDataConns).forEach(conn => {
+          conn.send({ type: 'chat', senderName: myShortId, text: text });
+        });
+      }
+
+      addChatLog('自分', text, true);
+      chatInput.value = '';
+    }
+
+    function addChatLog(sender, text, isMe) {
+      const msgEl = document.createElement('div');
+      msgEl.className = `chat-msg ${isMe ? 'me' : ''}`;
+      msgEl.innerHTML = `<span class="sender">${sender}:</span>${escapeHtml(text)}`;
+      chatLogs.appendChild(msgEl);
+      chatLogs.scrollTop = chatLogs.scrollHeight; // 最下部へスクロール
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    chatSendBtn.addEventListener('click', sendChatMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
+    });
+
+    // --- モーダル操作 ---
     function openGroupModal() {
       document.getElementById('modal-group-name').value = '';
       document.getElementById('modal-group-id').value = '';
@@ -473,17 +534,12 @@
       const id = document.getElementById('modal-group-id').value.trim();
       const pass = document.getElementById('modal-group-pass').value.trim();
 
-      if (!name || !id || !pass) {
-        return alert('すべての項目（グループ名・グループID・パスワード）を入力してください。');
-      }
+      if (!name || !id || !pass) return alert('全項目を入力してください');
 
       const newGroup = { id, name, pass };
       const index = customGroups.findIndex(g => g.id === id);
-      if (index >= 0) {
-        customGroups[index] = newGroup;
-      } else {
-        customGroups.push(newGroup);
-      }
+      if (index >= 0) customGroups[index] = newGroup;
+      else customGroups.push(newGroup);
 
       localStorage.setItem('my_naisen_groups_v4', JSON.stringify(customGroups));
       closeGroupModal();
@@ -497,49 +553,32 @@
       customGroups = customGroups.filter(g => g.id !== groupId);
       localStorage.setItem('my_naisen_groups_v4', JSON.stringify(customGroups));
 
-      if (currentGroupId === groupId) {
-        switchToDirect();
-      } else {
-        renderTabs();
-      }
+      if (currentGroupId === groupId) switchToDirect();
+      else renderTabs();
     }
 
-    // --- ヘルプ＆テストサーバー追加操作 ---
-    function openHelp() {
-      document.getElementById('help-modal').style.display = 'flex';
-    }
-
-    function closeHelp() {
-      document.getElementById('help-modal').style.display = 'none';
-    }
+    function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
+    function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
 
     function addTestGroup() {
       const testGroup = { id: 'test-room', name: 'テストルーム', pass: '0000' };
-      const index = customGroups.findIndex(g => g.id === testGroup.id);
-      
-      if (index < 0) {
+      if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
         localStorage.setItem('my_naisen_groups_v4', JSON.stringify(customGroups));
       }
-      
       closeHelp();
       joinGroup(testGroup);
     }
 
-    // --- ステータス更新 ---
     function updateStatus() {
       const count = Object.keys(activeCalls).length;
       if (currentMode === 'group') {
         countEl.innerText = count > 0 ? `接続中: ほか ${count} 人` : '接続中: 0人 (あなただけです)';
       } else if (currentMode === 'direct') {
-        if (count > 0) {
-          statusEl.innerText = '1対1通話中！';
-          talkBtn.disabled = false;
-          toggleBtn.disabled = false;
-          talkBtn.innerText = '長押しで話す';
-        } else {
-          statusEl.innerText = '相手のIDを入力して発信してください';
-        }
+        statusEl.innerText = count > 0 ? '1対1通話中！' : '相手のIDを入力して発信してください';
+        talkBtn.disabled = count === 0;
+        toggleBtn.disabled = count === 0;
+        if (count > 0) talkBtn.innerText = '長押しで話す';
       }
     }
 
