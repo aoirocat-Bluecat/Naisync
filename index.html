@@ -134,13 +134,11 @@
     .faq-item { margin-bottom: 12px; font-size: 13px; }
     .faq-item strong { display: block; color: #333; margin-bottom: 4px; }
     .faq-item p { margin: 0; color: #666; line-height: 1.5; }
-    .test-server-box { background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px; }
-    .test-server-box h4 { margin: 0 0 8px 0; color: #007bff; font-size: 14px; }
-    .test-server-box ul { margin: 8px 0; padding-left: 20px; font-size: 13px; color: #444; }
   </style>
 </head>
 <body>
 
+  <!-- ヘッダー＆タブエリア -->
   <div class="header-container">
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <button class="help-btn" onclick="openHelp()" title="ヘルプ">❓</button>
@@ -150,23 +148,27 @@
     <div class="section-title">あなたの内線ID:</div>
     <div class="id-box" id="my-id">発行中...</div>
 
+    <!-- 1対1通話エリア -->
     <div id="direct-panel" style="display: none;">
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
     </div>
 
+    <!-- グループ通話エリア -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
     </div>
 
     <div id="status">初期化中...</div>
 
+    <!-- マイク操作ボタン -->
     <div class="controls">
       <button id="nc-btn">🎧 ノイズキャンセル: ON</button>
       <button id="talk-btn" disabled>準備中...</button>
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
+    <!-- テキストチャットエリア -->
     <div class="chat-section">
       <div class="chat-title">💬 テキストチャット</div>
       <div class="chat-logs" id="chat-logs">
@@ -179,6 +181,7 @@
     </div>
   </div>
 
+  <!-- グループ追加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <h3>グループの作成・参加</h3>
@@ -195,6 +198,7 @@
     </div>
   </div>
 
+  <!-- ヘルプモーダル -->
   <div class="modal-overlay" id="help-modal">
     <div class="modal-box">
       <h3>❓ よくある質問とヘルプ</h3>
@@ -205,16 +209,6 @@
       <div class="faq-item">
         <strong>Q. チャット機能の使い方</strong>
         <p>A. 画面下の入力欄からメッセージを送信すると、同じグループや1対1の接続相手にリアルタイムで届きます。</p>
-      </div>
-      <div class="test-server-box">
-        <h4>🧪 テストサーバー情報</h4>
-        <p style="font-size:11px; margin:0;">動作確認用のグループです。</p>
-        <ul>
-          <li>グループ名: <strong>テストルーム</strong></li>
-          <li>グループID: <strong>test-room</strong></li>
-          <li>パスワード: <strong>0000</strong></li>
-        </ul>
-        <button class="btn-action" style="padding: 8px; font-size: 12px;" onclick="addTestGroup()">テストルームをタブに追加して参加</button>
       </div>
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="closeHelp()">閉じる</button>
@@ -228,7 +222,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
-    const APP_SECRET = 'naisen-app-v4-';
+    const APP_SECRET = 'naisen-app-v5-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -237,14 +231,17 @@
     let currentGroupId = null;
     let currentGroupTopic = null;
     let activeCalls = {};
-    let activeDataConns = {}; // 1対1チャット用のデータコネクション
+    let activeDataConns = {};
 
     let localStream = null;
     let localAudioTrack = null;
     let isLocked = false;
     let isNoiseCanceling = true;
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v4')) || [];
+    // ★ ブロックするNGワードのリスト（必要に応じて単語を追加・変更してください）
+    const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
+
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v5')) || [];
 
     const tabsWrapper = document.getElementById('tabs-wrapper');
     const myIdEl = document.getElementById('my-id');
@@ -261,6 +258,12 @@
     const chatLogs = document.getElementById('chat-logs');
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send-btn');
+
+    // ★ NGワードが含まれているかチェックする関数
+    function containsNGWord(text) {
+      if (!text) return false;
+      return NG_WORDS.some(word => text.includes(word));
+    }
 
     // 1. 初期化
     async function init() {
@@ -288,7 +291,6 @@
       }
     }
 
-    // ノイズキャンセル切り替え
     ncBtn.addEventListener('click', async () => {
       if (!localAudioTrack) return;
       isNoiseCanceling = !isNoiseCanceling;
@@ -352,7 +354,6 @@
           switchToDirect();
         });
 
-        // MQTTメッセージ受信（グループ通話＆グループチャット用）
         mqttClient.on('message', (topic, message) => {
           if (currentMode !== 'group') return;
           const data = JSON.parse(message.toString());
@@ -366,13 +367,11 @@
         });
       });
 
-      // 1対1の電話着信
       peer.on('call', (call) => {
         call.answer(localStream);
         setupCall(call);
       });
 
-      // 1対1のデータ（チャット）着信
       peer.on('connection', (conn) => {
         setupDataConn(conn);
       });
@@ -422,10 +421,9 @@
       activeDataConns = {};
       audioContainer.innerHTML = '';
       currentGroupTopic = null;
-      chatLogs.innerHTML = ''; // 部屋移動時にログクリア
+      chatLogs.innerHTML = ''; 
     }
 
-    // --- モード切り替え ---
     function switchToDirect() {
       closeAllCalls();
       currentMode = 'direct';
@@ -479,10 +477,15 @@
       const text = chatInput.value.trim();
       if (!text) return;
 
+      // ★ NGワードチェック
+      if (containsNGWord(text)) {
+        alert('不適切な単語が含まれているため送信できません。');
+        return;
+      }
+
       const myShortId = myPeerId ? myPeerId.substring(0, 5) : '自分';
 
       if (currentMode === 'group' && currentGroupTopic) {
-        // グループへ送信 (MQTT)
         mqttClient.publish(currentGroupTopic, JSON.stringify({
           type: 'chat',
           senderId: myPeerId,
@@ -490,7 +493,6 @@
           text: text
         }));
       } else if (currentMode === 'direct') {
-        // 1対1相手へ送信 (PeerJS DataConnection)
         Object.values(activeDataConns).forEach(conn => {
           conn.send({ type: 'chat', senderName: myShortId, text: text });
         });
@@ -505,7 +507,7 @@
       msgEl.className = `chat-msg ${isMe ? 'me' : ''}`;
       msgEl.innerHTML = `<span class="sender">${sender}:</span>${escapeHtml(text)}`;
       chatLogs.appendChild(msgEl);
-      chatLogs.scrollTop = chatLogs.scrollHeight; // 最下部へスクロール
+      chatLogs.scrollTop = chatLogs.scrollHeight; 
     }
 
     function escapeHtml(str) {
@@ -536,12 +538,22 @@
 
       if (!name || !id || !pass) return alert('全項目を入力してください');
 
+      // ★ テストルームのブロック
+      if (id === 'test-room' || name === 'テストルーム') {
+        return alert('「テストルーム」という名前・IDは使用できません。');
+      }
+
+      // ★ グループ名やIDのNGワードチェック
+      if (containsNGWord(name) || containsNGWord(id)) {
+        return alert('グループ名やIDに不適切な単語が含まれています。');
+      }
+
       const newGroup = { id, name, pass };
       const index = customGroups.findIndex(g => g.id === id);
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v4', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v5', JSON.stringify(customGroups));
       closeGroupModal();
       joinGroup(newGroup);
     }
@@ -551,7 +563,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v4', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v5', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -559,16 +571,6 @@
 
     function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
     function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
-
-    function addTestGroup() {
-      const testGroup = { id: 'test-room', name: 'テストルーム', pass: '0000' };
-      if (!customGroups.some(g => g.id === testGroup.id)) {
-        customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v4', JSON.stringify(customGroups));
-      }
-      closeHelp();
-      joinGroup(testGroup);
-    }
 
     function updateStatus() {
       const count = Object.keys(activeCalls).length;
