@@ -69,7 +69,7 @@
       font-size: 14px; padding: 10px; margin: 4px 0; width: 100%;
       box-sizing: border-box; border-radius: 8px;
     }
-    input[type="text"], input[type="password"] { border: 1px solid #ccc; text-align: center; }
+    input[type="text"], input[type="password"] { border: 1px solid #ccc; text-align: left; }
     .btn-action { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
     .btn-action:active { opacity: 0.8; }
     .btn-action:disabled { background-color: #a0cfff; cursor: not-allowed; }
@@ -161,6 +161,11 @@
     .test-server-box { background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px; }
     .test-server-box h4 { margin: 0 0 8px 0; color: #007bff; font-size: 14px; }
     .test-server-box ul { margin: 8px 0; padding-left: 20px; font-size: 13px; color: #444; }
+    
+    .checkbox-label {
+      display: flex; align-items: center; gap: 8px; margin-top: 16px; cursor: pointer; font-size: 13px; font-weight: bold; color: #d9534f;
+    }
+    .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -176,7 +181,7 @@
 
   <div class="card">
     <div class="section-title">あなたの内線ID:</div>
-    <div class="id-box" id="my-id">発行中...</div>
+    <div class="id-box" id="my-id" style="text-align: center;">発行中...</div>
 
     <div class="section-title">あなたの名前 (チャット用):</div>
     <input type="text" id="my-name-input" placeholder="名前を入力 (例: 田中)" style="margin-bottom: 10px;">
@@ -213,7 +218,7 @@
     </div>
   </div>
 
-  <!-- 【追加】設定モーダル -->
+  <!-- 設定モーダル -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <h3>⚙️ 設定</h3>
@@ -245,10 +250,20 @@
       <h3>グループの作成・参加</h3>
       <label>表示名（画面上のタブ名）</label>
       <input type="text" id="modal-group-name" placeholder="例: 営業チーム">
+      
       <label>グループID（半角英数字）</label>
       <input type="text" id="modal-group-id" placeholder="例: room-101">
+      
       <label>パスワード</label>
       <input type="password" id="modal-group-pass" placeholder="パスワードを入力">
+      
+      <!-- 【追加】リーダー用：名前必須設定 -->
+      <label class="checkbox-label">
+        <input type="checkbox" id="modal-group-require-name">
+        参加者に「名前設定」を必須にする
+      </label>
+      <p style="font-size:10px; color:#777; margin:2px 0 0 24px;">※チェックを入れると、名前未設定の人は入室できなくなります。</p>
+
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
         <button class="btn-action" onclick="saveNewGroup()">追加して参加</button>
@@ -265,8 +280,8 @@
         <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。</p>
       </div>
       <div class="faq-item">
-        <strong>Q. 声が小さい / うるさい</strong>
-        <p>A. 右上の「⚙️ 設定」から、自分のマイク音量を 0%〜200% の間で調整できます。</p>
+        <strong>Q. グループに入れない（弾かれる）</strong>
+        <p>A. グループのリーダーが「名前設定必須」にしている可能性があります。画面中央の「あなたの名前」欄に入力してから再度お試しください。</p>
       </div>
 
       <div class="test-server-box">
@@ -292,7 +307,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
-    const APP_SECRET = 'naisen-app-v6-';
+    const APP_SECRET = 'naisen-app-v7-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -305,20 +320,25 @@
 
     let rawStream = null;
     let rawAudioTrack = null;
-    
-    // 【追加】音量調整用
     let audioCtx = null;
     let gainNode = null;
-    let processedStream = null; // PeerJSで送信するストリーム
+    let processedStream = null;
 
     let isLocked = false;
-    
-    // 保存された設定の読み込み
-    let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false'; // デフォルトtrue
+    let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v6')) || [];
+    
+    // バージョンアップに伴うデータ移行処理
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v7')) || [];
+    if (customGroups.length === 0) {
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v6'));
+      if (oldGroups && oldGroups.length > 0) {
+        customGroups = oldGroups.map(g => ({ ...g, requireName: false }));
+        localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
+      }
+    }
 
     const tabsWrapper = document.getElementById('tabs-wrapper');
     const myIdEl = document.getElementById('my-id');
@@ -336,13 +356,11 @@
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send-btn');
 
-    // 設定系UI
     const ncCheckbox = document.getElementById('nc-checkbox');
     const ncStatusText = document.getElementById('nc-status-text');
     const micVolumeSlider = document.getElementById('mic-volume-slider');
     const micVolumeDisplay = document.getElementById('mic-volume-display');
 
-    // 名前保存
     myNameInput.value = localStorage.getItem('my_naisen_username') || '';
     myNameInput.addEventListener('input', () => {
       localStorage.setItem('my_naisen_username', myNameInput.value.trim());
@@ -365,11 +383,8 @@
       }
     }
 
-    // ブラウザの AudioContext を確実にするための処置
     function resumeAudioContext() {
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     // 1. 初期化
@@ -377,7 +392,6 @@
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
-        // UIに初期値を反映
         ncCheckbox.checked = isNoiseCanceling;
         ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
         micVolumeSlider.value = savedMicVolume;
@@ -388,25 +402,21 @@
             echoCancellation: isNoiseCanceling,
             noiseSuppression: isNoiseCanceling,
             autoGainControl: isNoiseCanceling
-          },
-          video: false
+          }, video: false
         };
 
         rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
         rawAudioTrack = rawStream.getAudioTracks()[0];
-        rawAudioTrack.enabled = false; // 最初はミュート
+        rawAudioTrack.enabled = false;
 
-        // 【追加】AudioContextを使ってマイク音量を調整できる仕組みを構築
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const source = audioCtx.createMediaStreamSource(rawStream);
         gainNode = audioCtx.createGain();
-        gainNode.gain.value = savedMicVolume; // 音量を設定
+        gainNode.gain.value = savedMicVolume;
 
         const destination = audioCtx.createMediaStreamDestination();
         source.connect(gainNode);
         gainNode.connect(destination);
-
-        // peer.call や peer.answer ではこの処理されたストリームを渡す
         processedStream = destination.stream;
 
         renderTabs();
@@ -418,19 +428,13 @@
     }
 
     // --- 設定操作 ---
-    function openSettings() {
-      document.getElementById('settings-modal').style.display = 'flex';
-    }
-    function closeSettings() {
-      document.getElementById('settings-modal').style.display = 'none';
-    }
+    function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
+    function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
 
-    // ノイキャン切り替え
     ncCheckbox.addEventListener('change', async (e) => {
       isNoiseCanceling = e.target.checked;
       ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
       localStorage.setItem('my_naisen_nc', isNoiseCanceling);
-
       if (rawAudioTrack) {
         try {
           await rawAudioTrack.applyConstraints({
@@ -442,12 +446,10 @@
       }
     });
 
-    // マイク音量スライダー操作
     micVolumeSlider.addEventListener('input', (e) => {
       resumeAudioContext();
       const val = parseFloat(e.target.value);
       if (gainNode) gainNode.gain.value = val;
-      
       savedMicVolume = val;
       localStorage.setItem('my_naisen_mic_vol', val);
       micVolumeDisplay.innerText = Math.round(val * 100) + '%';
@@ -503,9 +505,21 @@
           if (currentMode !== 'group') return;
           const data = JSON.parse(message.toString());
           
+          const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
+          const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
+
           if (data.type === 'join' && data.peerId !== myPeerId) {
+            
+            // ★【セキュリティ】相手が名前なしで、このグループが「名前必須」なら通信を拒否
+            if (isNameRequired && !data.senderName) {
+              console.log('名前未設定のユーザーの参加をブロックしました');
+              return;
+            }
+
             resumeAudioContext();
-            const call = peer.call(data.peerId, processedStream); // 音量処理済みの音を送る
+            const senderName = myNameInput.value.trim();
+            // コールの際に自分の名前情報をメタデータとして送る
+            const call = peer.call(data.peerId, processedStream, { metadata: { senderName } });
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
             if (currentGroupId === 'test-room') return;
@@ -516,6 +530,20 @@
 
       peer.on('call', (call) => {
         resumeAudioContext();
+
+        // ★【セキュリティ】着信時にも相手の名前をチェック
+        const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
+        const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
+        
+        if (currentMode === 'group' && isNameRequired) {
+          const callerName = call.metadata ? call.metadata.senderName : '';
+          if (!callerName) {
+            console.log('名前未設定のユーザーからの着信をブロックしました');
+            call.close();
+            return;
+          }
+        }
+
         call.answer(processedStream);
         setupCall(call);
       });
@@ -587,9 +615,11 @@
       resumeAudioContext();
       const targetId = peerIdInput.value.trim();
       if (!targetId) return alert('相手の内線IDを入力してください');
+      
+      const senderName = myNameInput.value.trim();
       statusEl.innerText = '発信中...';
       
-      const call = peer.call(targetId, processedStream);
+      const call = peer.call(targetId, processedStream, { metadata: { senderName } });
       setupCall(call);
 
       const conn = peer.connect(targetId);
@@ -597,6 +627,14 @@
     });
 
     function joinGroup(groupObj) {
+      // ★ グループ入室前の名前必須チェック
+      const myName = myNameInput.value.trim();
+      if (groupObj.requireName && !myName) {
+        alert(`【${groupObj.name}】はリーダーの設定により、名前の入力が必須になっています。\n「あなたの名前 (チャット用)」を入力してから再度参加してください。`);
+        switchToDirect();
+        return;
+      }
+
       resumeAudioContext();
       closeAllCalls();
       currentMode = 'group';
@@ -610,7 +648,12 @@
       currentGroupTopic = `${APP_SECRET}${groupObj.id}-${groupObj.pass}`;
 
       mqttClient.subscribe(currentGroupTopic);
-      mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'join', peerId: myPeerId }));
+      // MQTTで入室を知らせる際、自分の名前も送信する
+      mqttClient.publish(currentGroupTopic, JSON.stringify({ 
+        type: 'join', 
+        peerId: myPeerId,
+        senderName: myName
+      }));
 
       statusEl.innerText = `【${groupObj.name}】に参加中`;
       talkBtn.disabled = false;
@@ -671,6 +714,7 @@
       document.getElementById('modal-group-name').value = '';
       document.getElementById('modal-group-id').value = '';
       document.getElementById('modal-group-pass').value = '';
+      document.getElementById('modal-group-require-name').checked = false; // デフォルトはOFF
       document.getElementById('group-modal').style.display = 'flex';
     }
     function closeGroupModal() { document.getElementById('group-modal').style.display = 'none'; }
@@ -679,16 +723,17 @@
       const name = document.getElementById('modal-group-name').value.trim();
       const id = document.getElementById('modal-group-id').value.trim();
       const pass = document.getElementById('modal-group-pass').value.trim();
+      const requireName = document.getElementById('modal-group-require-name').checked;
 
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      const newGroup = { id, name, pass };
+      const newGroup = { id, name, pass, requireName };
       const index = customGroups.findIndex(g => g.id === id);
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v6', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
       closeGroupModal();
       joinGroup(newGroup);
     }
@@ -698,7 +743,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v6', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -708,10 +753,10 @@
     function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
 
     function addTestGroup() {
-      const testGroup = { id: 'test-room', name: 'テストルーム', pass: '0000' };
+      const testGroup = { id: 'test-room', name: 'テストルーム', pass: '0000', requireName: false };
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v6', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v7', JSON.stringify(customGroups));
       }
       closeHelp();
       joinGroup(testGroup);
@@ -732,9 +777,9 @@
     // --- マイク操作（ON/OFF） ---
     const startTalking = (e) => {
       e.preventDefault();
-      resumeAudioContext(); // 音声再生コンテキストのロック解除
+      resumeAudioContext(); 
       if (rawAudioTrack && !talkBtn.disabled && !isLocked) {
-        rawAudioTrack.enabled = true; // マイクへの入力をONにする
+        rawAudioTrack.enabled = true; 
         talkBtn.classList.add('active');
         talkBtn.innerText = '発言中!!';
       }
