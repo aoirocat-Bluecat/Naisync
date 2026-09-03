@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>多機能内線トランシーバー v1.2.0</title>
+  <title>Naisync - 内線トランシーバー v1.3.0</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -58,6 +58,12 @@
       background: white; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       width: 100%; max-width: 440px; text-align: center; box-sizing: border-box;
       flex-grow: 1; border-radius: 0 0 16px 16px;
+    }
+
+    /* アプリ名表示 */
+    .app-title {
+      font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 16px;
+      letter-spacing: 1px;
     }
 
     .id-box {
@@ -179,9 +185,6 @@
     .faq-item { margin-bottom: 12px; font-size: 13px; }
     .faq-item strong { display: block; color: #333; margin-bottom: 4px; }
     .faq-item p { margin: 0; color: #666; line-height: 1.5; }
-    .test-server-box { background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px; }
-    .test-server-box h4 { margin: 0 0 8px 0; color: #007bff; font-size: 14px; }
-    .test-server-box ul { margin: 8px 0; padding-left: 20px; font-size: 13px; color: #444; }
     
     .checkbox-label {
       display: flex; align-items: center; gap: 8px; margin-top: 16px; cursor: pointer; font-size: 13px; font-weight: bold; color: #d9534f;
@@ -190,31 +193,16 @@
 
     /* 通知トーストのスタイル */
     #notification-container {
-      position: fixed;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      pointer-events: none;
-      width: 90%;
-      max-width: 400px;
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none; width: 90%; max-width: 400px;
     }
     .toast {
-      background: rgba(40, 40, 40, 0.95);
-      color: white;
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: bold;
+      background: rgba(40, 40, 40, 0.95); color: white; padding: 12px 16px;
+      border-radius: 8px; font-size: 13px; font-weight: bold;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       animation: toastFadeIn 0.3s ease-out, toastFadeOut 0.4s ease-in 3.5s forwards;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      word-break: break-all;
+      display: flex; align-items: center; gap: 8px; word-break: break-all;
     }
     @keyframes toastFadeIn {
       from { transform: translateY(-20px); opacity: 0; }
@@ -241,6 +229,9 @@
   </div>
 
   <div class="card">
+    <!-- 【追加】アプリのタイトル表示 -->
+    <div class="app-title">Naisync</div>
+
     <div class="section-title">あなたの内線ID:</div>
     <div class="id-box" id="my-id" style="text-align: center; font-size: 16px;">発行中...</div>
 
@@ -292,7 +283,6 @@
     <div class="modal-box">
       <h3>⚙️ 設定</h3>
 
-      <!-- 【v1.2.0】ID変更UIを追加 -->
       <label>🆔 自分の内線ID（変更可能）</label>
       <div style="display: flex; gap: 8px; margin-top: 4px;">
         <input type="text" id="setting-my-id" placeholder="半角英数字">
@@ -346,7 +336,6 @@
       <label>パスワード</label>
       <input type="password" id="modal-group-pass" placeholder="パスワードを入力">
       
-      <!-- リーダー用：名前必須設定 -->
       <label class="checkbox-label">
         <input type="checkbox" id="modal-group-require-name">
         参加者に「名前設定」を必須にする
@@ -363,22 +352,22 @@
   <!-- ヘルプモーダル -->
   <div class="modal-overlay" id="help-modal">
     <div class="modal-box">
-      <h3>❓ よくある質問とヘルプ</h3>
+      <h3>❓ Naisync よくある質問</h3>
+      <div class="faq-item">
+        <strong>Q. 誰とも繋がらない・音が聞こえない</strong>
+        <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。</p>
+      </div>
       <div class="faq-item">
         <strong>Q. 内線IDって変えられるの？</strong>
         <p>A. 右上の「⚙️ 設定」から、自分の好きなID（例: tanaka-123）に変更して固定できます。</p>
-      </div>
-      <div class="faq-item">
-        <strong>Q. 特定の人の声がうるさい・小さい</strong>
-        <p>A. 通話が繋がるとメイン画面に表示される「参加者の個別音量」から、その人だけの音量を調整できます。</p>
       </div>
       <div class="faq-item">
         <strong>Q. グループに入れない（弾かれる）</strong>
         <p>A. リーダーが「名前設定必須」にしている可能性があります。「あなたの名前」欄に入力してからお試しください。</p>
       </div>
 
-      <div class="test-server-box">
-        <h4>🧪 テストサーバー情報</h4>
+      <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;">
+        <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 テストサーバー情報</h4>
         <p style="font-size:11px; margin:0; color:#d9534f;">※テストルーム内ではチャット機能は使用できません。</p>
         <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('normal')">通常テストルームを追加 (誰でも可)</button>
         <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('namereq')">名前必須ルームを追加 (要名前)</button>
@@ -396,7 +385,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
-    const APP_SECRET = 'naisen-app-v12-';
+    const APP_SECRET = 'naisen-app-v13-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -417,7 +406,6 @@
 
     let isLocked = false;
     
-    // 【v1.2.0】固定IDの読み込み
     let savedCustomId = localStorage.getItem('my_naisen_custom_id');
     
     let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
@@ -427,13 +415,12 @@
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    // データ移行
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v12')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v13')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v11'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v12'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v13', JSON.stringify(customGroups));
       }
     }
 
@@ -470,7 +457,6 @@
       localStorage.setItem('my_naisen_username', myNameInput.value.trim());
     });
 
-    // 通知表示関数
     function showNotification(message) {
       if (!isNotificationOn) return; 
       const container = document.getElementById('notification-container');
@@ -550,7 +536,6 @@
     function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
     function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
 
-    // 【v1.2.0】固定IDの変更機能
     function changeMyId() {
       const newId = settingMyIdInput.value.trim();
       if (!newId) return alert('新しいIDを入力してください。');
@@ -641,7 +626,6 @@
 
     // 3. ネットワーク接続
     function startNetworking() {
-      // 【v1.2.0】保存されたIDがあればそれを使用、なければランダム
       if (savedCustomId) {
         peer = new Peer(savedCustomId);
       } else {
@@ -652,7 +636,6 @@
         myPeerId = id;
         myIdEl.innerText = id;
         
-        // 生成されたIDを保存し、設定画面の入力欄にも反映する
         localStorage.setItem('my_naisen_custom_id', id);
         settingMyIdInput.value = id;
 
@@ -684,7 +667,6 @@
         });
       });
 
-      // 【v1.2.0】ID重複エラーのハンドリング
       peer.on('error', (err) => {
         if (err.type === 'unavailable-id') {
           alert(`設定した内線ID「${savedCustomId}」は現在他の人が使用中です。\nランダムなIDで再生成します。`);
@@ -977,7 +959,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v13', JSON.stringify(customGroups));
       closeGroupModal();
       joinGroup(newGroup);
     }
@@ -987,7 +969,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v13', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1006,7 +988,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v13', JSON.stringify(customGroups));
       }
       closeHelp();
       joinGroup(testGroup);
