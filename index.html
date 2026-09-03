@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.8.1</title>
+  <title>Naisync - 内線トランシーバー v1.8.2</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -193,7 +193,6 @@
 </head>
 <body>
 
-  <!-- ログイン・新規登録画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
@@ -374,13 +373,13 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-    // ▼ Supabase URL設定済み
+    // ▼ Supabase URL設定済み (末尾の /rest/v1/ は除外)
     const SUPABASE_URL = 'https://nzvyhrcdjcbckzyiztup.supabase.co';
     const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // ★ここにご自身の anon public キーを貼り付けてください
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const APP_SECRET = 'naisen-app-v181-';
+    const APP_SECRET = 'naisen-app-v182-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -410,12 +409,12 @@
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v181')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v182')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v18'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v181'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
       }
     }
 
@@ -1024,7 +1023,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1034,7 +1033,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1053,7 +1052,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
