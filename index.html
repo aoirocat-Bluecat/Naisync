@@ -3,20 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.7.0</title>
+  <title>Naisync - 内線トランシーバー v1.8.1</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
       min-height: 100vh; font-family: sans-serif; background-color: #f4f6f9; margin: 0;
     }
     
-    /* ヘッダー全体 */
     .header-container {
       display: flex; width: 100%; max-width: 440px; background: #e0e0e0;
       align-items: flex-end; justify-content: space-between;
     }
 
-    /* タブ切り替えエリア */
     .tabs-wrapper {
       display: flex; align-items: center; overflow-x: auto;
       padding: 8px 0 0 8px; box-sizing: border-box;
@@ -42,7 +40,6 @@
     }
     .tab .btn-del:hover { background: #ff4444; color: white; }
 
-    /* アイコンボタン群 */
     .header-btns {
       display: flex; align-items: center; padding-bottom: 6px; padding-right: 4px;
     }
@@ -82,7 +79,6 @@
     .btn-outline { background-color: white; color: #007bff; border: 1px solid #007bff; }
     .btn-danger { background-color: #dc3545; }
 
-    /* マイク操作エリア */
     .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 16px; }
     
     #talk-btn {
@@ -98,7 +94,6 @@
     }
     #toggle-btn.locked { background-color: #ff4444; border-color: #ff4444; color: white; }
 
-    /* 参加者の個別音量エリア */
     .participants-section {
       margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left;
     }
@@ -114,7 +109,6 @@
     .participant-item .p-ctrl { display: flex; align-items: center; gap: 6px; }
     .participant-item input[type=range] { width: 90px; margin: 0; }
 
-    /* チャットエリアUI */
     .chat-section { margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left; }
     .chat-title { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 6px; }
     .chat-logs {
@@ -134,7 +128,6 @@
     #member-count { font-size: 11px; color: #888; margin-top: 2px; }
     .section-title { font-size: 11px; color: #777; text-align: left; margin-top: 4px; }
 
-    /* モーダル */
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
@@ -148,7 +141,6 @@
     .modal-box label { font-size: 12px; color: #555; font-weight: bold; margin-top: 12px; display: block; }
     .modal-buttons { display: flex; gap: 8px; margin-top: 24px; }
 
-    /* 設定用トグルスイッチ */
     .toggle-switch { display: inline-flex; align-items: center; cursor: pointer; margin-top: 8px; }
     .toggle-switch input { display: none; }
     .toggle-slider {
@@ -162,7 +154,6 @@
     .toggle-switch input:checked + .toggle-slider { background-color: #28a745; }
     .toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
 
-    /* 設定用スライダー */
     input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-top: 8px; }
     input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e0e0e0; border-radius: 3px; }
     input[type=range]::-webkit-slider-thumb {
@@ -178,7 +169,6 @@
     }
     .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
 
-    /* 通知トースト */
     #notification-container {
       position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
       z-index: 9999; display: flex; flex-direction: column; gap: 10px;
@@ -194,7 +184,6 @@
     @keyframes toastFadeIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
 
-    /* 【v1.7.0】ログイン・登録画面用オーバレイ */
     #auth-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #f4f6f9; display: flex; flex-direction: column;
@@ -204,38 +193,34 @@
 </head>
 <body>
 
-  <!-- 【v1.7.0】ログイン・新規登録画面 -->
+  <!-- ログイン・新規登録画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
       
-      <!-- ログイン用パネル -->
       <div id="login-panel">
         <h3 style="margin-top:0; color: #333;">ログイン</h3>
         <input type="text" id="login-id" placeholder="内線ID (半角英数字)">
         <input type="password" id="login-pass" placeholder="パスワード">
-        <button class="btn-action" id="login-btn" onclick="doLogin()" style="margin-top: 12px;">ログイン</button>
-        <p style="font-size:12px; margin-top:16px;">初めての方は <a href="#" onclick="toggleAuth('register')" style="color:#007bff; font-weight:bold; text-decoration: none;">新規登録</a></p>
+        <button class="btn-action" id="login-btn" onclick="window.doLogin()" style="margin-top: 12px;">ログイン</button>
+        <p style="font-size:12px; margin-top:16px;">初めての方は <a href="#" onclick="window.toggleAuth('register')" style="color:#007bff; font-weight:bold; text-decoration: none;">新規登録</a></p>
       </div>
 
-      <!-- 新規登録用パネル -->
       <div id="register-panel" style="display: none;">
         <h3 style="margin-top:0; color: #333;">新規アカウント作成</h3>
         <input type="text" id="reg-id" placeholder="希望する内線ID (半角英数字)">
         <input type="text" id="reg-name" placeholder="あなたの名前 (表示名)">
         <input type="password" id="reg-pass" placeholder="パスワードを設定">
-        <button class="btn-action" id="reg-btn" onclick="doRegister()" style="margin-top: 12px;">登録して始める</button>
-        <p style="font-size:12px; margin-top:16px;">すでにIDをお持ちの方は <a href="#" onclick="toggleAuth('login')" style="color:#007bff; font-weight:bold; text-decoration: none;">ログイン</a></p>
+        <button class="btn-action" id="reg-btn" onclick="window.doRegister()" style="margin-top: 12px;">登録して始める</button>
+        <p style="font-size:12px; margin-top:16px;">すでにIDをお持ちの方は <a href="#" onclick="window.toggleAuth('login')" style="color:#007bff; font-weight:bold; text-decoration: none;">ログイン</a></p>
       </div>
       
       <div id="auth-error" style="color: #dc3545; font-size: 13px; margin-top: 12px; font-weight: bold; min-height: 20px;"></div>
-      <p style="font-size: 10px; color: #999; margin-top: 20px;">※簡易サーバーを利用しているため、長期間アクセスがないとデータが消える場合があります。その際は再度「新規登録」をお願いします。</p>
     </div>
   </div>
 
   <div id="notification-container"></div>
 
-  <!-- ここからメインアプリ (認証後に表示) -->
   <div class="header-container" id="main-header" style="display: none;">
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <div class="header-btns">
@@ -253,32 +238,27 @@
       <div><span style="font-size:11px; color:#666;">ID:</span> <span id="my-id" style="font-size: 14px; font-weight:bold;">-</span></div>
     </div>
 
-    <!-- 1対1通話エリア -->
     <div id="direct-panel" style="display: none;">
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
     </div>
 
-    <!-- グループ通話エリア -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
     </div>
 
     <div id="status">初期化中...</div>
 
-    <!-- マイク操作ボタン -->
     <div class="controls">
       <button id="talk-btn" disabled>準備中...</button>
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
-    <!-- 参加者の個別音量エリア -->
     <div class="participants-section" id="participants-section" style="display: none;">
       <div class="chat-title">👥 参加者の個別音量</div>
       <div id="participants-list"></div>
     </div>
 
-    <!-- テキストチャットエリア -->
     <div class="chat-section">
       <div class="chat-title">💬 テキストチャット</div>
       <div class="chat-logs" id="chat-logs">
@@ -301,9 +281,8 @@
         <input type="text" id="setting-my-name" placeholder="名前を入力 (例: 田中)" style="flex-grow: 1; min-width: 120px;">
         <button class="btn-action" style="width: auto; padding: 10px 14px; margin:0;" onclick="saveMyName()">保存</button>
       </div>
-      <p style="font-size:11px; color:#666; margin:4px 0 20px 0;">※変更した名前はログイン情報にも自動で反映されます。</p>
 
-      <label>🎤 自分のマイク音量（相手への声の大きさ）</label>
+      <label style="margin-top: 20px;">🎤 自分のマイク音量（相手への声の大きさ）</label>
       <div style="display: flex; align-items: center; gap: 10px;">
         <input type="range" id="mic-volume-slider" min="0" max="2" step="0.1" value="1">
         <span id="mic-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
@@ -329,10 +308,9 @@
         <span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
       </label>
 
-      <!-- 【v1.7.0】ログアウトボタンの追加 -->
       <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;">
       <label>🚪 アカウント操作</label>
-      <button class="btn-action btn-danger" style="margin-top: 8px;" onclick="logout()">ログアウト</button>
+      <button class="btn-action btn-danger" style="margin-top: 8px;" onclick="window.logout()">ログアウト</button>
 
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="closeSettings()">閉じる</button>
@@ -373,11 +351,13 @@
       </div>
       <div class="faq-item">
         <strong>Q. ログアウトするとどうなるの？</strong>
-        <p>A. 現在のIDから離脱し、ログイン画面に戻ります。作成したグループの履歴はそのまま残ります。</p>
+        <p>A. 現在のIDから離脱し、ログイン画面に戻ります。</p>
       </div>
-      <div class="faq-item">
-        <strong>Q. アカウントのデータが消えた！</strong>
-        <p>A. 簡易データベースを使用しているため、数ヶ月ログインしなかったりサーバーのメンテナンスが入ると、アカウントデータが消えることがあります。その場合はもう一度「新規登録」から同じIDとパスワードで作成してください。</p>
+
+      <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;">
+        <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 テストサーバー情報</h4>
+        <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('normal')">通常テストルームを追加 (誰でも可)</button>
+        <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('namereq')">名前必須ルームを追加 (要名前)</button>
       </div>
 
       <div class="modal-buttons">
@@ -391,15 +371,16 @@
   <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
-  <script>
-    const APP_SECRET = 'naisen-app-v17-';
-    const AUTH_PREFIX = 'naisync-auth-v17-'; // アカウント管理用トピックプレフィックス
-    
-    let authClient = null;
-    let savedAuthId = null;
-    let savedAuthHash = null;
-    let savedAuthName = null;
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
+    // ▼ Supabase URL設定済み
+    const SUPABASE_URL = 'https://nzvyhrcdjcbckzyiztup.supabase.co';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // ★ここにご自身の anon public キーを貼り付けてください
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const APP_SECRET = 'naisen-app-v181-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -419,6 +400,9 @@
 
     let isLocked = false;
     
+    let currentUser = null;
+    let savedMyName = '';
+    
     let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
@@ -426,16 +410,15 @@
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v17')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v181')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v16'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v18'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v17', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
       }
     }
 
-    // UI要素
     const tabsWrapper = document.getElementById('tabs-wrapper');
     const myIdEl = document.getElementById('my-id');
     const displayMyName = document.getElementById('display-my-name');
@@ -463,20 +446,9 @@
     const spkVolumeDisplay = document.getElementById('spk-volume-display');
     const notifCheckbox = document.getElementById('notif-checkbox');
     const notifStatusText = document.getElementById('notif-status-text');
-    
     const authError = document.getElementById('auth-error');
 
-    // --- 【v1.7.0】認証機能 ---
-    
-    // パスワードを暗号化（ハッシュ化）して安全に保存する処理
-    async function hashPassword(password) {
-      const msgBuffer = new TextEncoder().encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function toggleAuth(mode) {
+    window.toggleAuth = function(mode) {
       document.getElementById('login-panel').style.display = mode === 'login' ? 'block' : 'none';
       document.getElementById('register-panel').style.display = mode === 'register' ? 'block' : 'none';
       authError.innerText = '';
@@ -488,27 +460,8 @@
       document.getElementById('reg-btn').disabled = false;
     }
 
-    // 画面読み込み時に、過去にログインした記録があるかチェック
-    window.onload = () => {
-      authClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-      authClient.on('connect', () => {
-        savedAuthId = localStorage.getItem('my_naisen_auth_id');
-        savedAuthHash = localStorage.getItem('my_naisen_auth_hash');
-        savedAuthName = localStorage.getItem('my_naisen_auth_name');
-        
-        if (savedAuthId && savedAuthHash) {
-          // すでにログイン済みならそのままメイン画面へ
-          startMainApp();
-        } else {
-          // 未ログインならログイン画面を表示
-          document.getElementById('auth-overlay').style.display = 'flex';
-        }
-      });
-    };
-
-    // 新規登録
-    async function doRegister() {
-      const id = document.getElementById('reg-id').value.trim();
+    window.doRegister = async function() {
+      const id = document.getElementById('reg-id').value.trim().toLowerCase();
       const name = document.getElementById('reg-name').value.trim();
       const pass = document.getElementById('reg-pass').value.trim();
       
@@ -517,122 +470,71 @@
       if (containsNGWord(id) || containsNGWord(name)) return showAuthError('不適切な単語が含まれています。');
 
       document.getElementById('reg-btn').disabled = true;
-      authError.innerText = '登録確認中...';
+      authError.innerText = '登録中...';
 
-      const topic = AUTH_PREFIX + id;
-      const hash = await hashPassword(pass);
-      let isHandled = false;
-      
-      // すでに誰かがこのIDを登録していないかサーバー（MQTT）を確認
-      authClient.subscribe(topic);
-      const onMessage = (t, msg) => {
-        if (t === topic && !isHandled) {
-          isHandled = true;
-          authClient.unsubscribe(topic);
-          authClient.removeListener('message', onMessage);
-          showAuthError('このIDはすでに他の人に使われています。別のIDにしてください。');
-        }
-      };
-      authClient.on('message', onMessage);
+      const email = `${id}@naisy.nc`;
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: pass,
+        options: { data: { display_name: name, custom_id: id } }
+      });
 
-      // 1秒待って誰も使っていなければ自分のものとして登録
-      setTimeout(() => {
-        if (!isHandled) {
-          isHandled = true;
-          authClient.unsubscribe(topic);
-          authClient.removeListener('message', onMessage);
-          
-          // サーバーにパスワードのハッシュと名前を保存
-          authClient.publish(topic, JSON.stringify({ hash: hash, name: name }), { retain: true });
-          
-          // 自分のブラウザにも保存
-          localStorage.setItem('my_naisen_auth_id', id);
-          localStorage.setItem('my_naisen_auth_hash', hash);
-          localStorage.setItem('my_naisen_auth_name', name);
-          
-          savedAuthId = id;
-          savedAuthHash = hash;
-          savedAuthName = name;
-          
-          alert('アカウントを作成しました！');
-          startMainApp();
-        }
-      }, 1000);
+      if (error) {
+        showAuthError('登録失敗: ' + error.message);
+      } else {
+        alert('登録成功！ログインします。');
+        await window.executeLogin(id, pass);
+      }
     }
 
-    // ログイン
-    async function doLogin() {
-      const id = document.getElementById('login-id').value.trim();
+    window.doLogin = async function() {
+      const id = document.getElementById('login-id').value.trim().toLowerCase();
       const pass = document.getElementById('login-pass').value.trim();
       
       if (!id || !pass) return showAuthError('IDとパスワードを入力してください。');
-
-      document.getElementById('login-btn').disabled = true;
-      authError.innerText = '認証中...';
-
-      const topic = AUTH_PREFIX + id;
-      const hash = await hashPassword(pass);
-      let isHandled = false;
-
-      // サーバーから登録情報を取得
-      authClient.subscribe(topic);
-      const onMessage = (t, msg) => {
-        if (t === topic && !isHandled) {
-          isHandled = true;
-          authClient.unsubscribe(topic);
-          authClient.removeListener('message', onMessage);
-          
-          const data = JSON.parse(msg.toString());
-          if (data.hash === hash) {
-            // パスワード一致！ログイン成功
-            localStorage.setItem('my_naisen_auth_id', id);
-            localStorage.setItem('my_naisen_auth_hash', hash);
-            localStorage.setItem('my_naisen_auth_name', data.name);
-            
-            savedAuthId = id;
-            savedAuthHash = hash;
-            savedAuthName = data.name;
-            
-            startMainApp();
-          } else {
-            showAuthError('パスワードが間違っています。');
-          }
-        }
-      };
-      authClient.on('message', onMessage);
-
-      // 1.5秒待って情報が来なければ、アカウントが存在しないか消えている
-      setTimeout(() => {
-        if (!isHandled) {
-          isHandled = true;
-          authClient.unsubscribe(topic);
-          authClient.removeListener('message', onMessage);
-          showAuthError('このIDのアカウントは見つかりませんでした。');
-        }
-      }, 1500);
+      await window.executeLogin(id, pass);
     }
 
-    function logout() {
-      if(!confirm('ログアウトしますか？\n次回使うときは再度IDとパスワードの入力が必要になります。')) return;
-      localStorage.removeItem('my_naisen_auth_id');
-      localStorage.removeItem('my_naisen_auth_hash');
-      localStorage.removeItem('my_naisen_auth_name');
+    window.executeLogin = async function(id, pass) {
+      document.getElementById('login-btn').disabled = true;
+      const email = `${id}@naisy.nc`;
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+
+      if (error) {
+        showAuthError('ログイン失敗: IDまたはパスワードが違います。');
+      } else {
+        currentUser = data.user;
+        savedMyName = currentUser.user_metadata?.display_name || id;
+        startMainApp();
+      }
+    }
+
+    window.logout = async function() {
+      if (!confirm('ログアウトしますか？')) return;
+      await supabase.auth.signOut();
       location.reload();
     }
 
+    async function checkSession() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        savedMyName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+        startMainApp();
+      } else {
+        document.getElementById('auth-overlay').style.display = 'flex';
+      }
+    }
+    checkSession();
 
-    // --- メインアプリ起動処理 ---
     function startMainApp() {
-      // ログイン画面を隠してメイン画面を表示
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('main-header').style.display = 'flex';
       document.getElementById('main-card').style.display = 'block';
 
-      // 名前の反映
-      displayMyName.innerText = savedAuthName;
-      settingMyNameInput.value = savedAuthName;
+      displayMyName.innerText = savedMyName;
+      settingMyNameInput.value = savedMyName;
 
-      // マイクの起動と通信の開始
       initMicrophoneAndNetwork();
     }
 
@@ -644,6 +546,11 @@
       toast.innerText = message;
       container.appendChild(toast);
       setTimeout(() => { toast.remove(); }, 3900);
+    }
+
+    function containsNGWord(text) {
+      if (!text) return false;
+      return NG_WORDS.some(word => text.includes(word));
     }
 
     function updateChatUI() {
@@ -662,7 +569,6 @@
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // マイクの初期化とネットワークの開始
     async function initMicrophoneAndNetwork() {
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
@@ -706,23 +612,20 @@
       }
     }
 
-    // --- 設定操作 ---
-    function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
-    function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+    window.openSettings = function() { document.getElementById('settings-modal').style.display = 'flex'; }
+    window.closeSettings = function() { document.getElementById('settings-modal').style.display = 'none'; }
 
-    // 【v1.7.0】名前を保存してサーバーのデータも更新する
-    function saveMyName() {
+    window.saveMyName = async function() {
       const newName = settingMyNameInput.value.trim();
       if (!newName) return alert('名前を入力してください。');
       if (containsNGWord(newName)) return alert('名前に不適切な単語が含まれています。');
       
-      savedAuthName = newName;
-      localStorage.setItem('my_naisen_auth_name', newName);
+      savedMyName = newName;
       displayMyName.innerText = newName;
       
-      // サーバー上の名前も上書き更新
-      authClient.publish(AUTH_PREFIX + savedAuthId, JSON.stringify({ hash: savedAuthHash, name: newName }), { retain: true });
-      
+      await supabase.auth.updateUser({
+        data: { display_name: newName }
+      });
       alert('名前を保存しました！');
     }
 
@@ -768,7 +671,6 @@
       localStorage.setItem('my_naisen_notif', isNotificationOn);
     });
 
-    // 2. タブ描画
     function renderTabs() {
       tabsWrapper.innerHTML = '';
 
@@ -799,17 +701,15 @@
       const addBtn = document.createElement('button');
       addBtn.className = 'tab tab-add';
       addBtn.innerText = '＋ 作成';
-      addBtn.onclick = openGroupModal;
+      addBtn.onclick = window.openGroupModal;
       tabsWrapper.appendChild(addBtn);
     }
 
-    // 3. ネットワーク接続
     function startNetworking() {
-      // ログインしたIDでPeerJSに接続
-      peer = new Peer(savedAuthId);
+      const customId = currentUser.user_metadata?.custom_id || currentUser.email.split('@')[0];
+      peer = new Peer(customId);
 
       peer.on('open', (id) => {
-        sessionStorage.removeItem('my_naisen_id_retry');
         myPeerId = id;
         myIdEl.innerText = id;
 
@@ -828,7 +728,7 @@
             if (isNameRequired && !data.senderName) return;
 
             resumeAudioContext();
-            const call = peer.call(data.peerId, processedStream, { metadata: { senderName: savedAuthName } });
+            const call = peer.call(data.peerId, processedStream, { metadata: { senderName: savedMyName } });
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.senderId, data.senderName);
@@ -842,16 +742,7 @@
 
       peer.on('error', (err) => {
         if (err.type === 'unavailable-id') {
-          let retries = parseInt(sessionStorage.getItem('my_naisen_id_retry') || '0');
-          if (retries < 2) {
-            sessionStorage.setItem('my_naisen_id_retry', (retries + 1).toString());
-            statusEl.innerText = '前回の接続を解除中... (自動で再試行します)';
-            setTimeout(() => location.reload(), 2500);
-          } else {
-            sessionStorage.removeItem('my_naisen_id_retry');
-            alert(`ID「${savedAuthId}」は現在他の人がオンラインで使用中か、前回の接続が残っています。\n後でもう一度試すか、別のIDでログインしてください。`);
-            logout();
-          }
+          alert(`ID「${customId}」は現在他の端末で接続中または使用中です。`);
         } else {
           console.error('PeerJS Error:', err);
         }
@@ -1025,7 +916,7 @@
       if (!targetId) return alert('相手の内線IDを入力してください');
       
       statusEl.innerText = '発信中...';
-      const call = peer.call(targetId, processedStream, { metadata: { senderName: savedAuthName } });
+      const call = peer.call(targetId, processedStream, { metadata: { senderName: savedMyName } });
       setupCall(call);
 
       const conn = peer.connect(targetId);
@@ -1033,7 +924,7 @@
     });
 
     function joinGroup(groupObj) {
-      if (groupObj.requireName && !savedAuthName) {
+      if (groupObj.requireName && !savedMyName) {
         alert(`【${groupObj.name}】は名前の登録が必須です。\n右上の「⚙️ 設定」から名前を保存してください。`);
         switchToDirect();
         return;
@@ -1055,7 +946,7 @@
       mqttClient.publish(currentGroupTopic, JSON.stringify({ 
         type: 'join', 
         peerId: myPeerId,
-        senderName: savedAuthName
+        senderName: savedMyName
       }));
 
       statusEl.innerText = `【${groupObj.name}】に参加中`;
@@ -1074,7 +965,7 @@
       const text = chatInput.value.trim();
       if (!text) return;
 
-      let senderName = savedAuthName;
+      let senderName = savedMyName;
       if (!senderName) senderName = myPeerId ? myPeerId.substring(0, 5) : '自分';
 
       if (containsNGWord(text)) return alert('不適切な単語が含まれているため送信できません。');
@@ -1110,17 +1001,16 @@
       if (e.key === 'Enter') sendChatMessage();
     });
 
-    // --- モーダル・グループ操作 ---
-    function openGroupModal() {
+    window.openGroupModal = function() {
       document.getElementById('modal-group-name').value = '';
       document.getElementById('modal-group-id').value = '';
       document.getElementById('modal-group-pass').value = '';
       document.getElementById('modal-group-require-name').checked = false; 
       document.getElementById('group-modal').style.display = 'flex';
     }
-    function closeGroupModal() { document.getElementById('group-modal').style.display = 'none'; }
+    window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
-    function saveNewGroup() {
+    window.saveNewGroup = function() {
       const name = document.getElementById('modal-group-name').value.trim();
       const id = document.getElementById('modal-group-id').value.trim();
       const pass = document.getElementById('modal-group-pass').value.trim();
@@ -1134,8 +1024,8 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v17', JSON.stringify(customGroups));
-      closeGroupModal();
+      localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
+      window.closeGroupModal();
       joinGroup(newGroup);
     }
 
@@ -1144,14 +1034,30 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v17', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
     }
 
-    function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
-    function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
+    window.openHelp = function() { document.getElementById('help-modal').style.display = 'flex'; }
+    window.closeHelp = function() { document.getElementById('help-modal').style.display = 'none'; }
+
+    window.addTestGroup = function(type) {
+      let testGroup;
+      if (type === 'normal') {
+        testGroup = { id: 'test-room', name: '通常テスト', pass: '0000', requireName: false };
+      } else {
+        testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true };
+      }
+      
+      if (!customGroups.some(g => g.id === testGroup.id)) {
+        customGroups.push(testGroup);
+        localStorage.setItem('my_naisen_groups_v181', JSON.stringify(customGroups));
+      }
+      window.closeHelp();
+      joinGroup(testGroup);
+    }
 
     function updateStatus() {
       const count = Object.keys(activeCalls).length;
@@ -1165,7 +1071,6 @@
       }
     }
 
-    // --- マイク操作（ON/OFF） ---
     const startTalking = (e) => {
       e.preventDefault();
       resumeAudioContext(); 
@@ -1212,7 +1117,6 @@
         talkBtn.style.opacity = '1';
       }
     });
-
   </script>
 </body>
 </html>
