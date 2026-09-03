@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.8.2</title>
+  <title>Naisync - 内線トランシーバー v1.9.1</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -193,6 +193,7 @@
 </head>
 <body>
 
+  <!-- ログイン・新規登録画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
@@ -209,7 +210,7 @@
         <h3 style="margin-top:0; color: #333;">新規アカウント作成</h3>
         <input type="text" id="reg-id" placeholder="希望する内線ID (半角英数字)">
         <input type="text" id="reg-name" placeholder="あなたの名前 (表示名)">
-        <input type="password" id="reg-pass" placeholder="パスワードを設定">
+        <input type="password" id="reg-pass" placeholder="パスワード (6文字以上)">
         <button class="btn-action" id="reg-btn" onclick="window.doRegister()" style="margin-top: 12px;">登録して始める</button>
         <p style="font-size:12px; margin-top:16px;">すでにIDをお持ちの方は <a href="#" onclick="window.toggleAuth('login')" style="color:#007bff; font-weight:bold; text-decoration: none;">ログイン</a></p>
       </div>
@@ -371,15 +372,31 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged,
+      updateProfile 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // ▼ Supabase URL設定済み (末尾の /rest/v1/ は除外)
-    const SUPABASE_URL = 'https://nzvyhrcdjcbckzyiztup.supabase.co';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'; // ★ここにご自身の anon public キーを貼り付けてください
+    // ▼ ご提示いただいたFirebase設定を組み込み済み
+    const firebaseConfig = {
+      apiKey: "AIzaSyDQT3tMY_btI--ZTeMlkb7I7EeVUCJZH80",
+      authDomain: "naisync-b94a2.firebaseapp.com",
+      projectId: "naisync-b94a2",
+      storageBucket: "naisync-b94a2.firebasestorage.app",
+      messagingSenderId: "816585211801",
+      appId: "1:816585211801:web:0e5f27745d5c6979309d08",
+      measurementId: "G-Q62SGVS646"
+    };
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v182-';
+    const APP_SECRET = 'naisen-app-v191-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -398,7 +415,6 @@
     let processedStream = null;
 
     let isLocked = false;
-    
     let currentUser = null;
     let savedMyName = '';
     
@@ -409,12 +425,12 @@
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v182')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v191')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v181'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v19'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
       }
     }
 
@@ -466,23 +482,22 @@
       
       if (!id || !name || !pass) return showAuthError('すべての項目を入力してください。');
       if (!/^[a-zA-Z0-9-]+$/.test(id)) return showAuthError('IDは半角英数字とハイフン(-)のみ使用できます。');
+      if (pass.length < 6) return showAuthError('パスワードは6文字以上で設定してください。');
       if (containsNGWord(id) || containsNGWord(name)) return showAuthError('不適切な単語が含まれています。');
 
       document.getElementById('reg-btn').disabled = true;
       authError.innerText = '登録中...';
 
       const email = `${id}@naisy.nc`;
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: pass,
-        options: { data: { display_name: name, custom_id: id } }
-      });
-
-      if (error) {
-        showAuthError('登録失敗: ' + error.message);
-      } else {
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(userCredential.user, {
+          displayName: JSON.stringify({ name: name, customId: id })
+        });
         alert('登録成功！ログインします。');
         await window.executeLogin(id, pass);
+      } catch (error) {
+        showAuthError('登録失敗: このIDはすでに使われている可能性があります。');
       }
     }
 
@@ -497,34 +512,42 @@
     window.executeLogin = async function(id, pass) {
       document.getElementById('login-btn').disabled = true;
       const email = `${id}@naisy.nc`;
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
-
-      if (error) {
-        showAuthError('ログイン失敗: IDまたはパスワードが違います。');
-      } else {
-        currentUser = data.user;
-        savedMyName = currentUser.user_metadata?.display_name || id;
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+        currentUser = userCredential.user;
+        parseUserData(currentUser);
         startMainApp();
+      } catch (error) {
+        showAuthError('ログイン失敗: IDまたはパスワードが違います。');
       }
     }
 
     window.logout = async function() {
       if (!confirm('ログアウトしますか？')) return;
-      await supabase.auth.signOut();
+      await signOut(auth);
       location.reload();
     }
 
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        savedMyName = currentUser.user_metadata?.display_name || currentUser.email.split('@')[0];
+    function parseUserData(user) {
+      try {
+        const info = JSON.parse(user.displayName);
+        savedMyName = info.name;
+        currentUser.customId = info.customId;
+      } catch (e) {
+        savedMyName = user.email.split('@')[0];
+        currentUser.customId = user.email.split('@')[0];
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        currentUser = user;
+        parseUserData(user);
         startMainApp();
       } else {
         document.getElementById('auth-overlay').style.display = 'flex';
       }
-    }
-    checkSession();
+    });
 
     function startMainApp() {
       document.getElementById('auth-overlay').style.display = 'none';
@@ -622,8 +645,8 @@
       savedMyName = newName;
       displayMyName.innerText = newName;
       
-      await supabase.auth.updateUser({
-        data: { display_name: newName }
+      await updateProfile(auth.currentUser, {
+        displayName: JSON.stringify({ name: newName, customId: currentUser.customId })
       });
       alert('名前を保存しました！');
     }
@@ -705,7 +728,7 @@
     }
 
     function startNetworking() {
-      const customId = currentUser.user_metadata?.custom_id || currentUser.email.split('@')[0];
+      const customId = currentUser.customId || currentUser.email.split('@')[0];
       peer = new Peer(customId);
 
       peer.on('open', (id) => {
@@ -1007,6 +1030,7 @@
       document.getElementById('modal-group-require-name').checked = false; 
       document.getElementById('group-modal').style.display = 'flex';
     }
+    window.closeGroupModal = function() { document.getElementById('modal-group-modal').style.display = 'none'; } // 念のため修正
     window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
     window.saveNewGroup = function() {
@@ -1023,7 +1047,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1033,7 +1057,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1052,7 +1076,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v182', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
