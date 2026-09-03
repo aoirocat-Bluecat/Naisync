@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>多機能内線トランシーバー</title>
+  <title>多機能内線トランシーバー v1.2.0</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -188,7 +188,7 @@
     }
     .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
 
-    /* 【追加】通知トーストのスタイル */
+    /* 通知トーストのスタイル */
     #notification-container {
       position: fixed;
       top: 16px;
@@ -228,7 +228,7 @@
 </head>
 <body>
 
-  <!-- 【追加】通知表示用コンテナ -->
+  <!-- 通知表示用コンテナ -->
   <div id="notification-container"></div>
 
   <!-- ヘッダー＆タブエリア -->
@@ -242,7 +242,7 @@
 
   <div class="card">
     <div class="section-title">あなたの内線ID:</div>
-    <div class="id-box" id="my-id" style="text-align: center;">発行中...</div>
+    <div class="id-box" id="my-id" style="text-align: center; font-size: 16px;">発行中...</div>
 
     <div class="section-title">あなたの名前 (チャット用):</div>
     <input type="text" id="my-name-input" placeholder="名前を入力 (例: 田中)" style="margin-bottom: 10px;">
@@ -291,6 +291,14 @@
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <h3>⚙️ 設定</h3>
+
+      <!-- 【v1.2.0】ID変更UIを追加 -->
+      <label>🆔 自分の内線ID（変更可能）</label>
+      <div style="display: flex; gap: 8px; margin-top: 4px;">
+        <input type="text" id="setting-my-id" placeholder="半角英数字">
+        <button class="btn-action" style="width: auto; padding: 10px 14px; margin:0;" onclick="changeMyId()">変更</button>
+      </div>
+      <p style="font-size:11px; color:#666; margin:4px 0 20px 0;">※変更するとページが再読み込みされます。</p>
       
       <label>🎤 自分のマイク音量（相手への声の大きさ）</label>
       <div style="display: flex; align-items: center; gap: 10px;">
@@ -311,7 +319,13 @@
         <div class="toggle-slider"></div>
         <span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
       </label>
-      <p style="font-size:11px; color:#666; margin:4px 0 0 0;">※背景の雑音やエコー（やまびこ）を防ぎます。</p>
+
+      <label style="margin-top: 20px;">🔔 ポップアップ通知（着信・チャット）</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="notif-checkbox" checked>
+        <div class="toggle-slider"></div>
+        <span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
+      </label>
 
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="closeSettings()">閉じる</button>
@@ -351,6 +365,10 @@
     <div class="modal-box">
       <h3>❓ よくある質問とヘルプ</h3>
       <div class="faq-item">
+        <strong>Q. 内線IDって変えられるの？</strong>
+        <p>A. 右上の「⚙️ 設定」から、自分の好きなID（例: tanaka-123）に変更して固定できます。</p>
+      </div>
+      <div class="faq-item">
         <strong>Q. 特定の人の声がうるさい・小さい</strong>
         <p>A. 通話が繋がるとメイン画面に表示される「参加者の個別音量」から、その人だけの音量を調整できます。</p>
       </div>
@@ -378,7 +396,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
-    const APP_SECRET = 'naisen-app-v10-';
+    const APP_SECRET = 'naisen-app-v12-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -389,7 +407,6 @@
     let activeCalls = {};
     let activeDataConns = {};
     
-    // 参加者の名前を管理する辞書
     let peerNames = {};
 
     let rawStream = null;
@@ -400,18 +417,23 @@
 
     let isLocked = false;
     
+    // 【v1.2.0】固定IDの読み込み
+    let savedCustomId = localStorage.getItem('my_naisen_custom_id');
+    
     let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
+    let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v10')) || [];
+    // データ移行
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v12')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v9'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v11'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
       }
     }
 
@@ -439,24 +461,24 @@
     const micVolumeDisplay = document.getElementById('mic-volume-display');
     const spkVolumeSlider = document.getElementById('spk-volume-slider');
     const spkVolumeDisplay = document.getElementById('spk-volume-display');
+    const notifCheckbox = document.getElementById('notif-checkbox');
+    const notifStatusText = document.getElementById('notif-status-text');
+    const settingMyIdInput = document.getElementById('setting-my-id');
 
     myNameInput.value = localStorage.getItem('my_naisen_username') || '';
     myNameInput.addEventListener('input', () => {
       localStorage.setItem('my_naisen_username', myNameInput.value.trim());
     });
 
-    // 【追加】通知表示関数
+    // 通知表示関数
     function showNotification(message) {
+      if (!isNotificationOn) return; 
       const container = document.getElementById('notification-container');
       const toast = document.createElement('div');
       toast.className = 'toast';
       toast.innerText = message;
       container.appendChild(toast);
-      
-      // アニメーション完了後に削除
-      setTimeout(() => {
-        toast.remove();
-      }, 3900);
+      setTimeout(() => { toast.remove(); }, 3900);
     }
 
     function containsNGWord(text) {
@@ -491,6 +513,8 @@
         micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
         spkVolumeSlider.value = savedSpeakerVolume;
         spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
+        notifCheckbox.checked = isNotificationOn;
+        notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
 
         const audioConstraints = {
           audio: {
@@ -525,6 +549,18 @@
     // --- 設定操作 ---
     function openSettings() { document.getElementById('settings-modal').style.display = 'flex'; }
     function closeSettings() { document.getElementById('settings-modal').style.display = 'none'; }
+
+    // 【v1.2.0】固定IDの変更機能
+    function changeMyId() {
+      const newId = settingMyIdInput.value.trim();
+      if (!newId) return alert('新しいIDを入力してください。');
+      if (!/^[a-zA-Z0-9-]+$/.test(newId)) return alert('IDは半角英数字とハイフン(-)のみ使用できます。');
+      if (newId === myPeerId) return alert('既にそのIDです。');
+      
+      localStorage.setItem('my_naisen_custom_id', newId);
+      alert('IDを変更しました。適用するためにページを再読み込みします。');
+      location.reload();
+    }
 
     ncCheckbox.addEventListener('change', async (e) => {
       isNoiseCanceling = e.target.checked;
@@ -562,6 +598,11 @@
       });
     });
 
+    notifCheckbox.addEventListener('change', (e) => {
+      isNotificationOn = e.target.checked;
+      notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_notif', isNotificationOn);
+    });
 
     // 2. タブ描画
     function renderTabs() {
@@ -600,10 +641,20 @@
 
     // 3. ネットワーク接続
     function startNetworking() {
-      peer = new Peer();
+      // 【v1.2.0】保存されたIDがあればそれを使用、なければランダム
+      if (savedCustomId) {
+        peer = new Peer(savedCustomId);
+      } else {
+        peer = new Peer();
+      }
+
       peer.on('open', (id) => {
         myPeerId = id;
         myIdEl.innerText = id;
+        
+        // 生成されたIDを保存し、設定画面の入力欄にも反映する
+        localStorage.setItem('my_naisen_custom_id', id);
+        settingMyIdInput.value = id;
 
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         mqttClient.on('connect', () => switchToDirect());
@@ -617,11 +668,7 @@
 
           if (data.type === 'join' && data.peerId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.peerId, data.senderName);
-
-            // 名前必須ブロック
-            if (isNameRequired && !data.senderName) {
-              return;
-            }
+            if (isNameRequired && !data.senderName) return;
 
             resumeAudioContext();
             const senderName = myNameInput.value.trim();
@@ -631,11 +678,21 @@
             if (data.senderName) updateParticipantName(data.senderId, data.senderName);
             if (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom') return;
             
-            // ★【通知】チャット受信時
             showNotification(`💬 ${data.senderName}: ${data.text}`);
             addChatLog(data.senderName, data.text, false);
           }
         });
+      });
+
+      // 【v1.2.0】ID重複エラーのハンドリング
+      peer.on('error', (err) => {
+        if (err.type === 'unavailable-id') {
+          alert(`設定した内線ID「${savedCustomId}」は現在他の人が使用中です。\nランダムなIDで再生成します。`);
+          localStorage.removeItem('my_naisen_custom_id');
+          location.reload();
+        } else {
+          console.error('PeerJS Error:', err);
+        }
       });
 
       peer.on('call', (call) => {
@@ -645,7 +702,6 @@
         if (callerName) updateParticipantName(call.peer, callerName);
         
         const displayName = callerName || call.peer.substring(0, 5);
-        // ★【通知】着信時
         showNotification(`📞 ${displayName} から着信中...`);
 
         const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
@@ -741,14 +797,12 @@
           
           addParticipantUI(call.peer);
 
-          // ★【通知】接続完了時
           const displayName = peerNames[call.peer] || call.peer.substring(0, 5);
           showNotification(`✅ ${displayName} と接続しました`);
         }
       });
 
       call.on('close', () => {
-        // ★【通知】切断時
         const displayName = peerNames[call.peer] || call.peer.substring(0, 5);
         showNotification(`🔌 ${displayName} が退出しました`);
 
@@ -766,8 +820,6 @@
       conn.on('data', (data) => {
         if (data && data.type === 'chat') {
           updateParticipantName(conn.peer, data.senderName);
-          
-          // ★【通知】チャット受信時 (1対1)
           showNotification(`💬 ${data.senderName}: ${data.text}`);
           addChatLog(data.senderName, data.text, false);
         }
@@ -925,7 +977,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
       closeGroupModal();
       joinGroup(newGroup);
     }
@@ -935,7 +987,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -954,7 +1006,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v12', JSON.stringify(customGroups));
       }
       closeHelp();
       joinGroup(testGroup);
