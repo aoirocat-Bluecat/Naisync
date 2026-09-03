@@ -92,7 +92,7 @@
     }
     #toggle-btn.locked { background-color: #ff4444; border-color: #ff4444; color: white; }
 
-    /* 【追加】参加者の個別音量エリアUI */
+    /* 参加者の個別音量エリア */
     .participants-section {
       margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left;
     }
@@ -187,9 +187,49 @@
       display: flex; align-items: center; gap: 8px; margin-top: 16px; cursor: pointer; font-size: 13px; font-weight: bold; color: #d9534f;
     }
     .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
+
+    /* 【追加】通知トーストのスタイル */
+    #notification-container {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+      width: 90%;
+      max-width: 400px;
+    }
+    .toast {
+      background: rgba(40, 40, 40, 0.95);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      animation: toastFadeIn 0.3s ease-out, toastFadeOut 0.4s ease-in 3.5s forwards;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      word-break: break-all;
+    }
+    @keyframes toastFadeIn {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes toastFadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- 【追加】通知表示用コンテナ -->
+  <div id="notification-container"></div>
 
   <!-- ヘッダー＆タブエリア -->
   <div class="header-container">
@@ -226,7 +266,7 @@
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
-    <!-- 【追加】参加者の個別音量エリア -->
+    <!-- 参加者の個別音量エリア -->
     <div class="participants-section" id="participants-section" style="display: none;">
       <div class="chat-title">👥 参加者の個別音量</div>
       <div id="participants-list">
@@ -338,7 +378,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
   <script>
-    const APP_SECRET = 'naisen-app-v9-';
+    const APP_SECRET = 'naisen-app-v10-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -349,7 +389,7 @@
     let activeCalls = {};
     let activeDataConns = {};
     
-    // 【追加】参加者の名前を管理する辞書
+    // 参加者の名前を管理する辞書
     let peerNames = {};
 
     let rawStream = null;
@@ -360,20 +400,18 @@
 
     let isLocked = false;
     
-    // 保存された設定の読み込み
     let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    // データ移行
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v9')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v10')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v8'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v9'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v9', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
       }
     }
 
@@ -407,6 +445,20 @@
       localStorage.setItem('my_naisen_username', myNameInput.value.trim());
     });
 
+    // 【追加】通知表示関数
+    function showNotification(message) {
+      const container = document.getElementById('notification-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerText = message;
+      container.appendChild(toast);
+      
+      // アニメーション完了後に削除
+      setTimeout(() => {
+        toast.remove();
+      }, 3900);
+    }
+
     function containsNGWord(text) {
       if (!text) return false;
       return NG_WORDS.some(word => text.includes(word));
@@ -433,7 +485,6 @@
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
-        // 設定UIの初期化
         ncCheckbox.checked = isNoiseCanceling;
         ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
         micVolumeSlider.value = savedMicVolume;
@@ -505,10 +556,8 @@
       localStorage.setItem('my_naisen_spk_vol', val);
       spkVolumeDisplay.innerText = Math.round(val * 100) + '%';
       
-      // 個別スライダーの初期値を揃える（操作済みのものはそのまま）
       document.querySelectorAll('.participant-item input[type=range]').forEach(slider => {
         slider.value = val;
-        // スライダーのイベントを発火させて実際の音量を反映
         slider.dispatchEvent(new Event('input')); 
       });
     });
@@ -567,8 +616,6 @@
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
           if (data.type === 'join' && data.peerId !== myPeerId) {
-            
-            // 参加者の名前を記録
             if (data.senderName) updateParticipantName(data.peerId, data.senderName);
 
             // 名前必須ブロック
@@ -581,11 +628,11 @@
             const call = peer.call(data.peerId, processedStream, { metadata: { senderName } });
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
-            
-            // チャットで名前が送られてきたら記録
             if (data.senderName) updateParticipantName(data.senderId, data.senderName);
-            
             if (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom') return;
+            
+            // ★【通知】チャット受信時
+            showNotification(`💬 ${data.senderName}: ${data.text}`);
             addChatLog(data.senderName, data.text, false);
           }
         });
@@ -594,11 +641,13 @@
       peer.on('call', (call) => {
         resumeAudioContext();
         
-        // 着信時に名前を記録
         const callerName = call.metadata ? call.metadata.senderName : '';
         if (callerName) updateParticipantName(call.peer, callerName);
+        
+        const displayName = callerName || call.peer.substring(0, 5);
+        // ★【通知】着信時
+        showNotification(`📞 ${displayName} から着信中...`);
 
-        // 着信時の名前必須ブロック
         const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
         const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
         
@@ -616,14 +665,12 @@
       peer.on('connection', (conn) => setupDataConn(conn));
     }
 
-    // 【追加】参加者の名前をUIに反映する関数
     function updateParticipantName(peerId, name) {
       peerNames[peerId] = name;
       const nameEl = document.getElementById('name-' + peerId);
       if (nameEl) nameEl.innerText = name;
     }
 
-    // 【追加】参加者個別のボリューム調整UIを作る関数
     function addParticipantUI(peerId) {
       if (document.getElementById('ui-' + peerId)) return;
 
@@ -650,7 +697,7 @@
       slider.min = '0';
       slider.max = '1';
       slider.step = '0.05';
-      slider.value = savedSpeakerVolume; // 初期値は設定の音量
+      slider.value = savedSpeakerVolume; 
       
       slider.addEventListener('input', (e) => {
         const audio = document.getElementById('audio-' + peerId);
@@ -689,21 +736,27 @@
           audio.srcObject = remoteStream;
           audio.autoplay = true;
           audio.playsinline = true;
-          audio.volume = savedSpeakerVolume; // デフォルトの音量適用
+          audio.volume = savedSpeakerVolume; 
           audioContainer.appendChild(audio);
           
-          // 個別音量UIを追加
           addParticipantUI(call.peer);
+
+          // ★【通知】接続完了時
+          const displayName = peerNames[call.peer] || call.peer.substring(0, 5);
+          showNotification(`✅ ${displayName} と接続しました`);
         }
       });
 
       call.on('close', () => {
+        // ★【通知】切断時
+        const displayName = peerNames[call.peer] || call.peer.substring(0, 5);
+        showNotification(`🔌 ${displayName} が退出しました`);
+
         const audio = document.getElementById('audio-' + call.peer);
         if (audio) audio.remove();
         delete activeCalls[call.peer];
         updateStatus();
         
-        // 個別音量UIを削除
         removeParticipantUI(call.peer);
       });
     }
@@ -713,6 +766,9 @@
       conn.on('data', (data) => {
         if (data && data.type === 'chat') {
           updateParticipantName(conn.peer, data.senderName);
+          
+          // ★【通知】チャット受信時 (1対1)
+          showNotification(`💬 ${data.senderName}: ${data.text}`);
           addChatLog(data.senderName, data.text, false);
         }
       });
@@ -729,10 +785,9 @@
       currentGroupTopic = null;
       chatLogs.innerHTML = ''; 
       
-      // UIのクリア
       participantsList.innerHTML = '';
       participantsSection.style.display = 'none';
-      peerNames = {}; // 部屋を移動したら名前辞書もリセット
+      peerNames = {}; 
     }
 
     function switchToDirect() {
@@ -870,7 +925,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v9', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
       closeGroupModal();
       joinGroup(newGroup);
     }
@@ -880,7 +935,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v9', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -889,7 +944,6 @@
     function openHelp() { document.getElementById('help-modal').style.display = 'flex'; }
     function closeHelp() { document.getElementById('help-modal').style.display = 'none'; }
 
-    // テストグループ追加用
     function addTestGroup(type) {
       let testGroup;
       if (type === 'normal') {
@@ -900,7 +954,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v9', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v10', JSON.stringify(customGroups));
       }
       closeHelp();
       joinGroup(testGroup);
