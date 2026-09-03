@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.9.4</title>
+  <title>Naisync - 内線トランシーバー v1.9.5</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -212,9 +212,22 @@
       transition: background 0.3s;
     }
 
-    /* ==========================================
-       【v1.9.4追加】ダークモード用スタイル
-       ========================================== */
+    /* 右下バージョン表示用のスタイル */
+    .version-tag {
+      position: fixed;
+      bottom: 6px;
+      right: 10px;
+      font-size: 10px;
+      color: #888;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.6;
+    }
+    body.dark-mode .version-tag {
+      color: #aaa;
+    }
+
+    /* ダークモード用スタイル */
     body.dark-mode {
       background-color: #121212;
       color: #e0e0e0;
@@ -280,6 +293,9 @@
   </style>
 </head>
 <body>
+
+  <!-- 画面右下のバージョン表示 -->
+  <div class="version-tag">v1.9.5</div>
 
   <!-- ログイン・新規登録画面 -->
   <div id="auth-overlay">
@@ -403,7 +419,6 @@
         <span id="streamer-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
       </label>
 
-      <!-- 【v1.9.4追加】ダークモード設定 -->
       <label style="margin-top: 20px;">🌙 ダークモード</label>
       <label class="toggle-switch">
         <input type="checkbox" id="dark-mode-checkbox">
@@ -502,7 +517,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v194-';
+    const APP_SECRET = 'naisen-app-v195-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -529,18 +544,16 @@
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
     let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
     let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
-    
-    // 【v1.9.4追加】ダークモードの状態管理
     let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v194')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v195')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v193'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v194'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v194', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v195', JSON.stringify(customGroups));
       }
     }
 
@@ -577,7 +590,6 @@
     const darkModeStatusText = document.getElementById('dark-mode-status-text');
     const authError = document.getElementById('auth-error');
 
-    // 初期起動時のダークモード適用
     function updateDarkModeUI() {
       if (isDarkMode) {
         document.body.classList.add('dark-mode');
@@ -1202,7 +1214,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v194', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v195', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1212,7 +1224,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v194', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v195', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1231,7 +1243,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v194', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v195', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
