@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.9.1</title>
+  <title>Naisync - 内線トランシーバー v1.9.3</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -65,6 +65,17 @@
     .id-box {
       background: #eef2f5; padding: 12px; border-radius: 8px;
       font-weight: bold; word-break: break-all; margin: 4px 0 10px; font-size: 13px;
+    }
+
+    /* 配信者モード時のIDマスク用スタイル */
+    .streamer-mask {
+      filter: blur(5px);
+      cursor: pointer;
+      user-select: none;
+      transition: filter 0.2s;
+    }
+    .streamer-mask:hover {
+      filter: blur(0px);
     }
 
     input[type="text"], input[type="password"], .btn-action {
@@ -308,6 +319,15 @@
         <span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
       </label>
 
+      <!-- 【v1.9.3追加】配信者モード設定 -->
+      <label style="margin-top: 20px;">👁️ 配信者モード（IDを隠す）</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="streamer-mode-checkbox">
+        <div class="toggle-slider"></div>
+        <span id="streamer-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
+      </label>
+      <p style="font-size:11px; color:#666; margin:4px 0 0 0;">※ONにするとIDがぼかしで隠されます（マウスを乗せると一時的に見えます）。</p>
+
       <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;">
       <label>🚪 アカウント操作</label>
       <button class="btn-action btn-danger" style="margin-top: 8px;" onclick="window.logout()">ログアウト</button>
@@ -353,6 +373,10 @@
         <strong>Q. ログアウトするとどうなるの？</strong>
         <p>A. 現在のIDから離脱し、ログイン画面に戻ります。</p>
       </div>
+      <div class="faq-item">
+        <strong>Q. 問い合わせ・不具合の連絡先</strong>
+        <p>A. 作者のTwitter（<a href="https://twitter.com/AoirocatYoutube" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">@AoirocatYoutube</a>）までお気軽にDMやリプライでお知らせください！</p>
+      </div>
 
       <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;">
         <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 テストサーバー情報</h4>
@@ -382,7 +406,6 @@
       updateProfile 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // ▼ ご提示いただいたFirebase設定を組み込み済み
     const firebaseConfig = {
       apiKey: "AIzaSyDQT3tMY_btI--ZTeMlkb7I7EeVUCJZH80",
       authDomain: "naisync-b94a2.firebaseapp.com",
@@ -396,7 +419,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v191-';
+    const APP_SECRET = 'naisen-app-v193-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -422,15 +445,18 @@
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
     let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
+    
+    // 【v1.9.3追加】配信者モードの状態取得
+    let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v191')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v193')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v19'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v192'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v193', JSON.stringify(customGroups));
       }
     }
 
@@ -461,6 +487,8 @@
     const spkVolumeDisplay = document.getElementById('spk-volume-display');
     const notifCheckbox = document.getElementById('notif-checkbox');
     const notifStatusText = document.getElementById('notif-status-text');
+    const streamerModeCheckbox = document.getElementById('streamer-mode-checkbox');
+    const streamerModeStatusText = document.getElementById('streamer-mode-status-text');
     const authError = document.getElementById('auth-error');
 
     window.toggleAuth = function(mode) {
@@ -556,6 +584,10 @@
 
       displayMyName.innerText = savedMyName;
       settingMyNameInput.value = savedMyName;
+
+      // 配信者モードのUI反映
+      streamerModeCheckbox.checked = isStreamerMode;
+      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
 
       initMicrophoneAndNetwork();
     }
@@ -693,6 +725,27 @@
       localStorage.setItem('my_naisen_notif', isNotificationOn);
     });
 
+    // 【v1.9.3追加】配信者モードの切り替え処理
+    streamerModeCheckbox.addEventListener('change', (e) => {
+      isStreamerMode = e.target.checked;
+      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_streamer', isStreamerMode);
+      
+      // 画面上のID表示のマスクを即座に更新
+      applyStreamerModeToUI();
+    });
+
+    function applyStreamerModeToUI() {
+      if (!myPeerId) return;
+      if (isStreamerMode) {
+        myIdEl.classList.add('streamer-mask');
+        myIdEl.title = 'クリックまたはマウスホバーで一時的に確認できます';
+      } else {
+        myIdEl.classList.remove('streamer-mask');
+        myIdEl.title = '';
+      }
+    }
+
     function renderTabs() {
       tabsWrapper.innerHTML = '';
 
@@ -734,6 +787,7 @@
       peer.on('open', (id) => {
         myPeerId = id;
         myIdEl.innerText = id;
+        applyStreamerModeToUI(); // ID確定後にマスクを適用
 
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         mqttClient.on('connect', () => switchToDirect());
@@ -1030,7 +1084,6 @@
       document.getElementById('modal-group-require-name').checked = false; 
       document.getElementById('group-modal').style.display = 'flex';
     }
-    window.closeGroupModal = function() { document.getElementById('modal-group-modal').style.display = 'none'; } // 念のため修正
     window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
     window.saveNewGroup = function() {
@@ -1047,7 +1100,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v193', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1057,7 +1110,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v193', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1076,7 +1129,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v191', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v193', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
