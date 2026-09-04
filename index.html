@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.0.2</title>
+  <title>Naisync - 内線トランシーバー v2.0.3</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -272,10 +272,14 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.0.2</div>
+  <div class="version-tag">v2.0.3</div>
 
+  <!-- ログイン・新規登録画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
+      
+      <!-- 【v2.0.3追加】ログイン画面のアイコン -->
+      <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
       
       <div id="login-panel">
@@ -316,7 +320,12 @@
   </div>
 
   <div class="card" id="main-card" style="display: none;">
-    <div class="app-title">Naisync</div>
+    
+    <!-- 【v2.0.3追加】メイン画面のアイコンとタイトル -->
+    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
+      <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+      <div class="app-title" style="margin-bottom: 0;">Naisync</div>
+    </div>
 
     <div class="section-title">👤 あなたのプロフィール:</div>
     <div class="id-box" style="text-align: center;">
@@ -460,7 +469,6 @@
         <p>A. グループを「＋作成」から作った人のことです。リーダーは参加者を追放（キック）したり、パスワードを強制変更して部屋をロックすることができます。</p>
       </div>
       <div class="faq-item">
-        <!-- 【v2.0.2変更】問い合わせ先を公式アカウントに変更 -->
         <strong>Q. 問い合わせ・不具合の連絡先</strong>
         <p>A. Naisync公式X（<a href="https://x.com/NaiSync" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">@NaiSync</a>）までお気軽にDMやリプライでお知らせください！</p>
       </div>
@@ -505,8 +513,11 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.0.2変更】履歴を追加 -->
-          <div class="changelog-version">v2.0.2 (最新)</div>
+          <div class="changelog-version">v2.0.3 (最新)</div>
+          <div>・ログイン画面とメイン画面に公式のアプリロゴアイコンを追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.0.2</div>
           <div>・問い合わせ先をNaisync公式アカウント（@NaiSync）に変更しました。</div>
         </div>
         <div class="changelog-item">
@@ -524,22 +535,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v1.9.8</div>
           <div>・グループ招待リンクの共有・ワンタップ参加機能の追加</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.9.7</div>
-          <div>・ログインQ&A、更新一覧（履歴）機能の追加</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.9.6</div>
-          <div>・配信者モードの完全対応（すべてのID入力欄をマスク保護）</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.9.4</div>
-          <div>・ダークモード機能の追加</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.9.0</div>
-          <div>・Firebase連携による完全なアカウント保護機能（ログイン/登録）の追加</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -581,7 +576,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v202-';
+    const APP_SECRET = 'naisen-app-v203-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -627,12 +622,12 @@
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v202')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v203')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v201'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v202'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
       }
     }
 
@@ -717,7 +712,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1043,7 +1038,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
             
             const targetGroup = pendingInvite;
             pendingInvite = null; 
@@ -1064,7 +1059,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1074,7 +1069,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1386,7 +1381,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1396,7 +1391,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1415,7 +1410,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
