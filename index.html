@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.0.6</title>
+  <title>Naisync - 内線トランシーバー v2.0.7</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -272,7 +272,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.0.6</div>
+  <div class="version-tag">v2.0.7</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -507,9 +507,9 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.0.6変更】履歴を追加 -->
-          <div class="changelog-version">v2.0.6 (最新)</div>
-          <div>・招待リンク等から参加した際に全員がリーダー権限を持ってしまう重大なバグを修正。<br>・最初にグループを作成した人だけが真のリーダー（👑）になるように修正しました。</div>
+          <!-- 【v2.0.7変更】履歴を追加 -->
+          <div class="changelog-version">v2.0.7 (最新)</div>
+          <div>・既存グループへの参加時に、元のリーダー権限が上書きされて奪われてしまう重大なバグを修正。<br>・既存ルームのリーダー情報を正しく保護するように改善しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.0.5</div>
@@ -567,7 +567,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v206-';
+    const APP_SECRET = 'naisen-app-v207-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -607,19 +607,18 @@
           pass: params.get('p'),
           name: params.get('n') || params.get('g'),
           requireName: params.get('req') === '1',
-          // 【v2.0.6修正】招待リンクからの参加時は、URLに含まれる真のホストIDを保持する（自分がホストに昇格しない）
           hostId: params.get('h') || null 
         };
         window.history.replaceState(null, '', window.location.pathname);
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v206')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v207')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v205'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v206'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
       }
     }
 
@@ -704,7 +703,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1024,18 +1023,19 @@
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         mqttClient.on('connect', () => {
           if (pendingInvite) {
-            // 【v2.0.6修正】招待リンクから参加する場合、既存のグループ設定（ホスト情報含む）を正しく優先保持する
             const index = customGroups.findIndex(g => g.id === pendingInvite.id);
             if (index >= 0) {
-              // 既にタブがある場合はパスワードや名前を更新しつつ、既存の正しいhostIdを維持する
+              // 【v2.0.7修正】既存のグループがある場合、絶対に既存の正しい hostId を保持し、勝手に上書きさせない
               customGroups[index].pass = pendingInvite.pass;
               customGroups[index].name = pendingInvite.name;
               customGroups[index].requireName = pendingInvite.requireName;
-              if (pendingInvite.hostId) customGroups[index].hostId = pendingInvite.hostId;
+              if (!customGroups[index].hostId && pendingInvite.hostId) {
+                customGroups[index].hostId = pendingInvite.hostId;
+              }
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1056,7 +1056,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1066,7 +1066,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1419,12 +1419,16 @@
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      const newGroup = { id, name, pass, requireName, hostId: myPeerId };
+      // 【v2.0.7修正】すでにそのグループが登録されている場合は既存の hostId を厳格に保持する
+      const existingGroup = customGroups.find(g => g.id === id);
+      const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : myPeerId;
+
+      const newGroup = { id, name, pass, requireName, hostId };
       const index = customGroups.findIndex(g => g.id === id);
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1434,7 +1438,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1446,15 +1450,18 @@
     window.addTestGroup = function(type) {
       let testGroup;
       if (type === 'public') {
-        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', requireName: false };
+        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', requireName: false, hostId: null };
       } else {
-        testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true };
+        testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true, hostId: null };
       }
       
-      if (!customGroups.some(g => g.id === testGroup.id)) {
+      const index = customGroups.findIndex(g => g.id === testGroup.id);
+      if (index >= 0) {
+        customGroups[index] = testGroup;
+      } else {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
       }
+      localStorage.setItem('my_naisen_groups_v207', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
