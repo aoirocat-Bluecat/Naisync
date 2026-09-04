@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.9.7</title>
+  <title>Naisync - 内線トランシーバー v1.9.8</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -151,7 +151,6 @@
       background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
       z-index: 1000;
     }
-    /* ログイン画面より上に表示するためのz-index */
     .modal-overlay.top-layer { z-index: 3000; }
 
     .modal-box {
@@ -191,7 +190,6 @@
     }
     .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
 
-    /* 更新履歴リスト用スタイル */
     .changelog-list {
       max-height: 250px; overflow-y: auto; font-size: 12px; text-align: left;
       background: #fafafa; padding: 12px; border-radius: 8px;
@@ -233,9 +231,7 @@
       z-index: 999;
       opacity: 0.6;
     }
-    body.dark-mode .version-tag {
-      color: #aaa;
-    }
+    body.dark-mode .version-tag { color: #aaa; }
 
     /* ダークモード用スタイル */
     body.dark-mode {
@@ -255,6 +251,7 @@
     body.dark-mode input[type="password"] { background-color: #2a2d32; border-color: #444; color: #fff; }
     body.dark-mode input[type="text"]::placeholder, 
     body.dark-mode input[type="password"]::placeholder { color: #888; }
+    body.dark-mode .btn-outline { background-color: #2a2d32; color: #4dabf7; border-color: #4dabf7; }
     body.dark-mode .modal-box { background: #1e1e1e; color: #e0e0e0; }
     body.dark-mode .modal-box label,
     body.dark-mode .faq-item strong,
@@ -273,7 +270,7 @@
 <body>
 
   <!-- 画面右下のバージョン表示 -->
-  <div class="version-tag">v1.9.7</div>
+  <div class="version-tag">v1.9.8</div>
 
   <!-- ログイン・新規登録画面 -->
   <div id="auth-overlay">
@@ -299,7 +296,6 @@
       
       <div id="auth-error" style="color: #dc3545; font-size: 13px; margin-top: 12px; font-weight: bold; min-height: 20px;"></div>
 
-      <!-- 【v1.9.7】ログイン画面下部のリンク -->
       <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px; font-size: 12px;">
         <a href="#" onclick="window.openAuthHelp()" style="color:#888; text-decoration: none; font-weight: bold;">❓ Q&A</a>
         <a href="#" onclick="window.openChangelog()" style="color:#888; text-decoration: none; font-weight: bold;">📜 更新一覧</a>
@@ -312,7 +308,6 @@
   <div class="header-container" id="main-header" style="display: none;">
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <div class="header-btns">
-      <!-- 【v1.9.7】メイン画面にも更新履歴ボタンを追加 -->
       <button class="icon-btn" onclick="window.openChangelog()" title="更新一覧">📜</button>
       <button class="icon-btn" onclick="openSettings()" title="設定">⚙️</button>
       <button class="icon-btn" onclick="openHelp()" title="ヘルプ">❓</button>
@@ -333,8 +328,10 @@
       <button class="btn-action" id="connect-btn">1対1で発信</button>
     </div>
 
+    <!-- グループ通話エリアに招待共有ボタンを追加 -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
+      <button class="btn-action btn-outline" onclick="window.copyGroupInvite()" style="padding: 8px; font-size: 12px; margin-top: 12px;">🔗 このグループの招待リンクをコピー</button>
     </div>
 
     <div id="status">初期化中...</div>
@@ -451,7 +448,7 @@
       <h3>❓ Naisync よくある質問</h3>
       <div class="faq-item">
         <strong>Q. 誰とも繋がらない・音が聞こえない</strong>
-        <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。</p>
+        <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。招待リンクを共有するのが一番確実です。</p>
       </div>
       <div class="faq-item">
         <strong>Q. ログアウトするとどうなるの？</strong>
@@ -474,7 +471,7 @@
     </div>
   </div>
 
-  <!-- 【v1.9.7追加】ログイン画面用 Q&Aモーダル -->
+  <!-- ログイン画面用 Q&Aモーダル -->
   <div class="modal-overlay top-layer" id="auth-help-modal">
     <div class="modal-box">
       <h3>❓ ログイン・登録のQ&A</h3>
@@ -502,13 +499,17 @@
     </div>
   </div>
 
-  <!-- 【v1.9.7追加】更新一覧（履歴）モーダル -->
+  <!-- 更新一覧（履歴）モーダル -->
   <div class="modal-overlay top-layer" id="changelog-modal">
     <div class="modal-box">
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v1.9.7 (最新)</div>
+          <div class="changelog-version">v1.9.8 (最新)</div>
+          <div>・グループのID/パスワードをURLで共有し、ワンタップで参加できる招待機能を追加</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v1.9.7</div>
           <div>・ログインQ&Aの追加<br>・更新一覧（履歴）機能の追加</div>
         </div>
         <div class="changelog-item">
@@ -526,10 +527,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v1.6.0</div>
           <div>・IDの固定化と自動再接続システムの追加</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.5.0</div>
-          <div>・プロフィール（名前の永続保存）機能の追加</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -571,7 +568,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v197-';
+    const APP_SECRET = 'naisen-app-v198-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -602,12 +599,28 @@
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v197')) || [];
+    // 【v1.9.8】URLパラメータから招待情報を受け取る処理
+    let pendingInvite = null;
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('g') && params.get('p')) {
+        pendingInvite = {
+          id: params.get('g'),
+          pass: params.get('p'),
+          name: params.get('n') || params.get('g'),
+          requireName: params.get('req') === '1'
+        };
+        // 処理後はURLをきれいにする（リロード時の再実行を防ぐ）
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    });
+
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v198')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v196'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v197'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v197', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
       }
     }
 
@@ -644,12 +657,36 @@
     const darkModeStatusText = document.getElementById('dark-mode-status-text');
     const authError = document.getElementById('auth-error');
 
-    // --- 【v1.9.7】新規追加モーダルの開閉処理 ---
     window.openAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'flex'; }
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
     
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
     window.closeChangelog = function() { document.getElementById('changelog-modal').style.display = 'none'; }
+
+    // 【v1.9.8追加】グループの招待情報をクリップボードにコピー
+    window.copyGroupInvite = function() {
+      if (currentMode !== 'group' || !currentGroupId) return;
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if (!g) return;
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('g', g.id);
+      url.searchParams.set('p', g.pass);
+      url.searchParams.set('n', g.name);
+      if (g.requireName) url.searchParams.set('req', '1');
+
+      const text = `内線トランシーバー「Naisync」のグループ招待 📡\n` +
+                   `グループ名: ${g.name}\n` +
+                   `グループID: ${g.id}\n` +
+                   `パスワード: ${g.pass}\n\n` +
+                   `▼ここからワンタップで参加できます\n${url.toString()}`;
+
+      navigator.clipboard.writeText(text).then(() => {
+        showNotification('📋 グループの招待リンクをコピーしました！');
+      }).catch(err => {
+        alert('クリップボードへのコピーに失敗しました。');
+      });
+    }
 
     function applyStreamerModeToUI() {
       const idsToMask = [
@@ -979,7 +1016,24 @@
         applyStreamerModeToUI();
 
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-        mqttClient.on('connect', () => switchToDirect());
+        mqttClient.on('connect', () => {
+          // 【v1.9.8】URLから招待が来ていた場合の処理
+          if (pendingInvite) {
+            const index = customGroups.findIndex(g => g.id === pendingInvite.id);
+            if (index >= 0) {
+              customGroups[index] = pendingInvite;
+            } else {
+              customGroups.push(pendingInvite);
+            }
+            localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
+            
+            const targetGroup = pendingInvite;
+            pendingInvite = null; // 処理済みとしてリセット
+            joinGroup(targetGroup);
+          } else {
+            switchToDirect();
+          }
+        });
 
         mqttClient.on('message', (topic, message) => {
           if (currentMode !== 'group') return;
@@ -1289,7 +1343,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v197', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1299,7 +1353,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v197', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1318,7 +1372,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v197', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
