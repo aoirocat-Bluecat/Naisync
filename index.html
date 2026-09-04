@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.1.1</title>
+  <title>Naisync - 内線トランシーバー v2.1.2</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -165,7 +165,6 @@
     .modal-box label { font-size: 12px; color: #555; font-weight: bold; margin-top: 12px; display: block; transition: color 0.3s; }
     .modal-buttons { display: flex; gap: 8px; margin-top: 24px; }
 
-    /* 【v2.1.1追加】モーダル内のタブ切り替えボタン用スタイル */
     .modal-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
     .modal-tab-btn { flex: 1; padding: 8px; background: #e0e0e0; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; color: #555; transition: 0.2s; }
     .modal-tab-btn.active { background: #007bff; color: white; }
@@ -279,7 +278,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.1.1</div>
+  <div class="version-tag">v2.1.2</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -437,7 +436,7 @@
     </div>
   </div>
 
-  <!-- 【v2.1.1変更】グループ作成・参加モーダル（作成タブ / 参加タブに分離） -->
+  <!-- グループ作成・参加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <div class="modal-tabs">
@@ -538,13 +537,13 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.1.1変更】履歴を追加 -->
-          <div class="changelog-version">v2.1.1 (最新)</div>
-          <div>・グループ追加モーダルを「作成タブ」と「参加タブ」に完全に分離。<br>・参加タブから入った場合は絶対にホスト権限を取得せず、真のオーナーの権利を完全に保護するように仕様を変更しました。</div>
+          <!-- 【v2.1.2変更】履歴を追加 -->
+          <div class="changelog-version">v2.1.2 (最新)</div>
+          <div>・「作成タブ」において、すでに存在するグループIDの使用をブロックし、既存ルームのオーナー権限を完全に保護するバリデーションを追加しました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.0.5</div>
-          <div>・ヘルプ画面にバグ報告専用サイトのリンクを追加。<br>・テストルームを「公式パブリックルーム」に変更。</div>
+          <div class="changelog-version">v2.1.1</div>
+          <div>・グループ追加モーダルを「作成タブ」と「参加タブ」に完全に分離しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.0.4</div>
@@ -553,10 +552,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.0.0</div>
           <div>・キック時のタブ自動削除機能を実装。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.9.9</div>
-          <div>・リーダー（ホスト）機能およびパスワード強制変更機能の追加。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -598,7 +593,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v211-';
+    const APP_SECRET = 'naisen-app-v212-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -644,12 +639,12 @@
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v211')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v212')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v210'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v211'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
       }
     }
 
@@ -691,7 +686,6 @@
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
     window.closeChangelog = function() { document.getElementById('changelog-modal').style.display = 'none'; }
 
-    // 【v2.1.1追加】モーダルのタブ切り替え機能
     window.switchGroupModalTab = function(tabName) {
       const createSec = document.getElementById('form-create-section');
       const joinSec = document.getElementById('form-join-section');
@@ -754,7 +748,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1085,7 +1079,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1105,12 +1099,12 @@
           if (data.type === 'join' && data.hostId && currentGroupObj) {
             if (currentGroupObj.hostId === myPeerId && myPeerId !== data.hostId) {
               currentGroupObj.hostId = data.hostId;
-              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
               renderTabs();
               document.getElementById('host-controls').style.display = 'none';
             } else if (!currentGroupObj.hostId) {
               currentGroupObj.hostId = data.hostId;
-              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
               renderTabs();
               const isHostNow = (currentGroupObj.hostId === myPeerId);
               document.getElementById('host-controls').style.display = isHostNow ? 'block' : 'none';
@@ -1120,7 +1114,7 @@
           if (data.type === 'host_sync' && data.hostId && currentGroupObj) {
             if (currentGroupObj.hostId !== data.hostId) {
               currentGroupObj.hostId = data.hostId;
-              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
               renderTabs();
               const isHostNow = (currentGroupObj.hostId === myPeerId);
               document.getElementById('host-controls').style.display = isHostNow ? 'block' : 'none';
@@ -1131,7 +1125,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1141,7 +1135,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1484,7 +1478,6 @@
     });
 
     window.openGroupModal = function() {
-      // モーダルを開いたときはデフォルトで「作成タブ」を選択状態にする
       window.switchGroupModalTab('create');
       document.getElementById('modal-create-name').value = '';
       document.getElementById('modal-create-id').value = '';
@@ -1499,7 +1492,7 @@
     }
     window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
-    // 【v2.1.1追加】「作成タブ」からのグループ作成（自分をhostIdにする）
+    // 【v2.1.2修正】作成タブで既存IDの重複がある場合は作成をブロックする
     window.executeCreateGroup = function() {
       const name = document.getElementById('modal-create-name').value.trim();
       const id = document.getElementById('modal-create-id').value.trim();
@@ -1509,18 +1502,21 @@
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      // 自分がオーナー（hostId = myPeerId）として新しく作成
-      const newGroup = { id, name, pass, requireName, hostId: myPeerId };
-      const index = customGroups.findIndex(g => g.id === id);
-      if (index >= 0) customGroups[index] = newGroup;
-      else customGroups.push(newGroup);
+      // すでに自分または他人のリストにそのグループIDが存在しているかチェック
+      const existingGroup = customGroups.find(g => g.id === id);
+      if (existingGroup) {
+        alert(`グループID「${id}」はすでに存在します。\nオーナー権限の重複を防ぐため、「参加」タブからパスワードを入力して参加してください。`);
+        return;
+      }
 
-      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+      const newGroup = { id, name, pass, requireName, hostId: myPeerId };
+      customGroups.push(newGroup);
+
+      localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
 
-    // 【v2.1.1追加】「参加タブ」からのグループ参加（hostIdは持ち込まない・設定しない）
     window.executeJoinGroup = function() {
       const name = document.getElementById('modal-join-name').value.trim();
       const id = document.getElementById('modal-join-id').value.trim();
@@ -1529,7 +1525,6 @@
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      // すでに登録されているグループがあれば、既存の hostId を保持。なければ null（後からネットワーク経由で本当のホストから同期される）
       const existingGroup = customGroups.find(g => g.id === id);
       const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : null;
 
@@ -1542,7 +1537,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1552,7 +1547,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1575,7 +1570,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v212', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
