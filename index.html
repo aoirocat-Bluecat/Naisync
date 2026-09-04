@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.0</title>
+  <title>Naisync - 内線トランシーバー v2.2.1</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -307,7 +307,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.0</div>
+  <div class="version-tag">v2.2.1</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -514,7 +514,7 @@
         <input type="text" id="modal-create-name" placeholder="例: 営業チーム">
         <label>グループID（半角英数字）</label>
         <input type="text" id="modal-create-id" placeholder="例: room-101">
-        <label>パスワード</label>
+        <label>パスワード (必須)</label>
         <input type="password" id="modal-create-pass" placeholder="パスワードを入力">
         
         <label class="checkbox-label">
@@ -600,7 +600,7 @@
       <div class="changelog-list">
         <div class="changelog-item">
           <!-- 秘密のアップデートなので濁しておきます -->
-          <div class="changelog-version">v2.2.0 (最新)</div>
+          <div class="changelog-version">v2.2.1 (最新)</div>
           <div>・軽微な機能追加と内部システムの安定性を向上させました。</div>
         </div>
         <div class="changelog-item">
@@ -663,7 +663,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v220/';
+    const APP_PREFIX = 'Naisync/v221/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -712,7 +712,8 @@
     let pendingInvite = null;
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('g') && params.get('p')) {
+      // 【v2.2.1修正】URLパラメータにpが含まれていれば空文字（パスワードなし）でもOKとする
+      if (params.get('g') && params.has('p')) {
         pendingInvite = {
           id: params.get('g'),
           pass: params.get('p'),
@@ -720,7 +721,6 @@
           requireName: params.get('req') === '1',
           hostId: params.get('h') || null,
           createdAt: 9999999999999,
-          // URLパラメータからの判別
           isRadio: params.get('r') === '1'
         };
         window.history.replaceState(null, '', window.location.pathname);
@@ -730,15 +730,15 @@
     let customGroups = [];
 
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v220'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v221'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v219')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v220')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
-           if (g.isRadio === undefined) g.isRadio = false; // 古いデータは通常グループ
+           if (g.isRadio === undefined) g.isRadio = false; 
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v220', JSON.stringify(groups));
+         localStorage.setItem('my_naisen_groups_v221', JSON.stringify(groups));
       }
       customGroups = groups;
     }
@@ -816,14 +816,12 @@
       url.searchParams.set('n', g.name);
       if (g.requireName) url.searchParams.set('req', '1');
       if (g.hostId) url.searchParams.set('h', g.hostId);
-      // ラジオ専用のフラグをURLに追加
       if (g.isRadio) url.searchParams.set('r', '1');
 
       let text = '';
       if (g.isRadio) {
-        text = `📻 ラジオ放送局「${g.name}」のリスナー招待 📡\n` +
+        text = `📻 ラジオ局「${g.name}」のリスナー招待 📡\n` +
                `局ID: ${g.id}\n` +
-               `パスワード: ${g.pass}\n\n` +
                `▼ここからワンタップで受信できます\n${url.toString()}`;
       } else {
         text = `内線トランシーバー「Naisync」のグループ招待 📡\n` +
@@ -858,7 +856,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1255,7 +1253,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1286,8 +1284,8 @@
               if (isRemoteDominant) {
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
-                if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; // ラジオ情報の同期
-                localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+                if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
+                localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
                 updateStatus();
@@ -1307,7 +1305,7 @@
                  updated = true;
                }
                if (updated) {
-                 localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+                 localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
                  updateStatus();
                }
             }
@@ -1317,7 +1315,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1327,7 +1325,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1655,7 +1653,7 @@
           senderName: savedMyName,
           hostId: groupObj.hostId,
           createdAt: groupObj.createdAt,
-          isRadio: groupObj.isRadio // 【v2.2.0追加】ラジオ情報の同期
+          isRadio: groupObj.isRadio 
         }), { retain: true });
       } else {
         mqttClient.publish(currentGroupTopic, JSON.stringify({ 
@@ -1667,7 +1665,7 @@
         }));
       }
 
-      updateStatus(); // 【v2.2.0追加】ステータス更新でUIを切り替え
+      updateStatus(); 
     }
 
     // --- チャット ---
@@ -1679,7 +1677,7 @@
       const text = chatInput.value.trim();
       if (!text) return;
 
-      // 【v2.2.0追加】秘密のラジオ機能作成コマンド
+      // 【v2.2.1変更】秘密のラジオ機能作成コマンド（パスワード不要化）
       if (currentMode === 'direct' && Object.keys(activeDataConns).length === 0 && text === '/radio') {
         chatInput.value = '';
         setTimeout(() => {
@@ -1687,12 +1685,13 @@
           if (!name) return;
           const id = prompt('📻 [SECRET] ラジオ局のグループIDを入力してください (半角英数字):');
           if (!id) return;
-          const pass = prompt('📻 [SECRET] ラジオ局のパスワードを入力してください:');
-          if (!pass) return;
+          
+          // 【パスワード撤廃】ラジオの場合は自動的にパスワードを空にする
+          const pass = '';
 
           const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true };
           customGroups.push(newGroup);
-          localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
           joinGroup(newGroup);
           renderTabs();
         }, 100);
@@ -1750,6 +1749,7 @@
     }
     window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
+    // 【v2.2.1変更】通常グループの作成時にはパスワードを厳格に必須化
     window.executeCreateGroup = function() {
       if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
 
@@ -1758,7 +1758,8 @@
       const pass = document.getElementById('modal-create-pass').value.trim();
       const requireName = document.getElementById('modal-create-require-name').checked;
 
-      if (!name || !id || !pass) return alert('全項目を入力してください');
+      // パスワードが空の場合は作成させない
+      if (!name || !id || pass === '') return alert('全項目を入力してください（グループ作成にはパスワードが必須です）');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
       const existingGroup = customGroups.find(g => g.id === id);
@@ -1788,10 +1789,11 @@
           checkingGroupId = null;
         } else {
           checkingGroupId = null;
+          // 通常グループなので isRadio: false
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1800,12 +1802,14 @@
       }, 1000);
     }
 
+    // 【v2.2.1変更】通常グループへの参加処理
     window.executeJoinGroup = function() {
       const name = document.getElementById('modal-join-name').value.trim();
       const id = document.getElementById('modal-join-id').value.trim();
       const pass = document.getElementById('modal-join-pass').value.trim();
 
-      if (!name || !id || !pass) return alert('全項目を入力してください');
+      // パスワードはラジオ局の場合「空」でもOKとするため、表示名とIDのみ必須チェック
+      if (!name || !id) return alert('表示名とグループIDを入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
       const existingGroup = customGroups.find(g => g.id === id);
@@ -1822,7 +1826,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1832,7 +1836,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1855,7 +1859,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v220', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v221', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -1863,7 +1867,6 @@
     function updateStatus() {
       const count = Object.keys(activeCalls).length;
       if (currentMode === 'group') {
-        // 【v2.2.0変更】ラジオモードのUI分岐を追加
         const g = customGroups.find(x => x.id === currentGroupId);
         if (g && g.isRadio) {
           if (g.hostId === myPeerId) {
@@ -1875,7 +1878,6 @@
           } else {
             statusEl.innerText = `【🎧 ${g.name}】を受信中`;
             countEl.innerText = count > 0 ? `接続中: ほかリスナー ${count} 人` : '接続中: リスナー (あなただけです)';
-            // リスナーは発言不可
             talkBtn.disabled = true;
             toggleBtn.disabled = true;
             talkBtn.innerText = '🎧 聞き専モード';
@@ -2087,7 +2089,6 @@
 
     const startTalking = (e) => {
       e.preventDefault();
-      // 【v2.2.0追加】ラジオのリスナーは発言ボタンを無効化
       if (currentMode === 'group' && currentGroupId) {
           const g = customGroups.find(x => x.id === currentGroupId);
           if (g && g.isRadio && g.hostId !== myPeerId) return;
@@ -2131,7 +2132,6 @@
     talkBtn.addEventListener('mouseleave', stopTalking);
 
     toggleBtn.addEventListener('click', () => {
-      // 【v2.2.0追加】ラジオのリスナーは発言ボタンを無効化
       if (currentMode === 'group' && currentGroupId) {
           const g = customGroups.find(x => x.id === currentGroupId);
           if (g && g.isRadio && g.hostId !== myPeerId) return;
