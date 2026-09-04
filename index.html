@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.0.5</title>
+  <title>Naisync - 内線トランシーバー v2.0.6</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -265,13 +265,14 @@
     body.dark-mode .participant-item { background: #2a2d32; border-color: #444; color: #e0e0e0; }
     body.dark-mode .participant-item .p-name { color: #e0e0e0; }
     body.dark-mode #toggle-btn { background-color: #2a2d32; border-color: #555; color: #ccc; }
+    body.dark-mode #auth-overlay { background: #121212; }
     body.dark-mode .changelog-list { background: #2a2d32; border-color: #444; color: #ccc; }
     body.dark-mode .changelog-item { border-color: #444; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">v2.0.5</div>
+  <div class="version-tag">v2.0.6</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -469,7 +470,6 @@
         <strong>Q. 問い合わせ・不具合の連絡先</strong>
         <p>A. Naisync公式X（<a href="https://x.com/NaiSync" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">@NaiSync</a>）までお気軽にDMやリプライでお知らせください！</p>
       </div>
-      <!-- 【v2.0.5追加】バグ報告サイトへのリンク -->
       <div class="faq-item">
         <strong>Q. バグ・不具合の報告</strong>
         <p>A. <a href="https://aoirocat-bluecat.github.io/naisyncbugs/" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">バグ報告専用サイト</a>より情報をお寄せください。</p>
@@ -477,7 +477,6 @@
 
       <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;" id="test-server-wrap">
         <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 公式テストサーバー</h4>
-        <!-- 【v2.0.5変更】テストルームを誰でも喋れるパブリックルームに変更 -->
         <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('public')">公式パブリックルームに参加 (誰でも会話可)</button>
         <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('namereq')">名前必須ルームを追加 (要名前)</button>
       </div>
@@ -494,15 +493,7 @@
       <h3>❓ ログイン・登録のQ&A</h3>
       <div class="faq-item">
         <strong>Q. メールアドレスは必要ですか？</strong>
-        <p>A. いいえ、不要です。お好きな「内線ID」と「パスワード」だけで安全に登録できます。</p>
-      </div>
-      <div class="faq-item">
-        <strong>Q. パスワードを忘れてしまったら？</strong>
-        <p>A. アカウント保護のため、現在の仕様ではパスワードの復元・再発行はできません。お手数ですが、別の新しいIDで「新規登録」から作り直してください。</p>
-      </div>
-      <div class="faq-item">
-        <strong>Q. 「登録失敗」のエラーが出ます</strong>
-        <p>A. すでに他の人がそのIDを使っている可能性があります。別のIDに変更するか、パスワードが6文字以上になっているか確認してください。</p>
+        <p>A. いいえ、不要です。お好きな "内線ID" と "パスワード" だけですぐに利用できます。</p>
       </div>
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="window.closeAuthHelp()">閉じる</button>
@@ -516,37 +507,25 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.0.5変更】履歴を追加 -->
-          <div class="changelog-version">v2.0.5 (最新)</div>
-          <div>・ヘルプ画面にバグ報告専用サイトへのリンクを追加しました。<br>・テストルームを「公式パブリックルーム（誰でも他の人と喋れる常設部屋）」に仕様変更しました。</div>
+          <!-- 【v2.0.6変更】履歴を追加 -->
+          <div class="changelog-version">v2.0.6 (最新)</div>
+          <div>・招待リンク等から参加した際に全員がリーダー権限を持ってしまう重大なバグを修正。<br>・最初にグループを作成した人だけが真のリーダー（👑）になるように修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.0.5</div>
+          <div>・ヘルプ画面にバグ報告専用サイトのリンクを追加。<br>・テストルームを「公式パブリックルーム」に変更。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.0.4</div>
-          <div>・タブ移動時に通話が完全に切断されない（ゴースト音声化する）重大なバグを修正しました。<br>・他のモードからの不正な着信を完全に遮断する通信分離システムを導入しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.0.3</div>
-          <div>・ログイン画面とメイン画面に公式のアプリロゴアイコンを追加しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.0.2</div>
-          <div>・問い合わせ先をNaisync公式アカウント（@NaiSync）に変更しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.0.1</div>
-          <div>・大所帯のグループでも画面が邪魔にならないよう、接続/退出/着信時のポップアップ通知を廃止しました。</div>
+          <div>・タブ移動時のゴースト音声化（通話の切り忘れ）バグを修正。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.0.0</div>
-          <div>・キックされた際にグループのタブを自動削除し、再入室を防止する機能を実装（メジャーアップデート）</div>
+          <div>・キック時のタブ自動削除機能を実装。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.9.9</div>
-          <div>・リーダー（ホスト）機能の追加（グループ作成者が自動的にリーダーに）<br>・メンバーの強制退出（キック）機能の追加<br>・グループパスワードの強制変更機能の追加</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.9.8</div>
-          <div>・グループ招待リンクの共有・ワンタップ参加機能の追加</div>
+          <div>・リーダー（ホスト）機能およびパスワード強制変更機能の追加。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -588,7 +567,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v205-';
+    const APP_SECRET = 'naisen-app-v206-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -628,18 +607,19 @@
           pass: params.get('p'),
           name: params.get('n') || params.get('g'),
           requireName: params.get('req') === '1',
+          // 【v2.0.6修正】招待リンクからの参加時は、URLに含まれる真のホストIDを保持する（自分がホストに昇格しない）
           hostId: params.get('h') || null 
         };
         window.history.replaceState(null, '', window.location.pathname);
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v205')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v206')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v204'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v205'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
       }
     }
 
@@ -724,7 +704,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -879,7 +859,6 @@
     }
 
     function updateChatUI() {
-      // 【v2.0.5変更】パブリックルームはチャットも自由に使えるように開放
       if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
         chatInput.disabled = true;
         chatSendBtn.disabled = true;
@@ -1045,15 +1024,20 @@
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         mqttClient.on('connect', () => {
           if (pendingInvite) {
+            // 【v2.0.6修正】招待リンクから参加する場合、既存のグループ設定（ホスト情報含む）を正しく優先保持する
             const index = customGroups.findIndex(g => g.id === pendingInvite.id);
             if (index >= 0) {
-              customGroups[index] = pendingInvite;
+              // 既にタブがある場合はパスワードや名前を更新しつつ、既存の正しいhostIdを維持する
+              customGroups[index].pass = pendingInvite.pass;
+              customGroups[index].name = pendingInvite.name;
+              customGroups[index].requireName = pendingInvite.requireName;
+              if (pendingInvite.hostId) customGroups[index].hostId = pendingInvite.hostId;
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
             
-            const targetGroup = pendingInvite;
+            const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
             joinGroup(targetGroup);
           } else {
@@ -1072,7 +1056,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1082,7 +1066,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1440,7 +1424,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1450,7 +1434,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1462,7 +1446,6 @@
     window.addTestGroup = function(type) {
       let testGroup;
       if (type === 'public') {
-        // 【v2.0.5変更】誰でも入れる公開パブリックルーム（共通の固定IDと合言葉）
         testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', requireName: false };
       } else {
         testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true };
@@ -1470,7 +1453,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v206', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
