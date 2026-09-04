@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.1.0</title>
+  <title>Naisync - 内線トランシーバー v2.1.1</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -165,6 +165,11 @@
     .modal-box label { font-size: 12px; color: #555; font-weight: bold; margin-top: 12px; display: block; transition: color 0.3s; }
     .modal-buttons { display: flex; gap: 8px; margin-top: 24px; }
 
+    /* 【v2.1.1追加】モーダル内のタブ切り替えボタン用スタイル */
+    .modal-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+    .modal-tab-btn { flex: 1; padding: 8px; background: #e0e0e0; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; color: #555; transition: 0.2s; }
+    .modal-tab-btn.active { background: #007bff; color: white; }
+
     .toggle-switch { display: inline-flex; align-items: center; cursor: pointer; margin-top: 8px; }
     .toggle-switch input { display: none; }
     .toggle-slider {
@@ -268,11 +273,13 @@
     body.dark-mode .auth-overlay { background: #121212; }
     body.dark-mode .changelog-list { background: #2a2d32; border-color: #444; color: #ccc; }
     body.dark-mode .changelog-item { border-color: #444; }
+    body.dark-mode .modal-tab-btn { background: #333; color: #aaa; }
+    body.dark-mode .modal-tab-btn.active { background: #007bff; color: white; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">v2.1.0</div>
+  <div class="version-tag">v2.1.1</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -430,27 +437,51 @@
     </div>
   </div>
 
-  <!-- グループ追加モーダル -->
+  <!-- 【v2.1.1変更】グループ作成・参加モーダル（作成タブ / 参加タブに分離） -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
-      <h3>グループの作成・参加</h3>
-      <label>表示名（画面上のタブ名）</label>
-      <input type="text" id="modal-group-name" placeholder="例: 営業チーム">
-      <label>グループID（半角英数字）</label>
-      <input type="text" id="modal-group-id" placeholder="例: room-101">
-      <label>パスワード</label>
-      <input type="password" id="modal-group-pass" placeholder="パスワードを入力">
-      
-      <label class="checkbox-label">
-        <input type="checkbox" id="modal-group-require-name">
-        参加者に「名前設定」を必須にする
-      </label>
-
-      <div class="modal-buttons">
-        <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
-        <button class="btn-action" onclick="saveNewGroup()">追加して参加</button>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" id="tab-btn-create" onclick="window.switchGroupModalTab('create')">➕ グループを作成</button>
+        <button class="modal-tab-btn" id="tab-btn-join" onclick="window.switchGroupModalTab('join')">🔗 グループに参加</button>
       </div>
-      <p style="font-size: 11px; color: #888; margin-top: 16px;">※グループを作成した人は自動的に「リーダー（👑）」となり、キックやパスワード変更が可能になります。</p>
+
+      <!-- 作成フォーム -->
+      <div id="form-create-section">
+        <h3>グループを作成 (オーナー)</h3>
+        <label>表示名（画面上のタブ名）</label>
+        <input type="text" id="modal-create-name" placeholder="例: 営業チーム">
+        <label>グループID（半角英数字）</label>
+        <input type="text" id="modal-create-id" placeholder="例: room-101">
+        <label>パスワード</label>
+        <input type="password" id="modal-create-pass" placeholder="パスワードを入力">
+        
+        <label class="checkbox-label">
+          <input type="checkbox" id="modal-create-require-name">
+          参加者に「名前設定」を必須にする
+        </label>
+
+        <div class="modal-buttons">
+          <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
+          <button class="btn-action" onclick="window.executeCreateGroup()">作成して参加</button>
+        </div>
+      </div>
+
+      <!-- 参加フォーム -->
+      <div id="form-join-section" style="display: none;">
+        <h3>既存グループに参加</h3>
+        <label>表示名（画面上のタブ名）</label>
+        <input type="text" id="modal-join-name" placeholder="例: 営業チーム(参加)">
+        <label>グループID（半角英数字）</label>
+        <input type="text" id="modal-join-id" placeholder="例: room-101">
+        <label>パスワード</label>
+        <input type="password" id="modal-join-pass" placeholder="パスワードを入力">
+
+        <div class="modal-buttons">
+          <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
+          <button class="btn-action" onclick="window.executeJoinGroup()">参加する</button>
+        </div>
+        <p style="font-size: 11px; color: #888; margin-top: 16px;">※参加タブから入った場合、ホスト権限は一切取得せず、安全にメンバーとして参加します。</p>
+      </div>
     </div>
   </div>
 
@@ -464,7 +495,7 @@
       </div>
       <div class="faq-item">
         <strong>Q. リーダー（👑）とは？</strong>
-        <p>A. グループを「＋作成」から作った人のことです。リーダーは参加者を追放（キック）したり、パスワードを強制変更して部屋をロックすることができます。</p>
+        <p>A. グループを「作成タブ」から作った人のことです。リーダーは参加者を追放（キック）したり、パスワードを強制変更して部屋をロックすることができます。</p>
       </div>
       <div class="faq-item">
         <strong>Q. 問い合わせ・不具合の連絡先</strong>
@@ -507,9 +538,9 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.1.0変更】履歴を追加 -->
-          <div class="changelog-version">v2.1.0 (最新)</div>
-          <div>・ルーム内のホスト情報自動同期機能を強化。<br>・後から入った人がリーダー権限を誤って持ってしまっても、真のホストからの信号で自動的にメンバーに修正されるように改善しました。</div>
+          <!-- 【v2.1.1変更】履歴を追加 -->
+          <div class="changelog-version">v2.1.1 (最新)</div>
+          <div>・グループ追加モーダルを「作成タブ」と「参加タブ」に完全に分離。<br>・参加タブから入った場合は絶対にホスト権限を取得せず、真のオーナーの権利を完全に保護するように仕様を変更しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.0.5</div>
@@ -567,7 +598,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v210-';
+    const APP_SECRET = 'naisen-app-v211-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -613,12 +644,12 @@
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v210')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v211')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v209'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v210'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
       }
     }
 
@@ -659,6 +690,26 @@
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
     window.closeChangelog = function() { document.getElementById('changelog-modal').style.display = 'none'; }
+
+    // 【v2.1.1追加】モーダルのタブ切り替え機能
+    window.switchGroupModalTab = function(tabName) {
+      const createSec = document.getElementById('form-create-section');
+      const joinSec = document.getElementById('form-join-section');
+      const btnCreate = document.getElementById('tab-btn-create');
+      const btnJoin = document.getElementById('tab-btn-join');
+
+      if (tabName === 'create') {
+        createSec.style.display = 'block';
+        joinSec.style.display = 'none';
+        btnCreate.classList.add('active');
+        btnJoin.classList.remove('active');
+      } else {
+        createSec.style.display = 'none';
+        joinSec.style.display = 'block';
+        btnJoin.classList.add('active');
+        btnCreate.classList.remove('active');
+      }
+    }
 
     window.copyGroupInvite = function() {
       if (currentMode !== 'group' || !currentGroupId) return;
@@ -703,14 +754,14 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
 
     function applyStreamerModeToUI() {
       const idsToMask = [
-        myIdEl, peerIdInput, document.getElementById('modal-group-id'),
+        myIdEl, peerIdInput, document.getElementById('modal-create-id'), document.getElementById('modal-join-id'),
         document.getElementById('login-id'), document.getElementById('reg-id')
       ];
       if (isStreamerMode) {
@@ -1034,7 +1085,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1051,29 +1102,25 @@
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
-          // 【v2.1.0修正】自分がホスト（またはホスト未設定）で、かつ参加者から送られてきた hostId が自分と異なる場合：
-          // 自分が「後から入った側（かつ誤って自分がホストになっていた）」であるなら、真のホスト側（data.hostId）を絶対優先して上書きし、自分をメンバーに降格させる。
           if (data.type === 'join' && data.hostId && currentGroupObj) {
             if (currentGroupObj.hostId === myPeerId && myPeerId !== data.hostId) {
-              // 自分が「自分をホストだと思っていた」が、相手（data.hostId）が本来のホストである場合、相手をホストとして受け入れる
               currentGroupObj.hostId = data.hostId;
-              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
               renderTabs();
               document.getElementById('host-controls').style.display = 'none';
             } else if (!currentGroupObj.hostId) {
               currentGroupObj.hostId = data.hostId;
-              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
               renderTabs();
               const isHostNow = (currentGroupObj.hostId === myPeerId);
               document.getElementById('host-controls').style.display = isHostNow ? 'block' : 'none';
             }
           }
 
-          // ホスト側からの「俺がホストだ」という同期信号を受け取った場合の処理
           if (data.type === 'host_sync' && data.hostId && currentGroupObj) {
             if (currentGroupObj.hostId !== data.hostId) {
               currentGroupObj.hostId = data.hostId;
-              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
               renderTabs();
               const isHostNow = (currentGroupObj.hostId === myPeerId);
               document.getElementById('host-controls').style.display = isHostNow ? 'block' : 'none';
@@ -1084,7 +1131,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1094,7 +1141,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1104,7 +1151,6 @@
             if (data.senderName) updateParticipantName(data.peerId, data.senderName);
             if (isNameRequired && !data.senderName) return;
 
-            // 【v2.1.0追加】自分がホストなら、新しく入ってきた人に対して「俺がホストだ」という同期信号を即座に送り返す
             if (currentGroupObj && currentGroupObj.hostId === myPeerId) {
               mqttClient.publish(currentGroupTopic, JSON.stringify({
                 type: 'host_sync', senderId: myPeerId, hostId: myPeerId
@@ -1438,35 +1484,67 @@
     });
 
     window.openGroupModal = function() {
-      document.getElementById('modal-group-name').value = '';
-      document.getElementById('modal-group-id').value = '';
-      document.getElementById('modal-group-pass').value = '';
-      document.getElementById('modal-group-require-name').checked = false; 
+      // モーダルを開いたときはデフォルトで「作成タブ」を選択状態にする
+      window.switchGroupModalTab('create');
+      document.getElementById('modal-create-name').value = '';
+      document.getElementById('modal-create-id').value = '';
+      document.getElementById('modal-create-pass').value = '';
+      document.getElementById('modal-create-require-name').checked = false; 
+
+      document.getElementById('modal-join-name').value = '';
+      document.getElementById('modal-join-id').value = '';
+      document.getElementById('modal-join-pass').value = '';
+
       document.getElementById('group-modal').style.display = 'flex';
     }
     window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
-    window.saveNewGroup = function() {
-      const name = document.getElementById('modal-group-name').value.trim();
-      const id = document.getElementById('modal-group-id').value.trim();
-      const pass = document.getElementById('modal-group-pass').value.trim();
-      const requireName = document.getElementById('modal-group-require-name').checked;
+    // 【v2.1.1追加】「作成タブ」からのグループ作成（自分をhostIdにする）
+    window.executeCreateGroup = function() {
+      const name = document.getElementById('modal-create-name').value.trim();
+      const id = document.getElementById('modal-create-id').value.trim();
+      const pass = document.getElementById('modal-create-pass').value.trim();
+      const requireName = document.getElementById('modal-create-require-name').checked;
 
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      // 【v2.1.0修正】すでにそのグループがローカルにある場合、絶対に既存の真の hostId を引き継ぎ、自分が勝手にホストにならないようにする
-      const existingGroup = customGroups.find(g => g.id === id);
-      const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : myPeerId;
-
-      const newGroup = { id, name, pass, requireName, hostId };
+      // 自分がオーナー（hostId = myPeerId）として新しく作成
+      const newGroup = { id, name, pass, requireName, hostId: myPeerId };
       const index = customGroups.findIndex(g => g.id === id);
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
+    }
+
+    // 【v2.1.1追加】「参加タブ」からのグループ参加（hostIdは持ち込まない・設定しない）
+    window.executeJoinGroup = function() {
+      const name = document.getElementById('modal-join-name').value.trim();
+      const id = document.getElementById('modal-join-id').value.trim();
+      const pass = document.getElementById('modal-join-pass').value.trim();
+
+      if (!name || !id || !pass) return alert('全項目を入力してください');
+      if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
+
+      // すでに登録されているグループがあれば、既存の hostId を保持。なければ null（後からネットワーク経由で本当のホストから同期される）
+      const existingGroup = customGroups.find(g => g.id === id);
+      const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : null;
+
+      const newGroup = { id, name, pass, requireName: false, hostId };
+      const index = customGroups.findIndex(g => g.id === id);
+      if (index >= 0) {
+        customGroups[index].pass = pass;
+        customGroups[index].name = name;
+      } else {
+        customGroups.push(newGroup);
+      }
+
+      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
+      window.closeGroupModal();
+      joinGroup(customGroups.find(g => g.id === id));
     }
 
     function deleteGroup(groupId, groupName, e) {
@@ -1474,7 +1552,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1497,7 +1575,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v211', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -1555,7 +1633,6 @@
       } else {
         toggleBtn.classList.remove('locked');
         toggleBtn.innerText = '常時通話に切り替え (OFF)';
-        talkBtn.classList.add('active');
         talkBtn.classList.remove('active');
         talkBtn.innerText = '長押しで話す';
         talkBtn.style.opacity = '1';
