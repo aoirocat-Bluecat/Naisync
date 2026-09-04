@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.4</title>
+  <title>Naisync - 内線トランシーバー v2.2.5</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -130,7 +130,6 @@
     .participant-item .p-ctrl { display: flex; align-items: center; gap: 6px; }
     .participant-item input[type=range] { width: 90px; margin: 0; }
 
-    /* 【v2.2.4追加】自動字幕専用オーバーレイUI */
     #subtitle-container { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 12px; }
     .subtitle-box {
       background: rgba(0, 0, 0, 0.75); color: white; padding: 10px 14px;
@@ -317,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.4</div>
+  <div class="version-tag">v2.2.5</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -423,7 +422,6 @@
       <div id="reversi-board" class="reversi-board"></div>
     </div>
 
-    <!-- 【v2.2.4追加】字幕表示専用オーバーレイエリア -->
     <div id="subtitle-container"></div>
 
     <div class="chat-section">
@@ -461,7 +459,6 @@
         <span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
       </div>
 
-      <!-- 【v2.2.4変更】文字起こしのモード選択タブ -->
       <label style="margin-top: 24px;">🗣️ 自分の声の文字起こし</label>
       <div class="modal-tabs" style="margin-top: 4px; margin-bottom: 0; border: none; padding-bottom: 0;">
         <button class="modal-tab-btn active" id="trans-off" onclick="window.setTransMode('off')">OFF</button>
@@ -607,8 +604,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.4変更】履歴を追加 -->
-          <div class="changelog-version">v2.2.4 (最新)</div>
+          <!-- 秘密のアップデートなので濁しておきます -->
+          <div class="changelog-version">v2.2.5 (最新)</div>
+          <div>・ラジオ局（裏コマンド）のホストが「✕」ボタンでタブを閉じた際、リスナー全員を自動でキック（強制退出・タブ削除）して放送を完全終了させる機能を追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.4</div>
           <div>・字幕の共有設定（自分のみ/相手に共有）を選択できるようになりました。<br>・文字起こしがチャット欄を埋めないよう、動画のような「数秒で消える字幕エリア」を新設しました。</div>
         </div>
         <div class="changelog-item">
@@ -671,7 +672,8 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v224/';
+    // 【v2.2.5変更】
+    const APP_PREFIX = 'Naisync/v225/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -696,7 +698,6 @@
     let checkingGroupId = null;
     let isGroupIdTaken = false;
 
-    // 【v2.2.4変更】文字起こしのモード変数
     let transMode = localStorage.getItem('my_naisen_trans_mode') || 'off';
     let speechRecognition = null;
 
@@ -737,15 +738,15 @@
     let customGroups = [];
 
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v224'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v225'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v223')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v224')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v224', JSON.stringify(groups));
+         localStorage.setItem('my_naisen_groups_v225', JSON.stringify(groups));
       }
       customGroups = groups;
     }
@@ -789,7 +790,6 @@
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
     window.closeChangelog = function() { document.getElementById('changelog-modal').style.display = 'none'; }
 
-    // 【v2.2.4追加】字幕専用オーバーレイへの表示処理
     window.showSubtitle = function(sender, text) {
       const container = document.getElementById('subtitle-container');
       if (!container) return;
@@ -800,7 +800,6 @@
       
       container.appendChild(div);
       
-      // 4秒後にフェードアウトして消す
       setTimeout(() => {
         div.style.opacity = '0';
         div.style.transition = 'opacity 0.5s';
@@ -877,9 +876,33 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
+    }
+
+    // 【v2.2.5変更】ラジオ局ホストがタブを閉じた際の退出＆全体キック処理
+    function deleteGroup(groupId, groupName, e) {
+      if (e) e.stopPropagation();
+      if (!confirm(`「${groupName}」タブを削除しますか？`)) return;
+
+      const g = customGroups.find(x => x.id === groupId);
+      
+      // ラジオ局のホストが削除（退出）した場合、終了シグナルをネットワークに投げて部屋を閉鎖する
+      if (g && g.isRadio && g.hostId === myPeerId) {
+        if (mqttClient && mqttClient.connected) {
+          const topicToClose = `${APP_PREFIX}${g.id}/${g.pass}`;
+          mqttClient.publish(topicToClose, JSON.stringify({
+            type: 'radio_close', senderId: myPeerId
+          }), { retain: true }); // 今後入ろうとするリスナーも弾くため保持
+        }
+      }
+
+      customGroups = customGroups.filter(x => x.id !== groupId);
+      localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+
+      if (currentGroupId === groupId) switchToDirect();
+      else renderTabs();
     }
 
     function applyStreamerModeToUI() {
@@ -1020,7 +1043,6 @@
         }
         
         if (text.trim() !== '') {
-          // 【v2.2.4変更】設定モードに応じた字幕送信・表示ロジック
           let senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
           
           if (transMode === 'self') {
@@ -1028,7 +1050,6 @@
           } else if (transMode === 'all') {
             window.showSubtitle(senderName, text.trim());
             
-            // 相手に「字幕データ(subtitle)」として送信
             if (currentMode === 'group' && currentGroupTopic) {
               mqttClient.publish(currentGroupTopic, JSON.stringify({
                 type: 'subtitle', senderId: myPeerId, senderName: senderName, text: text.trim()
@@ -1103,7 +1124,6 @@
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
-        // 【v2.2.4変更】文字起こしのタブボタンの初期化
         document.getElementById('trans-off').classList.remove('active');
         document.getElementById('trans-self').classList.remove('active');
         document.getElementById('trans-all').classList.remove('active');
@@ -1164,7 +1184,6 @@
       alert('名前を保存しました！');
     }
 
-    // 【v2.2.4変更】文字起こしのモード変更処理
     window.setTransMode = function(mode) {
       transMode = mode;
       localStorage.setItem('my_naisen_trans_mode', mode);
@@ -1288,7 +1307,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1309,6 +1328,17 @@
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
+          // 【v2.2.5変更】ラジオ局閉鎖イベントの受信処理
+          if (data.type === 'radio_close' && data.senderId !== myPeerId) {
+            if (currentGroupObj && currentGroupObj.isRadio && data.senderId === currentGroupObj.hostId) {
+              alert('📻 放送局のオーナーが番組を終了しました。退出します。');
+              customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
+              localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+              switchToDirect();
+              return;
+            }
+          }
+
           if ((data.type === 'room_meta' || data.type === 'host_sync' || data.type === 'join') && data.hostId && currentGroupObj) {
             const remoteTime = data.createdAt || 9999999999999;
             const localTime = currentGroupObj.createdAt || 9999999999999;
@@ -1320,7 +1350,7 @@
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
                 if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
-                localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+                localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
                 updateStatus();
@@ -1340,7 +1370,7 @@
                  updated = true;
                }
                if (updated) {
-                 localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+                 localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
                  updateStatus();
                }
             }
@@ -1350,7 +1380,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1360,7 +1390,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1380,9 +1410,8 @@
             if (currentGroupId === 'test-nameroom') return;
             
             showNotification(`💬 ${data.senderName}: ${data.text}`);
-            addChatLog(data.senderName, data.text, false);
             
-          // 【v2.2.4追加】相手から字幕データを受信した時の処理
+            addChatLog(data.senderName, data.text, false);
           } else if (data.type === 'subtitle' && data.senderId !== myPeerId) {
             window.showSubtitle(data.senderName, data.text);
           }
@@ -1541,7 +1570,6 @@
           showNotification(`💬 ${data.senderName}: ${data.text}`);
           addChatLog(data.senderName, data.text, false);
 
-        // 【v2.2.4追加】1対1通話中の字幕受信処理
         } else if (data && data.type === 'subtitle') {
           window.showSubtitle(data.senderName, data.text);
 
@@ -1667,7 +1695,7 @@
       groupPanel.style.display = 'block';
 
       const isHost = (groupObj.hostId === myPeerId);
-      document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
+      document.getElementById('host-controls').style.display = isHost && !groupObj.isRadio ? 'block' : 'none';
 
       currentGroupTopic = `${APP_PREFIX}${groupObj.id}/${groupObj.pass}`;
 
@@ -1716,7 +1744,7 @@
 
           const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true };
           customGroups.push(newGroup);
-          localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
           joinGroup(newGroup);
           renderTabs();
         }, 100);
@@ -1815,7 +1843,7 @@
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1846,20 +1874,9 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
-    }
-
-    function deleteGroup(groupId, groupName, e) {
-      if (e) e.stopPropagation();
-      if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
-
-      customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
-
-      if (currentGroupId === groupId) switchToDirect();
-      else renderTabs();
     }
 
     window.openHelp = function() { document.getElementById('help-modal').style.display = 'flex'; }
@@ -1879,7 +1896,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
