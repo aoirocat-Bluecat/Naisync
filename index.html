@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.1.5</title>
+  <title>Naisync - 内線トランシーバー v2.1.6</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -278,7 +278,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.1.5</div>
+  <div class="version-tag">v2.1.6</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -398,7 +398,15 @@
         <span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
       </div>
 
-      <label style="margin-top: 24px;">🎧 ノイズキャンセリング</label>
+      <!-- 【v2.1.6追加】自動文字起こしの設定トグル -->
+      <label style="margin-top: 24px;">🗣️ 自動文字起こし（チャット連動）</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="transcription-checkbox">
+        <div class="toggle-slider"></div>
+        <span id="transcription-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
+      </label>
+
+      <label style="margin-top: 20px;">🎧 ノイズキャンセリング</label>
       <label class="toggle-switch">
         <input type="checkbox" id="nc-checkbox" checked>
         <div class="toggle-slider"></div>
@@ -461,7 +469,6 @@
 
         <div class="modal-buttons">
           <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
-          <!-- 【v2.1.5変更】ボタンにIDを付与 -->
           <button class="btn-action" id="btn-create-submit" onclick="window.executeCreateGroup()">作成して参加</button>
         </div>
       </div>
@@ -538,8 +545,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.1.5変更】履歴を追加 -->
-          <div class="changelog-version">v2.1.5 (最新)</div>
+          <!-- 【v2.1.6変更】履歴を追加 -->
+          <div class="changelog-version">v2.1.6 (最新)</div>
+          <div>・Web Speech APIを利用した「自動文字起こし（チャット連動）」機能を実装しました。設定からONにすると、話した言葉が自動でチャットに送信されます。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.1.5</div>
           <div>・「グループ作成」時にネットワーク全体を1秒間スキャンし、世界中で誰かがすでに使っているIDの場合は作成をブロックする、グローバル重複防止システムを実装しました。</div>
         </div>
         <div class="changelog-item">
@@ -594,8 +605,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // 【v2.1.5変更】MQTTトピックの構造を「/」区切りに変更し、ワイルドカード検索（#）を可能にしました
-    const APP_PREFIX = 'Naisync/v215/';
+    const APP_PREFIX = 'Naisync/v216/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -617,9 +627,12 @@
     let currentUser = null;
     let savedMyName = '';
     
-    // 【v2.1.5追加】重複チェック用のグローバル変数
     let checkingGroupId = null;
     let isGroupIdTaken = false;
+
+    // 【v2.1.6追加】音声認識（Web Speech API）の準備
+    let isTranscriptionOn = localStorage.getItem('my_naisen_transcription') === 'true';
+    let speechRecognition = null;
 
     let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
@@ -649,14 +662,14 @@
     let customGroups = [];
 
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v215'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v216'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v214')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v215')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v215', JSON.stringify(groups));
+         localStorage.setItem('my_naisen_groups_v216', JSON.stringify(groups));
       }
       customGroups = groups;
     }
@@ -680,6 +693,8 @@
     const participantsList = document.getElementById('participants-list');
     const participantsSection = document.getElementById('participants-section');
 
+    const transcriptionCheckbox = document.getElementById('transcription-checkbox');
+    const transcriptionStatusText = document.getElementById('transcription-status-text');
     const ncCheckbox = document.getElementById('nc-checkbox');
     const ncStatusText = document.getElementById('nc-status-text');
     const micVolumeSlider = document.getElementById('mic-volume-slider');
@@ -761,7 +776,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -886,6 +901,48 @@
       }
     });
 
+    // 【v2.1.6追加】Web Speech API の初期化関数
+    function initSpeechRecognition() {
+      if (!('webkitSpeechRecognition' in window)) return;
+      speechRecognition = new webkitSpeechRecognition();
+      speechRecognition.lang = 'ja-JP';
+      speechRecognition.continuous = true;
+      speechRecognition.interimResults = false;
+      
+      speechRecognition.onresult = (event) => {
+        // もしテストルーム等でチャットが禁止されている場合は送信しない
+        if (currentMode === 'group' && currentGroupId === 'test-nameroom') return;
+
+        let text = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          if (event.results[i].isFinal) {
+            text += event.results[i][0].transcript;
+          }
+        }
+        
+        if (text.trim() !== '') {
+          // 元々入力欄に書いていた文字をバックアップ
+          const backupInput = chatInput.value;
+          // チャット欄に音声認識された文字をセットして送信
+          chatInput.value = "🎤 " + text.trim();
+          sendChatMessage();
+          // 手打ちの文字があったら元に戻す
+          chatInput.value = backupInput;
+        }
+      };
+      
+      speechRecognition.onerror = (e) => { 
+        console.warn('自動文字起こしエラー:', e.error); 
+      };
+
+      // 常時通話ロック時に音声認識が途切れたら再起動する
+      speechRecognition.onend = () => {
+         if (isLocked && isTranscriptionOn && rawAudioTrack && rawAudioTrack.enabled) {
+             try { speechRecognition.start(); } catch(e){}
+         }
+      };
+    }
+
     function startMainApp() {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('main-header').style.display = 'flex';
@@ -898,7 +955,6 @@
       streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
 
       loadAndMigrateGroups(currentUser.customId || currentUser.email.split('@')[0]);
-
       initMicrophoneAndNetwork();
     }
 
@@ -937,6 +993,10 @@
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
+        // UI初期化
+        transcriptionCheckbox.checked = isTranscriptionOn;
+        transcriptionStatusText.innerText = isTranscriptionOn ? 'ON' : 'OFF';
+
         ncCheckbox.checked = isNoiseCanceling;
         ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
         micVolumeSlider.value = savedMicVolume;
@@ -945,6 +1005,9 @@
         spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
         notifCheckbox.checked = isNotificationOn;
         notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
+
+        // 音声認識の初期化
+        if (isTranscriptionOn) initSpeechRecognition();
 
         const audioConstraints = {
           audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
@@ -988,6 +1051,14 @@
       });
       alert('名前を保存しました！');
     }
+
+    // 【v2.1.6追加】文字起こし設定の保存イベント
+    transcriptionCheckbox.addEventListener('change', (e) => {
+      isTranscriptionOn = e.target.checked;
+      transcriptionStatusText.innerText = isTranscriptionOn ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_transcription', isTranscriptionOn);
+      if(isTranscriptionOn && !speechRecognition) initSpeechRecognition();
+    });
 
     ncCheckbox.addEventListener('change', async (e) => {
       isNoiseCanceling = e.target.checked;
@@ -1094,7 +1165,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1105,7 +1176,6 @@
         });
 
         mqttClient.on('message', (topic, message) => {
-          // 【v2.1.5追加】「作成」時のID空き状況チェック（ワイルドカード機能で受信）
           if (checkingGroupId && topic.startsWith(`${APP_PREFIX}${checkingGroupId}/`)) {
             isGroupIdTaken = true;
           }
@@ -1126,7 +1196,7 @@
               if (isRemoteDominant) {
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
-                localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+                localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
               } else if (currentGroupObj.hostId === myPeerId) {
@@ -1136,7 +1206,7 @@
               }
             } else if (currentGroupObj.hostId === data.hostId && remoteTime < localTime) {
                currentGroupObj.createdAt = remoteTime;
-               localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+               localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
             }
           }
 
@@ -1144,7 +1214,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1154,7 +1224,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1428,7 +1498,6 @@
       const isHost = (groupObj.hostId === myPeerId);
       document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
 
-      // 【v2.1.5変更】トピックの構造を「/」区切りに変更
       currentGroupTopic = `${APP_PREFIX}${groupObj.id}/${groupObj.pass}`;
 
       mqttClient.subscribe(currentGroupTopic);
@@ -1518,7 +1587,6 @@
     }
     window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
-    // 【v2.1.5追加】ネットワークへの空き状況問い合わせロジック
     window.executeCreateGroup = function() {
       if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
 
@@ -1536,7 +1604,6 @@
         return;
       }
 
-      // ネットワーク上で他の人が使っていないかチェックする
       const btn = document.getElementById('btn-create-submit');
       btn.disabled = true;
       btn.innerText = 'IDの空き状況を確認中...';
@@ -1544,12 +1611,10 @@
       checkingGroupId = id;
       isGroupIdTaken = false;
       
-      // パスワードに関わらず、そのIDの配下にあるすべてのトピックを「#（ワイルドカード）」で監視
       const checkTopic = `${APP_PREFIX}${id}/#`;
 
       mqttClient.subscribe(checkTopic);
 
-      // 1秒待って、すでに使われている通信（保持メッセージ）が飛んでこないか確認する
       setTimeout(() => {
         mqttClient.unsubscribe(checkTopic);
 
@@ -1559,12 +1624,11 @@
           btn.innerText = '作成して参加';
           checkingGroupId = null;
         } else {
-          // 空いていたので作成処理を続行
           checkingGroupId = null;
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now() };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1594,7 +1658,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1604,7 +1668,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1627,7 +1691,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v215', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v216', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -1644,6 +1708,7 @@
       }
     }
 
+    // 【v2.1.6追加】ボタン操作と音声認識の連動
     const startTalking = (e) => {
       e.preventDefault();
       resumeAudioContext(); 
@@ -1651,6 +1716,10 @@
         rawAudioTrack.enabled = true; 
         talkBtn.classList.add('active');
         talkBtn.innerText = '発言中!!';
+        
+        if (isTranscriptionOn && speechRecognition) {
+          try { speechRecognition.start(); } catch(err){}
+        }
       }
     };
 
@@ -1660,6 +1729,10 @@
         rawAudioTrack.enabled = false;
         talkBtn.classList.remove('active');
         talkBtn.innerText = '長押しで話す';
+
+        if (isTranscriptionOn && speechRecognition) {
+          try { speechRecognition.stop(); } catch(err){}
+        }
       }
     };
 
@@ -1682,12 +1755,20 @@
         talkBtn.classList.add('active');
         talkBtn.innerText = '常時通話中';
         talkBtn.style.opacity = '0.5';
+
+        if (isTranscriptionOn && speechRecognition) {
+          try { speechRecognition.start(); } catch(err){}
+        }
       } else {
         toggleBtn.classList.remove('locked');
         toggleBtn.innerText = '常時通話に切り替え (OFF)';
         talkBtn.classList.remove('active');
         talkBtn.innerText = '長押しで話す';
         talkBtn.style.opacity = '1';
+
+        if (isTranscriptionOn && speechRecognition) {
+          try { speechRecognition.stop(); } catch(err){}
+        }
       }
     });
   </script>
