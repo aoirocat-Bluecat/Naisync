@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.3</title>
+  <title>Naisync - 内線トランシーバー v2.2.4</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -129,6 +129,16 @@
     }
     .participant-item .p-ctrl { display: flex; align-items: center; gap: 6px; }
     .participant-item input[type=range] { width: 90px; margin: 0; }
+
+    /* 【v2.2.4追加】自動字幕専用オーバーレイUI */
+    #subtitle-container { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 12px; }
+    .subtitle-box {
+      background: rgba(0, 0, 0, 0.75); color: white; padding: 10px 14px;
+      border-radius: 8px; font-size: 14px; font-weight: bold; text-align: center;
+      animation: toastFadeIn 0.3s ease-out; word-break: break-all;
+    }
+    .subtitle-sender { font-size: 11px; color: #4dabf7; margin-bottom: 4px; }
+    body.dark-mode .subtitle-box { background: rgba(255, 255, 255, 0.15); }
 
     .chat-section { margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left; transition: border-color 0.3s; }
     .chat-title { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 6px; }
@@ -307,7 +317,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.3</div>
+  <div class="version-tag">v2.2.4</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -413,6 +423,9 @@
       <div id="reversi-board" class="reversi-board"></div>
     </div>
 
+    <!-- 【v2.2.4追加】字幕表示専用オーバーレイエリア -->
+    <div id="subtitle-container"></div>
+
     <div class="chat-section">
       <div class="chat-title">💬 テキストチャット</div>
       <div class="chat-logs" id="chat-logs">
@@ -448,13 +461,14 @@
         <span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
       </div>
 
-      <!-- 【v2.2.3変更】設定名と説明を変更 -->
-      <label style="margin-top: 24px;">🗣️ 自動文字起こし（自分のみ表示）</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="transcription-checkbox">
-        <div class="toggle-slider"></div>
-        <span id="transcription-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
-      </label>
+      <!-- 【v2.2.4変更】文字起こしのモード選択タブ -->
+      <label style="margin-top: 24px;">🗣️ 自分の声の文字起こし</label>
+      <div class="modal-tabs" style="margin-top: 4px; margin-bottom: 0; border: none; padding-bottom: 0;">
+        <button class="modal-tab-btn active" id="trans-off" onclick="window.setTransMode('off')">OFF</button>
+        <button class="modal-tab-btn" id="trans-self" onclick="window.setTransMode('self')">自分のみ</button>
+        <button class="modal-tab-btn" id="trans-all" onclick="window.setTransMode('all')">相手に共有</button>
+      </div>
+      <p style="font-size: 11px; color: #888; margin-top: 6px; margin-bottom: 16px;">※「相手に共有」にすると、あなたの声が相手の画面にも字幕として表示されます。</p>
 
       <label style="margin-top: 20px;">🎧 ノイズキャンセリング</label>
       <label class="toggle-switch">
@@ -468,13 +482,6 @@
         <input type="checkbox" id="notif-checkbox" checked>
         <div class="toggle-slider"></div>
         <span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
-      </label>
-
-      <label style="margin-top: 20px;">🔔 文字起こしのポップアップ通知</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="transcription-notif-checkbox" checked>
-        <div class="toggle-slider"></div>
-        <span id="transcription-notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
       </label>
 
       <label style="margin-top: 20px;">👁️ 配信者モード（全ID欄を隠す）</label>
@@ -600,13 +607,13 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.3変更】履歴を追加 -->
-          <div class="changelog-version">v2.2.3 (最新)</div>
-          <div>・自動文字起こしの結果を相手に送信せず、自分の画面のチャット欄にだけ表示（ローカル字幕）するように変更しました。</div>
+          <!-- 【v2.2.4変更】履歴を追加 -->
+          <div class="changelog-version">v2.2.4 (最新)</div>
+          <div>・字幕の共有設定（自分のみ/相手に共有）を選択できるようになりました。<br>・文字起こしがチャット欄を埋めないよう、動画のような「数秒で消える字幕エリア」を新設しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.2</div>
-          <div>・招待リンク（URL）にホストの内線IDが含まれないようにプライバシーを強化しました。（接続時に自動で裏側で同期されます）</div>
+          <div>・招待リンク（URL）にホストの内線IDが含まれないようにプライバシーを強化しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.1</div>
@@ -623,10 +630,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.1.6</div>
           <div>・Web Speech APIを利用した「自動文字起こし（チャット連動）」機能を実装しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.1.4</div>
-          <div>・作成時刻（ミリ秒）ベースの絶対優先度システムを導入し、既存オーナーの権限が誤って剥奪されるバグを完全に修正しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -668,7 +671,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v223/';
+    const APP_PREFIX = 'Naisync/v224/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -693,14 +696,14 @@
     let checkingGroupId = null;
     let isGroupIdTaken = false;
 
-    let isTranscriptionOn = localStorage.getItem('my_naisen_transcription') === 'true';
+    // 【v2.2.4変更】文字起こしのモード変数
+    let transMode = localStorage.getItem('my_naisen_trans_mode') || 'off';
     let speechRecognition = null;
 
     let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
     let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
-    let isTranscriptionNotifOn = localStorage.getItem('my_naisen_transcription_notif') !== 'false';
     
     let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
     let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
@@ -734,15 +737,15 @@
     let customGroups = [];
 
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v223'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v224'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v222')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v223')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v223', JSON.stringify(groups));
+         localStorage.setItem('my_naisen_groups_v224', JSON.stringify(groups));
       }
       customGroups = groups;
     }
@@ -766,8 +769,6 @@
     const participantsList = document.getElementById('participants-list');
     const participantsSection = document.getElementById('participants-section');
 
-    const transcriptionCheckbox = document.getElementById('transcription-checkbox');
-    const transcriptionStatusText = document.getElementById('transcription-status-text');
     const ncCheckbox = document.getElementById('nc-checkbox');
     const ncStatusText = document.getElementById('nc-status-text');
     const micVolumeSlider = document.getElementById('mic-volume-slider');
@@ -776,8 +777,6 @@
     const spkVolumeDisplay = document.getElementById('spk-volume-display');
     const notifCheckbox = document.getElementById('notif-checkbox');
     const notifStatusText = document.getElementById('notif-status-text');
-    const transcriptionNotifCheckbox = document.getElementById('transcription-notif-checkbox');
-    const transcriptionNotifStatusText = document.getElementById('transcription-notif-status-text');
     
     const streamerModeCheckbox = document.getElementById('streamer-mode-checkbox');
     const streamerModeStatusText = document.getElementById('streamer-mode-status-text');
@@ -789,6 +788,25 @@
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
     window.closeChangelog = function() { document.getElementById('changelog-modal').style.display = 'none'; }
+
+    // 【v2.2.4追加】字幕専用オーバーレイへの表示処理
+    window.showSubtitle = function(sender, text) {
+      const container = document.getElementById('subtitle-container');
+      if (!container) return;
+      
+      const div = document.createElement('div');
+      div.className = 'subtitle-box';
+      div.innerHTML = `<div class="subtitle-sender">${escapeHtml(sender)}</div><div>${escapeHtml(text)}</div>`;
+      
+      container.appendChild(div);
+      
+      // 4秒後にフェードアウトして消す
+      setTimeout(() => {
+        div.style.opacity = '0';
+        div.style.transition = 'opacity 0.5s';
+        setTimeout(() => div.remove(), 500);
+      }, 4000);
+    }
 
     window.switchGroupModalTab = function(tabName) {
       const createSec = document.getElementById('form-create-section');
@@ -859,7 +877,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1002,16 +1020,25 @@
         }
         
         if (text.trim() !== '') {
-          // 【v2.2.3変更】ネットワークへは送信せず、自分専用のローカルなチャットログとして描画する
+          // 【v2.2.4変更】設定モードに応じた字幕送信・表示ロジック
           let senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
-          const msg = "🎤 " + text.trim();
           
-          if (isTranscriptionNotifOn) {
-            showNotification(`📝 字幕: ${text.trim()}`);
+          if (transMode === 'self') {
+            window.showSubtitle(senderName + ' (自分のみ)', text.trim());
+          } else if (transMode === 'all') {
+            window.showSubtitle(senderName, text.trim());
+            
+            // 相手に「字幕データ(subtitle)」として送信
+            if (currentMode === 'group' && currentGroupTopic) {
+              mqttClient.publish(currentGroupTopic, JSON.stringify({
+                type: 'subtitle', senderId: myPeerId, senderName: senderName, text: text.trim()
+              }));
+            } else if (currentMode === 'direct') {
+              Object.values(activeDataConns).forEach(conn => {
+                conn.send({ type: 'subtitle', senderName: senderName, text: text.trim() });
+              });
+            }
           }
-          
-          // 「自分 (ローカル)」という名前で追加
-          addChatLog(senderName + ' (自分のみ)', msg, true);
         }
       };
       
@@ -1020,7 +1047,7 @@
       };
 
       speechRecognition.onend = () => {
-         if (isLocked && isTranscriptionOn && rawAudioTrack && rawAudioTrack.enabled) {
+         if (isLocked && transMode !== 'off' && rawAudioTrack && rawAudioTrack.enabled) {
              try { speechRecognition.start(); } catch(e){}
          }
       };
@@ -1076,8 +1103,11 @@
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
-        transcriptionCheckbox.checked = isTranscriptionOn;
-        transcriptionStatusText.innerText = isTranscriptionOn ? 'ON' : 'OFF';
+        // 【v2.2.4変更】文字起こしのタブボタンの初期化
+        document.getElementById('trans-off').classList.remove('active');
+        document.getElementById('trans-self').classList.remove('active');
+        document.getElementById('trans-all').classList.remove('active');
+        document.getElementById('trans-' + transMode).classList.add('active');
 
         ncCheckbox.checked = isNoiseCanceling;
         ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
@@ -1088,11 +1118,8 @@
         
         notifCheckbox.checked = isNotificationOn;
         notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
-        
-        transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
-        transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
 
-        if (isTranscriptionOn) initSpeechRecognition();
+        if (transMode !== 'off') initSpeechRecognition();
 
         const audioConstraints = {
           audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
@@ -1137,12 +1164,17 @@
       alert('名前を保存しました！');
     }
 
-    transcriptionCheckbox.addEventListener('change', (e) => {
-      isTranscriptionOn = e.target.checked;
-      transcriptionStatusText.innerText = isTranscriptionOn ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_transcription', isTranscriptionOn);
-      if(isTranscriptionOn && !speechRecognition) initSpeechRecognition();
-    });
+    // 【v2.2.4変更】文字起こしのモード変更処理
+    window.setTransMode = function(mode) {
+      transMode = mode;
+      localStorage.setItem('my_naisen_trans_mode', mode);
+      document.getElementById('trans-off').classList.remove('active');
+      document.getElementById('trans-self').classList.remove('active');
+      document.getElementById('trans-all').classList.remove('active');
+      document.getElementById('trans-' + mode).classList.add('active');
+      
+      if (mode !== 'off' && !speechRecognition) initSpeechRecognition();
+    }
 
     ncCheckbox.addEventListener('change', async (e) => {
       isNoiseCanceling = e.target.checked;
@@ -1182,12 +1214,6 @@
       isNotificationOn = e.target.checked;
       notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
       localStorage.setItem('my_naisen_notif', isNotificationOn);
-    });
-
-    transcriptionNotifCheckbox.addEventListener('change', (e) => {
-      isTranscriptionNotifOn = e.target.checked;
-      transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_transcription_notif', isTranscriptionNotifOn);
     });
 
     streamerModeCheckbox.addEventListener('change', (e) => {
@@ -1262,7 +1288,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1294,7 +1320,7 @@
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
                 if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
-                localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+                localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
                 updateStatus();
@@ -1314,7 +1340,7 @@
                  updated = true;
                }
                if (updated) {
-                 localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+                 localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
                  updateStatus();
                }
             }
@@ -1324,7 +1350,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1334,7 +1360,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1354,8 +1380,11 @@
             if (currentGroupId === 'test-nameroom') return;
             
             showNotification(`💬 ${data.senderName}: ${data.text}`);
-            
             addChatLog(data.senderName, data.text, false);
+            
+          // 【v2.2.4追加】相手から字幕データを受信した時の処理
+          } else if (data.type === 'subtitle' && data.senderId !== myPeerId) {
+            window.showSubtitle(data.senderName, data.text);
           }
         });
       });
@@ -1509,9 +1538,12 @@
       conn.on('data', (data) => {
         if (data && data.type === 'chat') {
           updateParticipantName(conn.peer, data.senderName);
-          
           showNotification(`💬 ${data.senderName}: ${data.text}`);
           addChatLog(data.senderName, data.text, false);
+
+        // 【v2.2.4追加】1対1通話中の字幕受信処理
+        } else if (data && data.type === 'subtitle') {
+          window.showSubtitle(data.senderName, data.text);
 
         } else if (data && data.type === 'reversi_req') {
           pendingReversiConn = conn;
@@ -1684,7 +1716,7 @@
 
           const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true };
           customGroups.push(newGroup);
-          localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
           joinGroup(newGroup);
           renderTabs();
         }, 100);
@@ -1783,7 +1815,7 @@
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1814,7 +1846,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1824,7 +1856,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1847,7 +1879,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v223', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v224', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -2088,7 +2120,7 @@
         talkBtn.classList.add('active');
         talkBtn.innerText = '発言中!!';
         
-        if (isTranscriptionOn && speechRecognition) {
+        if (transMode !== 'off' && speechRecognition) {
           try { speechRecognition.start(); } catch(err){}
         }
       }
@@ -2107,7 +2139,7 @@
           talkBtn.innerText = '長押しで話す';
         }
 
-        if (isTranscriptionOn && speechRecognition) {
+        if (transMode !== 'off' && speechRecognition) {
           try { speechRecognition.stop(); } catch(err){}
         }
       }
@@ -2138,7 +2170,7 @@
         talkBtn.innerText = '常時通話中';
         talkBtn.style.opacity = '0.5';
 
-        if (isTranscriptionOn && speechRecognition) {
+        if (transMode !== 'off' && speechRecognition) {
           try { speechRecognition.start(); } catch(err){}
         }
       } else {
@@ -2155,7 +2187,7 @@
         
         talkBtn.style.opacity = '1';
 
-        if (isTranscriptionOn && speechRecognition) {
+        if (transMode !== 'off' && speechRecognition) {
           try { speechRecognition.stop(); } catch(err){}
         }
       }
