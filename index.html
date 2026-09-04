@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.0.9</title>
+  <title>Naisync - 内線トランシーバー v2.1.0</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -265,14 +265,14 @@
     body.dark-mode .participant-item { background: #2a2d32; border-color: #444; color: #e0e0e0; }
     body.dark-mode .participant-item .p-name { color: #e0e0e0; }
     body.dark-mode #toggle-btn { background-color: #2a2d32; border-color: #555; color: #ccc; }
-    body.dark-mode #auth-overlay { background: #121212; }
+    body.dark-mode .auth-overlay { background: #121212; }
     body.dark-mode .changelog-list { background: #2a2d32; border-color: #444; color: #ccc; }
     body.dark-mode .changelog-item { border-color: #444; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">v2.0.9</div>
+  <div class="version-tag">v2.1.0</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -507,12 +507,9 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v2.0.9 (最新)</div>
-          <div>・スクリプト内の構文エラー（カッコの記述ミス）を修正し、ログイン機能が正常に動作するように復旧しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.0.8</div>
-          <div>・ネットワーク上で部屋のリーダー情報を自動同期し、後から参加した人がリーダー権限を奪い取る乗っ取りバグを修正。</div>
+          <!-- 【v2.1.0変更】履歴を追加 -->
+          <div class="changelog-version">v2.1.0 (最新)</div>
+          <div>・ルーム内のホスト情報自動同期機能を強化。<br>・後から入った人がリーダー権限を誤って持ってしまっても、真のホストからの信号で自動的にメンバーに修正されるように改善しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.0.5</div>
@@ -570,7 +567,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v209-';
+    const APP_SECRET = 'naisen-app-v210-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -616,12 +613,12 @@
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v209')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v210')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v208'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v209'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
       }
     }
 
@@ -706,18 +703,15 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
 
     function applyStreamerModeToUI() {
       const idsToMask = [
-        myIdEl, 
-        peerIdInput, 
-        document.getElementById('modal-group-id'),
-        document.getElementById('login-id'), 
-        document.getElementById('reg-id')
+        myIdEl, peerIdInput, document.getElementById('modal-group-id'),
+        document.getElementById('login-id'), document.getElementById('reg-id')
       ];
       if (isStreamerMode) {
         idsToMask.forEach(el => { if (el) el.classList.add('streamer-mask'); });
@@ -1034,13 +1028,13 @@
               customGroups[index].pass = pendingInvite.pass;
               customGroups[index].name = pendingInvite.name;
               customGroups[index].requireName = pendingInvite.requireName;
-              if (pendingInvite.hostId) {
+              if (pendingInvite.hostId && !customGroups[index].hostId) {
                 customGroups[index].hostId = pendingInvite.hostId;
               }
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1057,10 +1051,29 @@
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
+          // 【v2.1.0修正】自分がホスト（またはホスト未設定）で、かつ参加者から送られてきた hostId が自分と異なる場合：
+          // 自分が「後から入った側（かつ誤って自分がホストになっていた）」であるなら、真のホスト側（data.hostId）を絶対優先して上書きし、自分をメンバーに降格させる。
           if (data.type === 'join' && data.hostId && currentGroupObj) {
+            if (currentGroupObj.hostId === myPeerId && myPeerId !== data.hostId) {
+              // 自分が「自分をホストだと思っていた」が、相手（data.hostId）が本来のホストである場合、相手をホストとして受け入れる
+              currentGroupObj.hostId = data.hostId;
+              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+              renderTabs();
+              document.getElementById('host-controls').style.display = 'none';
+            } else if (!currentGroupObj.hostId) {
+              currentGroupObj.hostId = data.hostId;
+              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
+              renderTabs();
+              const isHostNow = (currentGroupObj.hostId === myPeerId);
+              document.getElementById('host-controls').style.display = isHostNow ? 'block' : 'none';
+            }
+          }
+
+          // ホスト側からの「俺がホストだ」という同期信号を受け取った場合の処理
+          if (data.type === 'host_sync' && data.hostId && currentGroupObj) {
             if (currentGroupObj.hostId !== data.hostId) {
               currentGroupObj.hostId = data.hostId;
-              localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
               renderTabs();
               const isHostNow = (currentGroupObj.hostId === myPeerId);
               document.getElementById('host-controls').style.display = isHostNow ? 'block' : 'none';
@@ -1071,7 +1084,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1081,7 +1094,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1090,6 +1103,13 @@
           if (data.type === 'join' && data.peerId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.peerId, data.senderName);
             if (isNameRequired && !data.senderName) return;
+
+            // 【v2.1.0追加】自分がホストなら、新しく入ってきた人に対して「俺がホストだ」という同期信号を即座に送り返す
+            if (currentGroupObj && currentGroupObj.hostId === myPeerId) {
+              mqttClient.publish(currentGroupTopic, JSON.stringify({
+                type: 'host_sync', senderId: myPeerId, hostId: myPeerId
+              }));
+            }
 
             resumeAudioContext();
             const call = peer.call(data.peerId, processedStream, { 
@@ -1435,6 +1455,7 @@
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
+      // 【v2.1.0修正】すでにそのグループがローカルにある場合、絶対に既存の真の hostId を引き継ぎ、自分が勝手にホストにならないようにする
       const existingGroup = customGroups.find(g => g.id === id);
       const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : myPeerId;
 
@@ -1443,7 +1464,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1453,7 +1474,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1476,7 +1497,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v209', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v210', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -1534,6 +1555,7 @@
       } else {
         toggleBtn.classList.remove('locked');
         toggleBtn.innerText = '常時通話に切り替え (OFF)';
+        talkBtn.classList.add('active');
         talkBtn.classList.remove('active');
         talkBtn.innerText = '長押しで話す';
         talkBtn.style.opacity = '1';
