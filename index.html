@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.9.9</title>
+  <title>Naisync - 内線トランシーバー v2.0.0</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -272,7 +272,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v1.9.9</div>
+  <div class="version-tag">v2.0.0</div>
 
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
@@ -333,7 +333,6 @@
       <div id="member-count">接続中: 0人 (あなただけです)</div>
       <button class="btn-action btn-outline" onclick="window.copyGroupInvite()" style="padding: 8px; font-size: 12px; margin-top: 12px;">🔗 このグループの招待リンクをコピー</button>
       
-      <!-- 【v1.9.9追加】リーダー専用コントロール -->
       <div id="host-controls" style="display: none; margin-top: 8px;">
         <button class="btn-action btn-danger" onclick="window.changeRoomPassword()" style="padding: 8px; font-size: 12px;">👑 グループのパスワードを変更する</button>
       </div>
@@ -505,7 +504,11 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v1.9.9 (最新)</div>
+          <div class="changelog-version">v2.0.0 (最新)</div>
+          <div>・キックされた際にグループのタブを自動削除し、再入室を防止する機能を実装（メジャーアップデート）</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v1.9.9</div>
           <div>・リーダー（ホスト）機能の追加（グループ作成者が自動的にリーダーに）<br>・メンバーの強制退出（キック）機能の追加<br>・グループパスワードの強制変更機能の追加</div>
         </div>
         <div class="changelog-item">
@@ -568,7 +571,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v199-';
+    const APP_SECRET = 'naisen-app-v200-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -608,18 +611,18 @@
           pass: params.get('p'),
           name: params.get('n') || params.get('g'),
           requireName: params.get('req') === '1',
-          hostId: params.get('h') || null // リーダー情報をURLから取得
+          hostId: params.get('h') || null 
         };
         window.history.replaceState(null, '', window.location.pathname);
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v199')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v200')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v198'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v199'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
       }
     }
 
@@ -686,7 +689,6 @@
       });
     }
 
-    // 【v1.9.9追加】リーダーによるメンバーキック機能
     window.kickUser = function(targetId, targetName) {
       if(!confirm(`${targetName} をグループから強制退出（キック）させますか？\n※相手が再度招待リンクを踏むと戻ってこれるため、完全にブロックしたい場合はパスワードを変更してください。`)) return;
       mqttClient.publish(currentGroupTopic, JSON.stringify({
@@ -694,21 +696,18 @@
       }));
     }
 
-    // 【v1.9.9追加】リーダーによるパスワード強制変更機能
     window.changeRoomPassword = function() {
       const newPass = prompt('新しいパスワードを入力してください（6文字以上推奨）。\n※この部屋にいる全員が自動的に新しいパスワードの部屋に移動します。');
       if(!newPass) return;
       
-      // ブロードキャスト（全員に新パスワードを通知）
       mqttClient.publish(currentGroupTopic, JSON.stringify({
         type: 'change_pass', senderId: myPeerId, newPass: newPass
       }));
       
-      // 自身も新しいパスワードに更新して移動
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -994,7 +993,6 @@
         const tab = document.createElement('button');
         tab.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
         
-        // 【v1.9.9】リーダーの場合は王冠マークを付ける
         const isHost = (g.hostId === myPeerId);
         const label = document.createElement('span');
         label.innerText = (isHost ? '👑 ' : '') + g.name;
@@ -1035,7 +1033,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
             
             const targetGroup = pendingInvite;
             pendingInvite = null; 
@@ -1052,21 +1050,24 @@
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
-          // 【v1.9.9】リーダーからのキック処理を受信
+          // 【v2.0.0】リーダーからのキック処理を受信
           if (data.type === 'kick' && data.targetId === myPeerId) {
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
-              alert('👑 リーダーから強制退出させられました。');
+              alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
+              // ローカルのグループリストから該当の部屋を完全に削除する
+              customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
+              localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
           }
 
-          // 【v1.9.9】リーダーからのパスワード変更処理を受信
+          // リーダーからのパスワード変更処理を受信
           if (data.type === 'change_pass') {
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1168,7 +1169,6 @@
       ctrlDiv.appendChild(icon);
       ctrlDiv.appendChild(slider);
       
-      // 【v1.9.9】自分がリーダーなら、相手のUIにキックボタンを追加
       const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
       const isHost = currentGroupObj && currentGroupObj.hostId === myPeerId;
       if (isHost && peerId !== myPeerId) {
@@ -1301,7 +1301,6 @@
       directPanel.style.display = 'none';
       groupPanel.style.display = 'block';
 
-      // 【v1.9.9】自分がリーダーかどうかの判定をしてUIを切り替え
       const isHost = (groupObj.hostId === myPeerId);
       document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
 
@@ -1384,13 +1383,12 @@
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      // 【v1.9.9】作成者をリーダーとして登録
       const newGroup = { id, name, pass, requireName, hostId: myPeerId };
       const index = customGroups.findIndex(g => g.id === id);
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1400,7 +1398,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1419,7 +1417,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v200', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
