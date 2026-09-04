@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.1.7</title>
+  <title>Naisync - 内線トランシーバー v2.1.8</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -92,6 +92,7 @@
     .btn-secondary { background-color: #6c757d; }
     .btn-outline { background-color: white; color: #007bff; border: 1px solid #007bff; }
     .btn-danger { background-color: #dc3545; }
+    .btn-success { background-color: #28a745; }
     
     .btn-kick { background: #ff4444; color: white; border: none; border-radius: 4px; font-size: 10px; padding: 4px 8px; cursor: pointer; margin-left: 6px; font-weight: bold; }
     .btn-kick:hover { background: #cc0000; }
@@ -148,6 +149,25 @@
     #status { font-size: 13px; color: #333; margin-top: 8px; font-weight: bold; transition: color 0.3s; }
     #member-count { font-size: 11px; color: #888; margin-top: 2px; }
     .section-title { font-size: 11px; color: #777; text-align: left; margin-top: 4px; transition: color 0.3s; }
+
+    /* 【v2.1.8追加】リバーシ用スタイル */
+    #reversi-section { margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center; transition: border-color 0.3s; }
+    .reversi-info { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 12px; transition: color 0.3s; }
+    .reversi-board {
+      display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px;
+      background: #222; padding: 4px; margin: 0 auto; max-width: 280px; aspect-ratio: 1;
+      border-radius: 4px;
+    }
+    .reversi-cell {
+      background: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .reversi-piece {
+      width: 80%; height: 80%; border-radius: 50%; transition: transform 0.3s;
+    }
+    .reversi-piece.black { background: #111; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+    .reversi-piece.white { background: #f8f8f8; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
+    .reversi-hint { width: 25%; height: 25%; border-radius: 50%; background: rgba(0,0,0,0.25); }
+    body.dark-mode .reversi-hint { background: rgba(255,255,255,0.25); }
 
     .modal-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -274,11 +294,12 @@
     body.dark-mode .changelog-item { border-color: #444; }
     body.dark-mode .modal-tab-btn { background: #333; color: #aaa; }
     body.dark-mode .modal-tab-btn.active { background: #007bff; color: white; }
+    body.dark-mode .reversi-info { color: #e0e0e0; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">v2.1.7</div>
+  <div class="version-tag">v2.1.8</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -340,6 +361,11 @@
     <div id="direct-panel" style="display: none;">
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
+      
+      <!-- 【v2.1.8追加】リバーシ対戦申し込みボタン (通話中のみ表示) -->
+      <div id="direct-connected-actions" style="display: none; margin-top: 12px;">
+        <button class="btn-action btn-success" id="btn-reversi-invite" onclick="window.inviteReversi()">🎮 リバーシ対戦を申し込む</button>
+      </div>
     </div>
 
     <div id="group-panel" style="display: none;">
@@ -361,6 +387,16 @@
     <div class="participants-section" id="participants-section" style="display: none;">
       <div class="chat-title">👥 参加者の個別音量</div>
       <div id="participants-list"></div>
+    </div>
+
+    <!-- 【v2.1.8追加】リバーシ盤セクション -->
+    <div id="reversi-section" style="display: none;">
+      <div class="chat-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 14px;">🎮 リアルタイム・リバーシ</span>
+        <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitReversi()">対戦終了</button>
+      </div>
+      <div id="reversi-info" class="reversi-info">準備中...</div>
+      <div id="reversi-board" class="reversi-board"></div>
     </div>
 
     <div class="chat-section">
@@ -412,7 +448,6 @@
         <span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
       </label>
 
-      <!-- 【v2.1.7変更】通知設定を全般と文字起こしで分離 -->
       <label style="margin-top: 20px;">🔔 全般のポップアップ通知（着信・通常チャット）</label>
       <label class="toggle-switch">
         <input type="checkbox" id="notif-checkbox" checked>
@@ -459,7 +494,6 @@
         <button class="modal-tab-btn" id="tab-btn-join" onclick="window.switchGroupModalTab('join')">🔗 グループに参加</button>
       </div>
 
-      <!-- 作成フォーム -->
       <div id="form-create-section">
         <h3>グループを作成 (オーナー)</h3>
         <label>表示名（画面上のタブ名）</label>
@@ -480,7 +514,6 @@
         </div>
       </div>
 
-      <!-- 参加フォーム -->
       <div id="form-join-section" style="display: none;">
         <h3>既存グループに参加</h3>
         <label>表示名（画面上のタブ名）</label>
@@ -552,9 +585,13 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.1.7変更】履歴を追加 -->
-          <div class="changelog-version">v2.1.7 (最新)</div>
-          <div>・文字起こしのポップアップ通知を個別にON/OFFできる設定を追加しました。<br>・文字起こしによる通知スパムを防げるようになりました。</div>
+          <!-- 【v2.1.8変更】履歴を追加 -->
+          <div class="changelog-version">v2.1.8 (最新)</div>
+          <div>・1対1通話中に遊べる「リアルタイム・リバーシ」対戦機能を追加しました！通話しながら同じ盤面を操作できます。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.1.7</div>
+          <div>・文字起こしのポップアップ通知を個別にON/OFFできる設定を追加しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.1.6</div>
@@ -573,8 +610,8 @@
           <div>・グループ追加モーダルを「作成タブ」と「参加タブ」に完全に分離しました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.0.4</div>
-          <div>・タブ移動時のゴースト音声化（通話の切り忘れ）バグを修正。</div>
+          <div class="changelog-version">v2.0.0</div>
+          <div>・キック時のタブ自動削除機能を実装。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -616,7 +653,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v217/';
+    const APP_PREFIX = 'Naisync/v218/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -648,12 +685,16 @@
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
     let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
-    
-    // 【v2.1.7追加】文字起こしの個別通知設定の読み込み
     let isTranscriptionNotifOn = localStorage.getItem('my_naisen_transcription_notif') !== 'false';
     
     let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
     let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
+
+    // 【v2.1.8追加】リバーシ用グローバル変数
+    let isReversiActive = false;
+    let reversiBoard = [];
+    let reversiMyColor = 1; // 1:黒, 2:白
+    let reversiCurrentTurn = 1;
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
@@ -676,14 +717,14 @@
     let customGroups = [];
 
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v217'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v218'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v216')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v217')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v217', JSON.stringify(groups));
+         localStorage.setItem('my_naisen_groups_v218', JSON.stringify(groups));
       }
       customGroups = groups;
     }
@@ -717,8 +758,6 @@
     const spkVolumeDisplay = document.getElementById('spk-volume-display');
     const notifCheckbox = document.getElementById('notif-checkbox');
     const notifStatusText = document.getElementById('notif-status-text');
-    
-    // 【v2.1.7追加】文字起こしの個別通知設定のUI要素取得
     const transcriptionNotifCheckbox = document.getElementById('transcription-notif-checkbox');
     const transcriptionNotifStatusText = document.getElementById('transcription-notif-status-text');
     
@@ -795,7 +834,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1006,7 +1045,6 @@
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
-        // UI初期化
         transcriptionCheckbox.checked = isTranscriptionOn;
         transcriptionStatusText.innerText = isTranscriptionOn ? 'ON' : 'OFF';
 
@@ -1020,7 +1058,6 @@
         notifCheckbox.checked = isNotificationOn;
         notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
         
-        // 【v2.1.7追加】文字起こし個別通知UIの初期化
         transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
         transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
 
@@ -1116,7 +1153,6 @@
       localStorage.setItem('my_naisen_notif', isNotificationOn);
     });
 
-    // 【v2.1.7追加】文字起こし個別通知設定の保存処理
     transcriptionNotifCheckbox.addEventListener('change', (e) => {
       isTranscriptionNotifOn = e.target.checked;
       transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
@@ -1188,7 +1224,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1219,7 +1255,7 @@
               if (isRemoteDominant) {
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
-                localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+                localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
               } else if (currentGroupObj.hostId === myPeerId) {
@@ -1229,7 +1265,7 @@
               }
             } else if (currentGroupObj.hostId === data.hostId && remoteTime < localTime) {
                currentGroupObj.createdAt = remoteTime;
-               localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+               localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
             }
           }
 
@@ -1237,7 +1273,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1247,7 +1283,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1266,7 +1302,6 @@
             if (data.senderName) updateParticipantName(data.senderId, data.senderName);
             if (currentGroupId === 'test-nameroom') return;
             
-            // 【v2.1.7変更】文字起こし個別通知の判定ロジック
             const isTranscriptionMsg = data.text.startsWith('🎤 ');
             if (isTranscriptionMsg) {
               if (isTranscriptionNotifOn) {
@@ -1425,13 +1460,13 @@
       });
     }
 
+    // 【v2.1.8追加】1対1データ通信のリバーシ処理を統合
     function setupDataConn(conn) {
       activeDataConns[conn.peer] = conn;
       conn.on('data', (data) => {
         if (data && data.type === 'chat') {
           updateParticipantName(conn.peer, data.senderName);
           
-          // 【v2.1.7変更】1対1通信でも文字起こし個別通知の判定ロジックを適用
           const isTranscriptionMsg = data.text.startsWith('🎤 ');
           if (isTranscriptionMsg) {
             if (isTranscriptionNotifOn) {
@@ -1440,8 +1475,33 @@
           } else {
             showNotification(`💬 ${data.senderName}: ${data.text}`);
           }
-          
           addChatLog(data.senderName, data.text, false);
+
+        // --- ここからリバーシ通信ロジック ---
+        } else if (data && data.type === 'reversi_req') {
+          if (confirm(`🎮 ${data.senderName} さんからリバーシの対戦申し込みが届きました！対戦しますか？\n(あなたが先手・黒番になります)`)) {
+            conn.send({ type: 'reversi_acc', senderName: savedMyName || myPeerId.substring(0,5) });
+            startReversi(1);
+          } else {
+            conn.send({ type: 'reversi_dec', senderName: savedMyName || myPeerId.substring(0,5) });
+          }
+        } else if (data && data.type === 'reversi_acc') {
+          startReversi(2);
+          showNotification(`🎮 ${data.senderName}さんが対戦を承諾しました！(あなたは後手・白番です)`);
+        } else if (data && data.type === 'reversi_dec') {
+          alert('リバーシの対戦申し込みが断られました。');
+        } else if (data && data.type === 'reversi_move') {
+          applyReversiMove(data.r, data.c, data.color);
+        } else if (data && data.type === 'reversi_pass') {
+          showNotification('相手は置ける場所がないためパスしました。');
+          reversiCurrentTurn = reversiMyColor;
+          updateReversiUI();
+          checkReversiPassOrEnd();
+        } else if (data && data.type === 'reversi_quit') {
+          showNotification('相手がリバーシを終了しました。');
+          endReversi();
+        // --- ここまで ---
+
         } else if (data && data.type === 'leave') {
           if (activeCalls[conn.peer]) {
             if (activeCalls[conn.peer].peerConnection) activeCalls[conn.peer].peerConnection.close();
@@ -1452,6 +1512,7 @@
           if (audio) audio.remove();
           removeParticipantUI(conn.peer);
           updateStatus();
+          if (isReversiActive) endReversi(); // 通話が切れたらリバーシも終了
         }
       });
       conn.on('close', () => delete activeDataConns[conn.peer]);
@@ -1494,6 +1555,7 @@
       closeAllCalls();
       currentMode = 'direct';
       currentGroupId = null;
+      endReversi(); // グループ移動時にリバーシを終了
       renderTabs();
       updateChatUI();
       directPanel.style.display = 'block';
@@ -1503,6 +1565,7 @@
       talkBtn.disabled = true;
       toggleBtn.disabled = true;
       talkBtn.innerText = '接続待ち';
+      document.getElementById('direct-connected-actions').style.display = 'none';
     }
 
     connectBtn.addEventListener('click', () => {
@@ -1531,6 +1594,7 @@
       closeAllCalls();
       currentMode = 'group';
       currentGroupId = groupObj.id;
+      endReversi(); // グループ移動時にリバーシを終了
 
       renderTabs();
       updateChatUI();
@@ -1670,7 +1734,7 @@
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now() };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1700,7 +1764,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1710,7 +1774,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1733,7 +1797,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v217', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -1746,9 +1810,181 @@
         statusEl.innerText = count > 0 ? '1対1通話中！' : '相手のIDを入力して発信してください';
         talkBtn.disabled = count === 0;
         toggleBtn.disabled = count === 0;
-        if (count > 0) talkBtn.innerText = '長押しで話す';
+        if (count > 0) {
+          talkBtn.innerText = '長押しで話す';
+          // 【v2.1.8追加】1対1通話が繋がったらリバーシボタンを表示
+          document.getElementById('direct-connected-actions').style.display = 'block';
+        } else {
+          document.getElementById('direct-connected-actions').style.display = 'none';
+        }
       }
     }
+
+    // ==========================================
+    // 【v2.1.8追加】リバーシ (オセロ) のゲームロジック
+    // ==========================================
+    window.inviteReversi = function() {
+      if (Object.keys(activeDataConns).length === 0) return alert('対戦相手がいません。');
+      Object.values(activeDataConns).forEach(conn => {
+        conn.send({ type: 'reversi_req', senderName: savedMyName || myPeerId.substring(0,5) });
+      });
+      showNotification('相手にリバーシの対戦申し込みを送りました。返答待ちです...');
+    }
+
+    function startReversi(color) {
+      isReversiActive = true;
+      reversiMyColor = color;
+      reversiCurrentTurn = 1;
+      document.getElementById('reversi-section').style.display = 'block';
+      initReversiBoard();
+      updateReversiUI();
+    }
+
+    function initReversiBoard() {
+      reversiBoard = Array(8).fill().map(() => Array(8).fill(0));
+      reversiBoard[3][3] = 2; // 白
+      reversiBoard[3][4] = 1; // 黒
+      reversiBoard[4][3] = 1; // 黒
+      reversiBoard[4][4] = 2; // 白
+    }
+
+    function renderReversiBoard() {
+      const boardEl = document.getElementById('reversi-board');
+      boardEl.innerHTML = '';
+      let bCount = 0, wCount = 0;
+      
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const val = reversiBoard[r][c];
+          if (val === 1) bCount++;
+          if (val === 2) wCount++;
+
+          const cell = document.createElement('div');
+          cell.className = 'reversi-cell';
+          cell.onclick = () => handleReversiClick(r, c);
+          
+          if (val !== 0) {
+            const piece = document.createElement('div');
+            piece.className = 'reversi-piece ' + (val === 1 ? 'black' : 'white');
+            cell.appendChild(piece);
+          } else if (isReversiActive && reversiCurrentTurn === reversiMyColor) {
+            if (getFlippablePieces(r, c, reversiMyColor).length > 0) {
+               const hint = document.createElement('div');
+               hint.className = 'reversi-hint';
+               cell.appendChild(hint);
+            }
+          }
+          boardEl.appendChild(cell);
+        }
+      }
+      return { bCount, wCount };
+    }
+
+    function updateReversiUI() {
+      const { bCount, wCount } = renderReversiBoard();
+      const infoEl = document.getElementById('reversi-info');
+      
+      let myColorStr = reversiMyColor === 1 ? '黒' : '白';
+      let turnStr = (reversiCurrentTurn === reversiMyColor) ? '🔵 あなたの番です' : '⏳ 相手の番です';
+      
+      infoEl.innerText = `${turnStr} (あなたは${myColorStr}) | 黒: ${bCount} 白: ${wCount}`;
+    }
+
+    function getFlippablePieces(r, c, color) {
+      if (reversiBoard[r][c] !== 0) return [];
+      const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+      const opp = color === 1 ? 2 : 1;
+      let flippable = [];
+
+      for (const [dr, dc] of dirs) {
+        let nr = r + dr, nc = c + dc;
+        let temp = [];
+        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === opp) {
+          temp.push([nr, nc]);
+          nr += dr; nc += dc;
+        }
+        if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === color && temp.length > 0) {
+          flippable.push(...temp);
+        }
+      }
+      return flippable;
+    }
+
+    function handleReversiClick(r, c) {
+      if (!isReversiActive || reversiCurrentTurn !== reversiMyColor) return;
+      const flips = getFlippablePieces(r, c, reversiMyColor);
+      if (flips.length === 0) return;
+
+      applyReversiMove(r, c, reversiMyColor, flips);
+
+      Object.values(activeDataConns).forEach(conn => {
+        conn.send({ type: 'reversi_move', r, c, color: reversiMyColor });
+      });
+    }
+
+    function applyReversiMove(r, c, color, preCalcFlips = null) {
+      const flips = preCalcFlips || getFlippablePieces(r, c, color);
+      reversiBoard[r][c] = color;
+      flips.forEach(([fr, fc]) => { reversiBoard[fr][fc] = color; });
+      
+      reversiCurrentTurn = (color === 1) ? 2 : 1;
+      updateReversiUI();
+      checkReversiPassOrEnd();
+    }
+
+    function checkReversiPassOrEnd() {
+      let canMove = false;
+      for (let r=0; r<8; r++) {
+        for (let c=0; c<8; c++) {
+           if (getFlippablePieces(r, c, reversiCurrentTurn).length > 0) canMove = true;
+        }
+      }
+
+      if (!canMove) {
+        const nextTurn = reversiCurrentTurn === 1 ? 2 : 1;
+        let oppCanMove = false;
+        for (let r=0; r<8; r++) {
+          for (let c=0; c<8; c++) {
+             if (getFlippablePieces(r, c, nextTurn).length > 0) oppCanMove = true;
+          }
+        }
+
+        if (!oppCanMove) {
+           setTimeout(() => {
+             const {bCount, wCount} = renderReversiBoard();
+             let msg = `🏁 ゲーム終了！ 黒:${bCount} 白:${wCount}\n`;
+             if(bCount > wCount) msg += "黒の勝ち！";
+             else if (wCount > bCount) msg += "白の勝ち！";
+             else msg += "引き分け！";
+             alert(msg);
+             endReversi();
+           }, 500);
+        } else {
+           if (reversiCurrentTurn === reversiMyColor) {
+              alert('置ける場所がないためパスになります。');
+              reversiCurrentTurn = nextTurn;
+              updateReversiUI();
+              Object.values(activeDataConns).forEach(conn => {
+                conn.send({ type: 'reversi_pass' });
+              });
+           }
+        }
+      }
+    }
+
+    window.quitReversi = function() {
+      if(!confirm("リバーシを終了しますか？")) return;
+      Object.values(activeDataConns).forEach(conn => {
+        conn.send({ type: 'reversi_quit' });
+      });
+      endReversi();
+    }
+
+    function endReversi() {
+      isReversiActive = false;
+      document.getElementById('reversi-section').style.display = 'none';
+    }
+    // ==========================================
 
     const startTalking = (e) => {
       e.preventDefault();
