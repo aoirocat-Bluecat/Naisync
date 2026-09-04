@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.0.1</title>
+  <title>Naisync - 内線トランシーバー v2.0.2</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -272,7 +272,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.0.1</div>
+  <div class="version-tag">v2.0.2</div>
 
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
@@ -460,8 +460,9 @@
         <p>A. グループを「＋作成」から作った人のことです。リーダーは参加者を追放（キック）したり、パスワードを強制変更して部屋をロックすることができます。</p>
       </div>
       <div class="faq-item">
+        <!-- 【v2.0.2変更】問い合わせ先を公式アカウントに変更 -->
         <strong>Q. 問い合わせ・不具合の連絡先</strong>
-        <p>A. 作者のTwitter（<a href="https://twitter.com/AoirocatYoutube" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">@AoirocatYoutube</a>）までお気軽にDMやリプライでお知らせください！</p>
+        <p>A. Naisync公式X（<a href="https://x.com/NaiSync" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">@NaiSync</a>）までお気軽にDMやリプライでお知らせください！</p>
       </div>
 
       <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;" id="test-server-wrap">
@@ -504,7 +505,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v2.0.1 (最新)</div>
+          <!-- 【v2.0.2変更】履歴を追加 -->
+          <div class="changelog-version">v2.0.2 (最新)</div>
+          <div>・問い合わせ先をNaisync公式アカウント（@NaiSync）に変更しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.0.1</div>
           <div>・大所帯のグループでも画面が邪魔にならないよう、接続/退出/着信時のポップアップ通知を廃止しました。</div>
         </div>
         <div class="changelog-item">
@@ -575,7 +581,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v201-';
+    const APP_SECRET = 'naisen-app-v202-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -621,12 +627,12 @@
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v201')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v202')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v200'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v201'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
       }
     }
 
@@ -711,7 +717,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1037,7 +1043,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
             
             const targetGroup = pendingInvite;
             pendingInvite = null; 
@@ -1058,7 +1064,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1068,7 +1074,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1380,7 +1386,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1390,7 +1396,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1409,7 +1415,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v201', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v202', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
