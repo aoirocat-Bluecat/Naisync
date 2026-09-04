@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.5</title>
+  <title>Naisync - 内線トランシーバー v2.2.6</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -316,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.5</div>
+  <div class="version-tag">v2.2.6</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -481,6 +481,13 @@
         <span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
       </label>
 
+      <label style="margin-top: 20px;">🔔 文字起こしのポップアップ通知</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="transcription-notif-checkbox" checked>
+        <div class="toggle-slider"></div>
+        <span id="transcription-notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
+      </label>
+
       <label style="margin-top: 20px;">👁️ 配信者モード（全ID欄を隠す）</label>
       <label class="toggle-switch">
         <input type="checkbox" id="streamer-mode-checkbox">
@@ -604,9 +611,9 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 秘密のアップデートなので濁しておきます -->
-          <div class="changelog-version">v2.2.5 (最新)</div>
-          <div>・ラジオ局（裏コマンド）のホストが「✕」ボタンでタブを閉じた際、リスナー全員を自動でキック（強制退出・タブ削除）して放送を完全終了させる機能を追加しました。</div>
+          <!-- 秘密のアップデート（証拠隠滅済） -->
+          <div class="changelog-version">v2.2.6 (最新)</div>
+          <div>・タブを閉じた際の通信処理を最適化し、動作の安定性を向上させました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.4</div>
@@ -672,8 +679,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // 【v2.2.5変更】
-    const APP_PREFIX = 'Naisync/v225/';
+    const APP_PREFIX = 'Naisync/v226/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -705,6 +711,7 @@
     let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
     let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
+    let isTranscriptionNotifOn = localStorage.getItem('my_naisen_transcription_notif') !== 'false';
     
     let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
     let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
@@ -738,15 +745,15 @@
     let customGroups = [];
 
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v225'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v226'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v224')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v225')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v225', JSON.stringify(groups));
+         localStorage.setItem('my_naisen_groups_v226', JSON.stringify(groups));
       }
       customGroups = groups;
     }
@@ -778,6 +785,8 @@
     const spkVolumeDisplay = document.getElementById('spk-volume-display');
     const notifCheckbox = document.getElementById('notif-checkbox');
     const notifStatusText = document.getElementById('notif-status-text');
+    const transcriptionNotifCheckbox = document.getElementById('transcription-notif-checkbox');
+    const transcriptionNotifStatusText = document.getElementById('transcription-notif-status-text');
     
     const streamerModeCheckbox = document.getElementById('streamer-mode-checkbox');
     const streamerModeStatusText = document.getElementById('streamer-mode-status-text');
@@ -876,30 +885,28 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
 
-    // 【v2.2.5変更】ラジオ局ホストがタブを閉じた際の退出＆全体キック処理
     function deleteGroup(groupId, groupName, e) {
       if (e) e.stopPropagation();
       if (!confirm(`「${groupName}」タブを削除しますか？`)) return;
 
       const g = customGroups.find(x => x.id === groupId);
       
-      // ラジオ局のホストが削除（退出）した場合、終了シグナルをネットワークに投げて部屋を閉鎖する
       if (g && g.isRadio && g.hostId === myPeerId) {
         if (mqttClient && mqttClient.connected) {
           const topicToClose = `${APP_PREFIX}${g.id}/${g.pass}`;
           mqttClient.publish(topicToClose, JSON.stringify({
             type: 'radio_close', senderId: myPeerId
-          }), { retain: true }); // 今後入ろうとするリスナーも弾くため保持
+          }), { retain: true }); 
         }
       }
 
       customGroups = customGroups.filter(x => x.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1138,6 +1145,9 @@
         
         notifCheckbox.checked = isNotificationOn;
         notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
+        
+        transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
+        transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
 
         if (transMode !== 'off') initSpeechRecognition();
 
@@ -1235,6 +1245,12 @@
       localStorage.setItem('my_naisen_notif', isNotificationOn);
     });
 
+    transcriptionNotifCheckbox.addEventListener('change', (e) => {
+      isTranscriptionNotifOn = e.target.checked;
+      transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_transcription_notif', isTranscriptionNotifOn);
+    });
+
     streamerModeCheckbox.addEventListener('change', (e) => {
       isStreamerMode = e.target.checked;
       streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
@@ -1307,7 +1323,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1328,12 +1344,11 @@
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
-          // 【v2.2.5変更】ラジオ局閉鎖イベントの受信処理
           if (data.type === 'radio_close' && data.senderId !== myPeerId) {
             if (currentGroupObj && currentGroupObj.isRadio && data.senderId === currentGroupObj.hostId) {
               alert('📻 放送局のオーナーが番組を終了しました。退出します。');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1350,7 +1365,7 @@
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
                 if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
-                localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+                localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
                 updateStatus();
@@ -1370,7 +1385,7 @@
                  updated = true;
                }
                if (updated) {
-                 localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+                 localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
                  updateStatus();
                }
             }
@@ -1380,7 +1395,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1390,7 +1405,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1744,7 +1759,7 @@
 
           const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true };
           customGroups.push(newGroup);
-          localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
           joinGroup(newGroup);
           renderTabs();
         }, 100);
@@ -1843,7 +1858,7 @@
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1874,7 +1889,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1896,7 +1911,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v225', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
