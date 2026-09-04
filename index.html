@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.1.8</title>
+  <title>Naisync - 内線トランシーバー v2.1.9</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -150,7 +150,6 @@
     #member-count { font-size: 11px; color: #888; margin-top: 2px; }
     .section-title { font-size: 11px; color: #777; text-align: left; margin-top: 4px; transition: color 0.3s; }
 
-    /* 【v2.1.8追加】リバーシ用スタイル */
     #reversi-section { margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center; transition: border-color 0.3s; }
     .reversi-info { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 12px; transition: color 0.3s; }
     .reversi-board {
@@ -241,6 +240,16 @@
     @keyframes toastFadeIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
 
+    /* 【v2.1.9追加】対戦リクエスト用のカスタム通知（消えないポップアップ） */
+    #game-invite-container {
+      display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      z-index: 10000; background: rgba(40, 40, 40, 0.95); color: white;
+      padding: 16px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      width: 90%; max-width: 320px; text-align: center; border: 1px solid #555;
+      animation: toastFadeIn 0.3s ease-out;
+    }
+    #game-invite-msg { margin-bottom: 12px; font-size: 13px; font-weight: bold; line-height: 1.4; word-break: break-all; }
+
     #auth-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #f4f6f9; display: flex; flex-direction: column;
@@ -299,7 +308,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.1.8</div>
+  <div class="version-tag">v2.1.9</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -336,6 +345,15 @@
 
   <div id="notification-container"></div>
 
+  <!-- 【v2.1.9追加】リバーシ対戦リクエスト用カスタム通知 -->
+  <div id="game-invite-container">
+    <div id="game-invite-msg"></div>
+    <div style="display: flex; justify-content: center; gap: 10px;">
+      <button class="btn-action btn-success" style="width: auto; padding: 8px 16px; margin: 0; font-size: 12px;" onclick="window.acceptGameInvite()">対戦する</button>
+      <button class="btn-action btn-secondary" style="width: auto; padding: 8px 16px; margin: 0; font-size: 12px;" onclick="window.declineGameInvite()">断る</button>
+    </div>
+  </div>
+
   <div class="header-container" id="main-header" style="display: none;">
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <div class="header-btns">
@@ -362,7 +380,6 @@
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
       
-      <!-- 【v2.1.8追加】リバーシ対戦申し込みボタン (通話中のみ表示) -->
       <div id="direct-connected-actions" style="display: none; margin-top: 12px;">
         <button class="btn-action btn-success" id="btn-reversi-invite" onclick="window.inviteReversi()">🎮 リバーシ対戦を申し込む</button>
       </div>
@@ -389,7 +406,6 @@
       <div id="participants-list"></div>
     </div>
 
-    <!-- 【v2.1.8追加】リバーシ盤セクション -->
     <div id="reversi-section" style="display: none;">
       <div class="chat-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span style="font-size: 14px;">🎮 リアルタイム・リバーシ</span>
@@ -585,13 +601,13 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.1.8変更】履歴を追加 -->
-          <div class="changelog-version">v2.1.8 (最新)</div>
-          <div>・1対1通話中に遊べる「リアルタイム・リバーシ」対戦機能を追加しました！通話しながら同じ盤面を操作できます。</div>
+          <!-- 【v2.1.9変更】履歴を追加 -->
+          <div class="changelog-version">v2.1.9 (最新)</div>
+          <div>・リバーシの対戦申し込み画面を、ブラウザ標準のポップアップからアプリ内のカスタム通知（スマートなデザイン）に変更し、操作性を向上させました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.1.7</div>
-          <div>・文字起こしのポップアップ通知を個別にON/OFFできる設定を追加しました。</div>
+          <div class="changelog-version">v2.1.8</div>
+          <div>・1対1通話中に遊べる「リアルタイム・リバーシ」対戦機能を追加しました！通話しながら同じ盤面を操作できます。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.1.6</div>
@@ -604,14 +620,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.1.4</div>
           <div>・作成時刻（ミリ秒）ベースの絶対優先度システムを導入し、既存オーナーの権限が誤って剥奪されるバグを完全に修正しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.1.1</div>
-          <div>・グループ追加モーダルを「作成タブ」と「参加タブ」に完全に分離しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.0.0</div>
-          <div>・キック時のタブ自動削除機能を実装。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -653,7 +661,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v218/';
+    const APP_PREFIX = 'Naisync/v219/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -690,11 +698,13 @@
     let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
     let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
 
-    // 【v2.1.8追加】リバーシ用グローバル変数
     let isReversiActive = false;
     let reversiBoard = [];
-    let reversiMyColor = 1; // 1:黒, 2:白
+    let reversiMyColor = 1; 
     let reversiCurrentTurn = 1;
+
+    // 【v2.1.9追加】リクエストを受信したコネクションを一時保存する変数
+    let pendingReversiConn = null;
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
@@ -717,14 +727,14 @@
     let customGroups = [];
 
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v218'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v219'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v217')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v218')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v218', JSON.stringify(groups));
+         localStorage.setItem('my_naisen_groups_v219', JSON.stringify(groups));
       }
       customGroups = groups;
     }
@@ -834,7 +844,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -1224,7 +1234,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1255,7 +1265,7 @@
               if (isRemoteDominant) {
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
-                localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+                localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
               } else if (currentGroupObj.hostId === myPeerId) {
@@ -1265,7 +1275,7 @@
               }
             } else if (currentGroupObj.hostId === data.hostId && remoteTime < localTime) {
                currentGroupObj.createdAt = remoteTime;
-               localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+               localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
             }
           }
 
@@ -1273,7 +1283,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1283,7 +1293,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1460,7 +1470,7 @@
       });
     }
 
-    // 【v2.1.8追加】1対1データ通信のリバーシ処理を統合
+    // 【v2.1.9変更】リバーシの対戦申し込み受信処理をカスタムUIに変更
     function setupDataConn(conn) {
       activeDataConns[conn.peer] = conn;
       conn.on('data', (data) => {
@@ -1477,19 +1487,18 @@
           }
           addChatLog(data.senderName, data.text, false);
 
-        // --- ここからリバーシ通信ロジック ---
         } else if (data && data.type === 'reversi_req') {
-          if (confirm(`🎮 ${data.senderName} さんからリバーシの対戦申し込みが届きました！対戦しますか？\n(あなたが先手・黒番になります)`)) {
-            conn.send({ type: 'reversi_acc', senderName: savedMyName || myPeerId.substring(0,5) });
-            startReversi(1);
-          } else {
-            conn.send({ type: 'reversi_dec', senderName: savedMyName || myPeerId.substring(0,5) });
-          }
+          // ネイティブの confirm() をやめて、カスタム通知UIを表示
+          pendingReversiConn = conn;
+          document.getElementById('game-invite-msg').innerText = `🎮 ${data.senderName} さんからリバーシの対戦申し込みが届きました！\n(あなたが先手・黒番になります)`;
+          document.getElementById('game-invite-container').style.display = 'block';
+
         } else if (data && data.type === 'reversi_acc') {
           startReversi(2);
           showNotification(`🎮 ${data.senderName}さんが対戦を承諾しました！(あなたは後手・白番です)`);
         } else if (data && data.type === 'reversi_dec') {
-          alert('リバーシの対戦申し込みが断られました。');
+          // 断られた時もアプリ内通知に変更
+          showNotification(`🎮 ${data.senderName} さんにリバーシの対戦を断られました。`);
         } else if (data && data.type === 'reversi_move') {
           applyReversiMove(data.r, data.c, data.color);
         } else if (data && data.type === 'reversi_pass') {
@@ -1498,10 +1507,9 @@
           updateReversiUI();
           checkReversiPassOrEnd();
         } else if (data && data.type === 'reversi_quit') {
-          showNotification('相手がリバーシを終了しました。');
+          // 終了された時もアプリ内通知に変更
+          showNotification('🎮 相手がリバーシを終了しました。');
           endReversi();
-        // --- ここまで ---
-
         } else if (data && data.type === 'leave') {
           if (activeCalls[conn.peer]) {
             if (activeCalls[conn.peer].peerConnection) activeCalls[conn.peer].peerConnection.close();
@@ -1512,7 +1520,7 @@
           if (audio) audio.remove();
           removeParticipantUI(conn.peer);
           updateStatus();
-          if (isReversiActive) endReversi(); // 通話が切れたらリバーシも終了
+          if (isReversiActive) endReversi(); 
         }
       });
       conn.on('close', () => delete activeDataConns[conn.peer]);
@@ -1549,13 +1557,17 @@
       participantsList.innerHTML = '';
       participantsSection.style.display = 'none';
       peerNames = {}; 
+
+      // 通話が切れたら対戦申し込みのポップアップも消す
+      document.getElementById('game-invite-container').style.display = 'none';
+      pendingReversiConn = null;
     }
 
     function switchToDirect() {
       closeAllCalls();
       currentMode = 'direct';
       currentGroupId = null;
-      endReversi(); // グループ移動時にリバーシを終了
+      endReversi(); 
       renderTabs();
       updateChatUI();
       directPanel.style.display = 'block';
@@ -1594,7 +1606,6 @@
       closeAllCalls();
       currentMode = 'group';
       currentGroupId = groupObj.id;
-      endReversi(); // グループ移動時にリバーシを終了
 
       renderTabs();
       updateChatUI();
@@ -1734,7 +1745,7 @@
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now() };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+          localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1764,7 +1775,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1774,7 +1785,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1797,7 +1808,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v218', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v219', JSON.stringify(customGroups));
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -1812,7 +1823,6 @@
         toggleBtn.disabled = count === 0;
         if (count > 0) {
           talkBtn.innerText = '長押しで話す';
-          // 【v2.1.8追加】1対1通話が繋がったらリバーシボタンを表示
           document.getElementById('direct-connected-actions').style.display = 'block';
         } else {
           document.getElementById('direct-connected-actions').style.display = 'none';
@@ -1821,7 +1831,7 @@
     }
 
     // ==========================================
-    // 【v2.1.8追加】リバーシ (オセロ) のゲームロジック
+    // リバーシ (オセロ) のゲームロジック
     // ==========================================
     window.inviteReversi = function() {
       if (Object.keys(activeDataConns).length === 0) return alert('対戦相手がいません。');
@@ -1829,6 +1839,24 @@
         conn.send({ type: 'reversi_req', senderName: savedMyName || myPeerId.substring(0,5) });
       });
       showNotification('相手にリバーシの対戦申し込みを送りました。返答待ちです...');
+    }
+
+    // 【v2.1.9追加】対戦申し込みのカスタムUIのボタン操作
+    window.acceptGameInvite = function() {
+      document.getElementById('game-invite-container').style.display = 'none';
+      if (pendingReversiConn && pendingReversiConn.open) {
+        pendingReversiConn.send({ type: 'reversi_acc', senderName: savedMyName || myPeerId.substring(0,5) });
+        startReversi(1);
+      }
+      pendingReversiConn = null;
+    }
+
+    window.declineGameInvite = function() {
+      document.getElementById('game-invite-container').style.display = 'none';
+      if (pendingReversiConn && pendingReversiConn.open) {
+        pendingReversiConn.send({ type: 'reversi_dec', senderName: savedMyName || myPeerId.substring(0,5) });
+      }
+      pendingReversiConn = null;
     }
 
     function startReversi(color) {
@@ -1961,7 +1989,7 @@
            }, 500);
         } else {
            if (reversiCurrentTurn === reversiMyColor) {
-              alert('置ける場所がないためパスになります。');
+              showNotification('置ける場所がないためパスになります。');
               reversiCurrentTurn = nextTurn;
               updateReversiUI();
               Object.values(activeDataConns).forEach(conn => {
