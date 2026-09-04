@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.0.3</title>
+  <title>Naisync - 内線トランシーバー v2.0.5</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -265,20 +265,18 @@
     body.dark-mode .participant-item { background: #2a2d32; border-color: #444; color: #e0e0e0; }
     body.dark-mode .participant-item .p-name { color: #e0e0e0; }
     body.dark-mode #toggle-btn { background-color: #2a2d32; border-color: #555; color: #ccc; }
-    body.dark-mode #auth-overlay { background: #121212; }
     body.dark-mode .changelog-list { background: #2a2d32; border-color: #444; color: #ccc; }
     body.dark-mode .changelog-item { border-color: #444; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">v2.0.3</div>
+  <div class="version-tag">v2.0.5</div>
 
-  <!-- ログイン・新規登録画面 -->
+  <!-- ログイン画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
       
-      <!-- 【v2.0.3追加】ログイン画面のアイコン -->
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
       
@@ -321,7 +319,6 @@
 
   <div class="card" id="main-card" style="display: none;">
     
-    <!-- 【v2.0.3追加】メイン画面のアイコンとタイトル -->
     <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
       <div class="app-title" style="margin-bottom: 0;">Naisync</div>
@@ -472,10 +469,16 @@
         <strong>Q. 問い合わせ・不具合の連絡先</strong>
         <p>A. Naisync公式X（<a href="https://x.com/NaiSync" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">@NaiSync</a>）までお気軽にDMやリプライでお知らせください！</p>
       </div>
+      <!-- 【v2.0.5追加】バグ報告サイトへのリンク -->
+      <div class="faq-item">
+        <strong>Q. バグ・不具合の報告</strong>
+        <p>A. <a href="https://aoirocat-bluecat.github.io/naisyncbugs/" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">バグ報告専用サイト</a>より情報をお寄せください。</p>
+      </div>
 
       <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;" id="test-server-wrap">
-        <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 テストサーバー情報</h4>
-        <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('normal')">通常テストルームを追加 (誰でも可)</button>
+        <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 公式テストサーバー</h4>
+        <!-- 【v2.0.5変更】テストルームを誰でも喋れるパブリックルームに変更 -->
+        <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('public')">公式パブリックルームに参加 (誰でも会話可)</button>
         <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('namereq')">名前必須ルームを追加 (要名前)</button>
       </div>
 
@@ -513,7 +516,16 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v2.0.3 (最新)</div>
+          <!-- 【v2.0.5変更】履歴を追加 -->
+          <div class="changelog-version">v2.0.5 (最新)</div>
+          <div>・ヘルプ画面にバグ報告専用サイトへのリンクを追加しました。<br>・テストルームを「公式パブリックルーム（誰でも他の人と喋れる常設部屋）」に仕様変更しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.0.4</div>
+          <div>・タブ移動時に通話が完全に切断されない（ゴースト音声化する）重大なバグを修正しました。<br>・他のモードからの不正な着信を完全に遮断する通信分離システムを導入しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.0.3</div>
           <div>・ログイン画面とメイン画面に公式のアプリロゴアイコンを追加しました。</div>
         </div>
         <div class="changelog-item">
@@ -576,7 +588,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v203-';
+    const APP_SECRET = 'naisen-app-v205-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -622,12 +634,12 @@
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v203')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v205')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v202'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v204'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
       }
     }
 
@@ -712,7 +724,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -867,10 +879,11 @@
     }
 
     function updateChatUI() {
-      if (currentMode === 'group' && (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom')) {
+      // 【v2.0.5変更】パブリックルームはチャットも自由に使えるように開放
+      if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
         chatInput.disabled = true;
         chatSendBtn.disabled = true;
-        chatInput.placeholder = "テストルームではチャットは使用できません";
+        chatInput.placeholder = "このルームではチャットは使用できません";
       } else {
         chatInput.disabled = false;
         chatSendBtn.disabled = false;
@@ -1038,7 +1051,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
             
             const targetGroup = pendingInvite;
             pendingInvite = null; 
@@ -1059,7 +1072,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
               switchToDirect();
               return;
             }
@@ -1069,7 +1082,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+              localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
               joinGroup(currentGroupObj);
               return;
             }
@@ -1080,11 +1093,13 @@
             if (isNameRequired && !data.senderName) return;
 
             resumeAudioContext();
-            const call = peer.call(data.peerId, processedStream, { metadata: { senderName: savedMyName } });
+            const call = peer.call(data.peerId, processedStream, { 
+              metadata: { senderName: savedMyName, mode: 'group', groupId: currentGroupId } 
+            });
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.senderId, data.senderName);
-            if (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom') return;
+            if (currentGroupId === 'test-nameroom') return;
             
             showNotification(`💬 ${data.senderName}: ${data.text}`);
             addChatLog(data.senderName, data.text, false);
@@ -1104,6 +1119,21 @@
         resumeAudioContext();
         
         const callerName = call.metadata ? call.metadata.senderName : '';
+        const callMode = call.metadata ? call.metadata.mode : 'direct';
+        const callGroupId = call.metadata ? call.metadata.groupId : null;
+
+        if (currentMode === 'group') {
+          if (callMode !== 'group' || callGroupId !== currentGroupId) {
+            call.close();
+            return;
+          }
+        } else if (currentMode === 'direct') {
+          if (callMode === 'group') {
+            call.close();
+            return;
+          }
+        }
+
         if (callerName) updateParticipantName(call.peer, callerName);
         
         const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
@@ -1217,7 +1247,6 @@
         if (audio) audio.remove();
         delete activeCalls[call.peer];
         updateStatus();
-        
         removeParticipantUI(call.peer);
       });
     }
@@ -1229,6 +1258,16 @@
           updateParticipantName(conn.peer, data.senderName);
           showNotification(`💬 ${data.senderName}: ${data.text}`);
           addChatLog(data.senderName, data.text, false);
+        } else if (data && data.type === 'leave') {
+          if (activeCalls[conn.peer]) {
+            if (activeCalls[conn.peer].peerConnection) activeCalls[conn.peer].peerConnection.close();
+            activeCalls[conn.peer].close();
+            delete activeCalls[conn.peer];
+          }
+          const audio = document.getElementById('audio-' + conn.peer);
+          if (audio) audio.remove();
+          removeParticipantUI(conn.peer);
+          updateStatus();
         }
       });
       conn.on('close', () => delete activeDataConns[conn.peer]);
@@ -1236,8 +1275,26 @@
 
     function closeAllCalls() {
       if (currentGroupTopic && mqttClient) mqttClient.unsubscribe(currentGroupTopic);
-      Object.values(activeCalls).forEach(call => call.close());
-      Object.values(activeDataConns).forEach(conn => conn.close());
+      
+      Object.values(activeDataConns).forEach(conn => {
+        if (conn.open) conn.send({ type: 'leave', senderId: myPeerId });
+        conn.close();
+      });
+
+      Object.values(activeCalls).forEach(call => {
+        if (call.peerConnection) call.peerConnection.close();
+        call.close();
+      });
+
+      if (peer && peer.connections) {
+        Object.keys(peer.connections).forEach(peerId => {
+          peer.connections[peerId].forEach(conn => {
+            if (conn.peerConnection) conn.peerConnection.close();
+            if (conn.close) conn.close();
+          });
+        });
+      }
+
       activeCalls = {};
       activeDataConns = {};
       audioContainer.innerHTML = '';
@@ -1270,7 +1327,9 @@
       if (!targetId) return alert('相手の内線IDを入力してください');
       
       statusEl.innerText = '発信中...';
-      const call = peer.call(targetId, processedStream, { metadata: { senderName: savedMyName } });
+      const call = peer.call(targetId, processedStream, { 
+        metadata: { senderName: savedMyName, mode: 'direct' } 
+      });
       setupCall(call);
 
       const conn = peer.connect(targetId);
@@ -1315,8 +1374,8 @@
 
     // --- チャット ---
     function sendChatMessage() {
-      if (currentMode === 'group' && (currentGroupId === 'test-room' || currentGroupId === 'test-nameroom')) {
-        return alert('テストルームではチャットは使用できません。');
+      if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
+        return alert('このルームではチャットは使用できません。');
       }
 
       const text = chatInput.value.trim();
@@ -1381,7 +1440,7 @@
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1391,7 +1450,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1402,15 +1461,16 @@
 
     window.addTestGroup = function(type) {
       let testGroup;
-      if (type === 'normal') {
-        testGroup = { id: 'test-room', name: '通常テスト', pass: '0000', requireName: false };
+      if (type === 'public') {
+        // 【v2.0.5変更】誰でも入れる公開パブリックルーム（共通の固定IDと合言葉）
+        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', requireName: false };
       } else {
         testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true };
       }
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v203', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v205', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
