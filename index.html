@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v1.9.8</title>
+  <title>Naisync - 内線トランシーバー v1.9.9</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -92,6 +92,9 @@
     .btn-secondary { background-color: #6c757d; }
     .btn-outline { background-color: white; color: #007bff; border: 1px solid #007bff; }
     .btn-danger { background-color: #dc3545; }
+    
+    .btn-kick { background: #ff4444; color: white; border: none; border-radius: 4px; font-size: 10px; padding: 4px 8px; cursor: pointer; margin-left: 6px; font-weight: bold; }
+    .btn-kick:hover { background: #cc0000; }
 
     .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 16px; }
     
@@ -269,10 +272,8 @@
 </head>
 <body>
 
-  <!-- 画面右下のバージョン表示 -->
-  <div class="version-tag">v1.9.8</div>
+  <div class="version-tag">v1.9.9</div>
 
-  <!-- ログイン・新規登録画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
@@ -328,10 +329,14 @@
       <button class="btn-action" id="connect-btn">1対1で発信</button>
     </div>
 
-    <!-- グループ通話エリアに招待共有ボタンを追加 -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
       <button class="btn-action btn-outline" onclick="window.copyGroupInvite()" style="padding: 8px; font-size: 12px; margin-top: 12px;">🔗 このグループの招待リンクをコピー</button>
+      
+      <!-- 【v1.9.9追加】リーダー専用コントロール -->
+      <div id="host-controls" style="display: none; margin-top: 8px;">
+        <button class="btn-action btn-danger" onclick="window.changeRoomPassword()" style="padding: 8px; font-size: 12px;">👑 グループのパスワードを変更する</button>
+      </div>
     </div>
 
     <div id="status">初期化中...</div>
@@ -439,6 +444,7 @@
         <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
         <button class="btn-action" onclick="saveNewGroup()">追加して参加</button>
       </div>
+      <p style="font-size: 11px; color: #888; margin-top: 16px;">※グループを作成した人は自動的に「リーダー（👑）」となり、キックやパスワード変更が可能になります。</p>
     </div>
   </div>
 
@@ -451,8 +457,8 @@
         <p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。招待リンクを共有するのが一番確実です。</p>
       </div>
       <div class="faq-item">
-        <strong>Q. ログアウトするとどうなるの？</strong>
-        <p>A. 現在のIDから離脱し、ログイン画面に戻ります。</p>
+        <strong>Q. リーダー（👑）とは？</strong>
+        <p>A. グループを「＋作成」から作った人のことです。リーダーは参加者を追放（キック）したり、パスワードを強制変更して部屋をロックすることができます。</p>
       </div>
       <div class="faq-item">
         <strong>Q. 問い合わせ・不具合の連絡先</strong>
@@ -475,7 +481,6 @@
   <div class="modal-overlay top-layer" id="auth-help-modal">
     <div class="modal-box">
       <h3>❓ ログイン・登録のQ&A</h3>
-      
       <div class="faq-item">
         <strong>Q. メールアドレスは必要ですか？</strong>
         <p>A. いいえ、不要です。お好きな「内線ID」と「パスワード」だけで安全に登録できます。</p>
@@ -488,11 +493,6 @@
         <strong>Q. 「登録失敗」のエラーが出ます</strong>
         <p>A. すでに他の人がそのIDを使っている可能性があります。別のIDに変更するか、パスワードが6文字以上になっているか確認してください。</p>
       </div>
-      <div class="faq-item">
-        <strong>Q. IDの文字に制限はある？</strong>
-        <p>A. 「半角英数字」と「ハイフン(-)」のみ使用可能です。</p>
-      </div>
-
       <div class="modal-buttons">
         <button class="btn-action btn-secondary" onclick="window.closeAuthHelp()">閉じる</button>
       </div>
@@ -505,12 +505,16 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v1.9.8 (最新)</div>
-          <div>・グループのID/パスワードをURLで共有し、ワンタップで参加できる招待機能を追加</div>
+          <div class="changelog-version">v1.9.9 (最新)</div>
+          <div>・リーダー（ホスト）機能の追加（グループ作成者が自動的にリーダーに）<br>・メンバーの強制退出（キック）機能の追加<br>・グループパスワードの強制変更機能の追加</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v1.9.8</div>
+          <div>・グループ招待リンクの共有・ワンタップ参加機能の追加</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.9.7</div>
-          <div>・ログインQ&Aの追加<br>・更新一覧（履歴）機能の追加</div>
+          <div>・ログインQ&A、更新一覧（履歴）機能の追加</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.9.6</div>
@@ -523,10 +527,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v1.9.0</div>
           <div>・Firebase連携による完全なアカウント保護機能（ログイン/登録）の追加</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v1.6.0</div>
-          <div>・IDの固定化と自動再接続システムの追加</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -568,7 +568,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_SECRET = 'naisen-app-v198-';
+    const APP_SECRET = 'naisen-app-v199-';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -599,7 +599,6 @@
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
-    // 【v1.9.8】URLパラメータから招待情報を受け取る処理
     let pendingInvite = null;
     window.addEventListener('DOMContentLoaded', () => {
       const params = new URLSearchParams(window.location.search);
@@ -608,19 +607,19 @@
           id: params.get('g'),
           pass: params.get('p'),
           name: params.get('n') || params.get('g'),
-          requireName: params.get('req') === '1'
+          requireName: params.get('req') === '1',
+          hostId: params.get('h') || null // リーダー情報をURLから取得
         };
-        // 処理後はURLをきれいにする（リロード時の再実行を防ぐ）
         window.history.replaceState(null, '', window.location.pathname);
       }
     });
 
-    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v198')) || [];
+    let customGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v199')) || [];
     if (customGroups.length === 0) {
-      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v197'));
+      const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v198'));
       if (oldGroups && oldGroups.length > 0) {
         customGroups = oldGroups;
-        localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
       }
     }
 
@@ -659,11 +658,9 @@
 
     window.openAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'flex'; }
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
-    
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
     window.closeChangelog = function() { document.getElementById('changelog-modal').style.display = 'none'; }
 
-    // 【v1.9.8追加】グループの招待情報をクリップボードにコピー
     window.copyGroupInvite = function() {
       if (currentMode !== 'group' || !currentGroupId) return;
       const g = customGroups.find(x => x.id === currentGroupId);
@@ -674,6 +671,7 @@
       url.searchParams.set('p', g.pass);
       url.searchParams.set('n', g.name);
       if (g.requireName) url.searchParams.set('req', '1');
+      if (g.hostId) url.searchParams.set('h', g.hostId);
 
       const text = `内線トランシーバー「Naisync」のグループ招待 📡\n` +
                    `グループ名: ${g.name}\n` +
@@ -688,24 +686,43 @@
       });
     }
 
+    // 【v1.9.9追加】リーダーによるメンバーキック機能
+    window.kickUser = function(targetId, targetName) {
+      if(!confirm(`${targetName} をグループから強制退出（キック）させますか？\n※相手が再度招待リンクを踏むと戻ってこれるため、完全にブロックしたい場合はパスワードを変更してください。`)) return;
+      mqttClient.publish(currentGroupTopic, JSON.stringify({
+        type: 'kick', senderId: myPeerId, targetId: targetId
+      }));
+    }
+
+    // 【v1.9.9追加】リーダーによるパスワード強制変更機能
+    window.changeRoomPassword = function() {
+      const newPass = prompt('新しいパスワードを入力してください（6文字以上推奨）。\n※この部屋にいる全員が自動的に新しいパスワードの部屋に移動します。');
+      if(!newPass) return;
+      
+      // ブロードキャスト（全員に新パスワードを通知）
+      mqttClient.publish(currentGroupTopic, JSON.stringify({
+        type: 'change_pass', senderId: myPeerId, newPass: newPass
+      }));
+      
+      // 自身も新しいパスワードに更新して移動
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if(g) {
+        g.pass = newPass;
+        localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+        setTimeout(() => joinGroup(g), 500); 
+      }
+    }
+
     function applyStreamerModeToUI() {
       const idsToMask = [
-        myIdEl,
-        peerIdInput,
-        document.getElementById('modal-group-id'),
-        document.getElementById('login-id'),
-        document.getElementById('reg-id')
+        myIdEl, peerIdInput, document.getElementById('modal-group-id'),
+        document.getElementById('login-id'), document.getElementById('reg-id')
       ];
-      
       if (isStreamerMode) {
-        idsToMask.forEach(el => {
-          if (el) el.classList.add('streamer-mask');
-        });
+        idsToMask.forEach(el => { if (el) el.classList.add('streamer-mask'); });
         if(myIdEl) myIdEl.title = 'マウスホバーで一時的に確認できます';
       } else {
-        idsToMask.forEach(el => {
-          if (el) el.classList.remove('streamer-mask');
-        });
+        idsToMask.forEach(el => { if (el) el.classList.remove('streamer-mask'); });
         if(myIdEl) myIdEl.title = '';
       }
     }
@@ -714,12 +731,10 @@
     function updateDarkModeUI() {
       if (isDarkMode) {
         document.body.classList.add('dark-mode');
-        darkModeCheckbox.checked = true;
-        darkModeStatusText.innerText = 'ON';
+        darkModeCheckbox.checked = true; darkModeStatusText.innerText = 'ON';
       } else {
         document.body.classList.remove('dark-mode');
-        darkModeCheckbox.checked = false;
-        darkModeStatusText.innerText = 'OFF';
+        darkModeCheckbox.checked = false; darkModeStatusText.innerText = 'OFF';
       }
     }
     updateDarkModeUI();
@@ -877,11 +892,7 @@
         notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
 
         const audioConstraints = {
-          audio: {
-            echoCancellation: isNoiseCanceling,
-            noiseSuppression: isNoiseCanceling,
-            autoGainControl: isNoiseCanceling
-          }, video: false
+          audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
         };
 
         rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
@@ -930,9 +941,7 @@
       if (rawAudioTrack) {
         try {
           await rawAudioTrack.applyConstraints({
-            echoCancellation: isNoiseCanceling,
-            noiseSuppression: isNoiseCanceling,
-            autoGainControl: isNoiseCanceling
+            echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling
           });
         } catch (err) { console.error(err); }
       }
@@ -985,8 +994,10 @@
         const tab = document.createElement('button');
         tab.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
         
+        // 【v1.9.9】リーダーの場合は王冠マークを付ける
+        const isHost = (g.hostId === myPeerId);
         const label = document.createElement('span');
-        label.innerText = g.name;
+        label.innerText = (isHost ? '👑 ' : '') + g.name;
         tab.appendChild(label);
 
         const delBtn = document.createElement('span');
@@ -1017,7 +1028,6 @@
 
         mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         mqttClient.on('connect', () => {
-          // 【v1.9.8】URLから招待が来ていた場合の処理
           if (pendingInvite) {
             const index = customGroups.findIndex(g => g.id === pendingInvite.id);
             if (index >= 0) {
@@ -1025,10 +1035,10 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
+            localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
             
             const targetGroup = pendingInvite;
-            pendingInvite = null; // 処理済みとしてリセット
+            pendingInvite = null; 
             joinGroup(targetGroup);
           } else {
             switchToDirect();
@@ -1041,6 +1051,26 @@
           
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
+
+          // 【v1.9.9】リーダーからのキック処理を受信
+          if (data.type === 'kick' && data.targetId === myPeerId) {
+            if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
+              alert('👑 リーダーから強制退出させられました。');
+              switchToDirect();
+              return;
+            }
+          }
+
+          // 【v1.9.9】リーダーからのパスワード変更処理を受信
+          if (data.type === 'change_pass') {
+            if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
+              alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
+              currentGroupObj.pass = data.newPass;
+              localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
+              joinGroup(currentGroupObj);
+              return;
+            }
+          }
 
           if (data.type === 'join' && data.peerId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.peerId, data.senderName);
@@ -1137,6 +1167,18 @@
       
       ctrlDiv.appendChild(icon);
       ctrlDiv.appendChild(slider);
+      
+      // 【v1.9.9】自分がリーダーなら、相手のUIにキックボタンを追加
+      const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
+      const isHost = currentGroupObj && currentGroupObj.hostId === myPeerId;
+      if (isHost && peerId !== myPeerId) {
+        const kickBtn = document.createElement('button');
+        kickBtn.innerText = '✕ 退出';
+        kickBtn.className = 'btn-kick';
+        kickBtn.onclick = () => window.kickUser(peerId, name);
+        ctrlDiv.appendChild(kickBtn);
+      }
+
       div.appendChild(nameEl);
       div.appendChild(ctrlDiv);
       
@@ -1259,6 +1301,10 @@
       directPanel.style.display = 'none';
       groupPanel.style.display = 'block';
 
+      // 【v1.9.9】自分がリーダーかどうかの判定をしてUIを切り替え
+      const isHost = (groupObj.hostId === myPeerId);
+      document.getElementById('host-controls').style.display = isHost ? 'block' : 'none';
+
       currentGroupTopic = `${APP_SECRET}${groupObj.id}-${groupObj.pass}`;
 
       mqttClient.subscribe(currentGroupTopic);
@@ -1338,12 +1384,13 @@
       if (!name || !id || !pass) return alert('全項目を入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      const newGroup = { id, name, pass, requireName };
+      // 【v1.9.9】作成者をリーダーとして登録
+      const newGroup = { id, name, pass, requireName, hostId: myPeerId };
       const index = customGroups.findIndex(g => g.id === id);
       if (index >= 0) customGroups[index] = newGroup;
       else customGroups.push(newGroup);
 
-      localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
       window.closeGroupModal();
       joinGroup(newGroup);
     }
@@ -1353,7 +1400,7 @@
       if (!confirm(`グループ「${groupName}」を削除しますか？`)) return;
 
       customGroups = customGroups.filter(g => g.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1372,7 +1419,7 @@
       
       if (!customGroups.some(g => g.id === testGroup.id)) {
         customGroups.push(testGroup);
-        localStorage.setItem('my_naisen_groups_v198', JSON.stringify(customGroups));
+        localStorage.setItem('my_naisen_groups_v199', JSON.stringify(customGroups));
       }
       window.closeHelp();
       joinGroup(testGroup);
