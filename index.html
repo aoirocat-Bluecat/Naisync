@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.16</title>
+  <title>Naisync - 内線トランシーバー v2.2.17</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -316,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.16</div>
+  <div class="version-tag">v2.2.17</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -563,9 +563,10 @@
         <label>パスワード (必須)</label>
         <input type="password" id="modal-create-pass" placeholder="パスワードを入力">
         
+        <!-- 【v2.2.17変更】名前必須を廃止し、ゲスト参加禁止オプションに変更 -->
         <label class="checkbox-label">
-          <input type="checkbox" id="modal-create-require-name">
-          参加者に「名前設定」を必須にする
+          <input type="checkbox" id="modal-create-no-guests">
+          ゲスト（未ログイン）の参加を禁止する
         </label>
         
         <label class="checkbox-label">
@@ -621,7 +622,8 @@
       <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;" id="test-server-wrap">
         <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 公式テストサーバー</h4>
         <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('public')">公式パブリックルームに参加 (誰でも会話可)</button>
-        <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('namereq')">名前必須ルームを追加 (要名前)</button>
+        <!-- 【v2.2.17変更】ゲスト禁止ルームの追加ボタンに変更 -->
+        <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('noguest')">ゲスト禁止ルームを追加</button>
       </div>
 
       <div class="modal-buttons">
@@ -650,8 +652,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.16変更】バージョン更新 -->
-          <div class="changelog-version">v2.2.16 (最新)</div>
+          <!-- 【v2.2.17追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.17 (最新) 🛡️荒らし対策強化</div>
+          <div>・グループ作成時に「ゲスト（未ログイン）の参加を禁止する」オプションを追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.16</div>
           <div>・ファイル読み込みのパス指定を改善し、特定のサーバー環境での動作安定性を向上させました。</div>
         </div>
         <div class="changelog-item">
@@ -689,10 +695,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.2.6</div>
           <div>・タブを閉じた際の通信処理を最適化し、動作の安定性を向上させました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.4</div>
-          <div>・字幕の共有設定と、動画のような「数秒で消える字幕エリア」を新設しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -734,7 +736,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2216/';
+    const APP_PREFIX = 'Naisync/v2217/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -768,6 +770,7 @@
     let isJoinRoomClosed = false;
     let joiningFoundRadio = false;
     let joiningFoundAllowMemberSE = false;
+    let joiningFoundNoGuests = false; // 【v2.2.17追加】
 
     let transMode = localStorage.getItem('my_naisen_trans_mode') || 'off';
     let speechRecognition = null;
@@ -799,7 +802,7 @@
           id: params.get('g'),
           pass: params.get('p'),
           name: params.get('n') || params.get('g'),
-          requireName: params.get('req') === '1',
+          noGuests: params.get('ng') === '1', // 【v2.2.17変更】
           hostId: null, 
           createdAt: 9999999999999,
           isRadio: params.get('r') === '1'
@@ -815,7 +818,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2216', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2217', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -823,13 +826,14 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2216'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2217'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2215')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2216')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
            if (g.allowMemberSE === undefined) g.allowMemberSE = false;
+           if (g.noGuests === undefined) g.noGuests = false; // 【v2.2.17変更】
            return g;
          });
          saveGroups();
@@ -875,7 +879,6 @@
     const darkModeStatusText = document.getElementById('dark-mode-status-text');
     const authError = document.getElementById('auth-error');
 
-    // 【v2.2.16変更】英語ファイル名に変更（GitHub Pagesでの404対策）
     const SE_FILES = {
       'applause': './applause.mp3',
       'pingpong': './correct.mp3',
@@ -1015,7 +1018,7 @@
       url.searchParams.set('g', g.id);
       url.searchParams.set('p', g.pass);
       url.searchParams.set('n', g.name);
-      if (g.requireName) url.searchParams.set('req', '1');
+      if (g.noGuests) url.searchParams.set('ng', '1'); // 【v2.2.17変更】
       if (g.isRadio) url.searchParams.set('r', '1');
 
       let text = '';
@@ -1227,7 +1230,7 @@
       speechRecognition.interimResults = false;
       
       speechRecognition.onresult = (event) => {
-        if (currentMode === 'group' && currentGroupId === 'test-nameroom') return;
+        if (currentMode === 'group' && currentGroupId === 'test-noguest') return;
 
         let text = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -1304,7 +1307,7 @@
         chatInput.disabled = true;
         chatSendBtn.disabled = true;
         chatInput.placeholder = "ゲストはチャットを送信できません";
-      } else if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
+      } else if (currentMode === 'group' && currentGroupId === 'test-noguest') {
         chatInput.disabled = true;
         chatSendBtn.disabled = true;
         chatInput.placeholder = "このルームではチャットは使用できません";
@@ -1502,6 +1505,7 @@
         addBtn.innerText = '＋ 作成';
         addBtn.onclick = () => {
           document.getElementById('modal-create-allow-se').checked = false;
+          document.getElementById('modal-create-no-guests').checked = false; // 【v2.2.17追加】
           window.openGroupModal();
         };
       }
@@ -1531,6 +1535,9 @@
               if (pendingInvite.isRadio) {
                 customGroups[index].isRadio = true;
               }
+              if (pendingInvite.noGuests) { // 【v2.2.17追加】
+                customGroups[index].noGuests = true;
+              }
             } else {
               customGroups.push(pendingInvite);
             }
@@ -1558,6 +1565,7 @@
                 if (data.type === 'radio_close') isJoinRoomClosed = true;
                 if (data.isRadio !== undefined) joiningFoundRadio = data.isRadio;
                 if (data.allowMemberSE !== undefined) joiningFoundAllowMemberSE = data.allowMemberSE; 
+                if (data.noGuests !== undefined) joiningFoundNoGuests = data.noGuests; // 【v2.2.17追加】
               } catch(e) {}
             }
           }
@@ -1566,7 +1574,6 @@
           const data = JSON.parse(message.toString());
           
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
-          const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
           if (data.type === 'se' && data.senderId !== myPeerId) {
             playAudioEffect(data.sound);
@@ -1614,6 +1621,7 @@
                 currentGroupObj.createdAt = remoteTime;
                 if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
                 if (data.allowMemberSE !== undefined) currentGroupObj.allowMemberSE = data.allowMemberSE; 
+                if (data.noGuests !== undefined) currentGroupObj.noGuests = data.noGuests; // 【v2.2.17追加】
                 saveGroups();
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId && !currentGroupObj.isRadio) ? 'block' : 'none';
@@ -1621,7 +1629,8 @@
               } else if (currentGroupObj.hostId === myPeerId) {
                 mqttClient.publish(currentGroupTopic, JSON.stringify({
                   type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, 
-                  isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE
+                  isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE,
+                  noGuests: currentGroupObj.noGuests // 【v2.2.17追加】
                 }), { retain: true });
               }
             } else if (currentGroupObj.hostId === data.hostId) {
@@ -1638,10 +1647,23 @@
                  currentGroupObj.allowMemberSE = data.allowMemberSE;
                  updated = true;
                }
+               if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { // 【v2.2.17追加】
+                 currentGroupObj.noGuests = data.noGuests;
+                 updated = true;
+               }
                if (updated) {
                  saveGroups();
                  updateStatus();
                }
+            }
+            
+            // 【v2.2.17追加】受信した部屋情報でゲスト禁止だった場合、強制退出させる
+            if (isGuestMode && currentGroupObj.noGuests) {
+              alert('🚨 このグループはゲストの参加が許可されていません。\n強制退出します。');
+              customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
+              saveGroups();
+              switchToDirect();
+              return;
             }
           }
 
@@ -1667,16 +1689,18 @@
 
           if (data.type === 'join' && data.peerId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.peerId, data.senderName);
-            if (isNameRequired && !data.senderName) return;
+            
+            // 【v2.2.17追加】ゲスト禁止部屋にゲストからJoinが来た場合は通信を構築しない
+            if (currentGroupObj && currentGroupObj.noGuests && data.isGuest) return;
 
             resumeAudioContext();
             const call = peer.call(data.peerId, processedStream, { 
-              metadata: { senderName: savedMyName, mode: 'group', groupId: currentGroupId } 
+              metadata: { senderName: savedMyName, mode: 'group', groupId: currentGroupId, isGuest: isGuestMode } 
             });
             setupCall(call);
           } else if (data.type === 'chat' && data.senderId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.senderId, data.senderName);
-            if (currentGroupId === 'test-nameroom') return;
+            if (currentGroupId === 'test-noguest') return;
             
             showNotification(`💬 ${data.senderName}: ${data.text}`);
             
@@ -1701,6 +1725,7 @@
         const callerName = call.metadata ? call.metadata.senderName : '';
         const callMode = call.metadata ? call.metadata.mode : 'direct';
         const callGroupId = call.metadata ? call.metadata.groupId : null;
+        const callerIsGuest = call.metadata ? call.metadata.isGuest : false; // 【v2.2.17追加】
 
         if (isGuestMode && callMode === 'direct') {
           call.close();
@@ -1722,10 +1747,10 @@
         if (callerName) updateParticipantName(call.peer, callerName);
         
         const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
-        const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
         
-        if (currentMode === 'group' && isNameRequired) {
-          if (!callerName) {
+        // 【v2.2.17変更】ゲスト禁止の部屋にゲストから着信が来た場合は切断する
+        if (currentMode === 'group' && currentGroupObj && currentGroupObj.noGuests) {
+          if (callerIsGuest) {
             call.close();
             return;
           }
@@ -1991,8 +2016,9 @@
     });
 
     function joinGroup(groupObj) {
-      if (groupObj.requireName && !savedMyName) {
-        alert(`【${groupObj.name}】は名前の登録が必須です。\n右上の「⚙️ 設定」から名前を保存してください。`);
+      // 【v2.2.17変更】ゲスト参加禁止チェックを最優先で実施
+      if (groupObj.noGuests && isGuestMode) {
+        alert(`🚨 【${groupObj.name}】はゲストでの参加が禁止されています。\nログインしてからご参加ください。`);
         switchToDirect();
         return;
       }
@@ -2031,7 +2057,8 @@
           hostId: groupObj.hostId,
           createdAt: groupObj.createdAt,
           isRadio: groupObj.isRadio,
-          allowMemberSE: groupObj.allowMemberSE 
+          allowMemberSE: groupObj.allowMemberSE,
+          noGuests: groupObj.noGuests // 【v2.2.17追加】
         }), { retain: true });
       }
       
@@ -2039,6 +2066,7 @@
         type: 'join', 
         peerId: myPeerId,
         senderName: savedMyName,
+        isGuest: isGuestMode, // 【v2.2.17追加】
         hostId: groupObj.hostId,
         createdAt: groupObj.createdAt
       }));
@@ -2049,7 +2077,7 @@
     // --- チャット ---
     function sendChatMessage() {
       if (isGuestMode) return;
-      if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
+      if (currentMode === 'group' && currentGroupId === 'test-noguest') {
         return alert('このルームではチャットは使用できません。');
       }
 
@@ -2066,7 +2094,7 @@
           
           const pass = '';
 
-          const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true, allowMemberSE: false };
+          const newGroup = { id, name, pass, noGuests: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true, allowMemberSE: false };
           customGroups.push(newGroup);
           saveGroups();
           joinGroup(newGroup);
@@ -2122,7 +2150,7 @@
       document.getElementById('modal-create-name').value = '';
       document.getElementById('modal-create-id').value = '';
       document.getElementById('modal-create-pass').value = '';
-      document.getElementById('modal-create-require-name').checked = false; 
+      document.getElementById('modal-create-no-guests').checked = false; 
       document.getElementById('modal-create-allow-se').checked = false; 
 
       document.getElementById('modal-join-name').value = '';
@@ -2140,7 +2168,7 @@
       const name = document.getElementById('modal-create-name').value.trim();
       const id = document.getElementById('modal-create-id').value.trim();
       const pass = document.getElementById('modal-create-pass').value.trim();
-      const requireName = document.getElementById('modal-create-require-name').checked;
+      const noGuests = document.getElementById('modal-create-no-guests').checked; // 【v2.2.17追加】
       const allowMemberSE = document.getElementById('modal-create-allow-se').checked; 
 
       if (!name || !id || pass === '') return alert('全項目を入力してください（グループ作成にはパスワードが必須です）');
@@ -2173,7 +2201,7 @@
           checkingGroupId = null;
         } else {
           checkingGroupId = null;
-          const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false, allowMemberSE: allowMemberSE };
+          const newGroup = { id, name, pass, noGuests: noGuests, hostId: myPeerId, createdAt: Date.now(), isRadio: false, allowMemberSE: allowMemberSE };
           customGroups.push(newGroup);
 
           saveGroups();
@@ -2206,6 +2234,7 @@
       isJoinRoomClosed = false;
       joiningFoundRadio = false;
       joiningFoundAllowMemberSE = false; 
+      joiningFoundNoGuests = false; // 【v2.2.17追加】
 
       const checkTopic = `${APP_PREFIX}${id}/#`;
       mqttClient.subscribe(checkTopic);
@@ -2237,6 +2266,15 @@
           return;
         }
 
+        // 【v2.2.17追加】ゲスト禁止チェック
+        if (isGuestMode && joiningFoundNoGuests) {
+          alert(`🚨 このグループはゲストの参加が許可されていません。\nログインしてから再度お試しください。`);
+          btn.disabled = false;
+          btn.innerText = '参加する';
+          joiningGroupId = null;
+          return;
+        }
+
         joiningGroupId = null;
         joiningGroupPass = null;
 
@@ -2245,14 +2283,16 @@
         const createdAt = (existingGroup && existingGroup.createdAt) ? existingGroup.createdAt : 9999999999999;
         const isRadio = joiningFoundRadio;
         const allowMemberSE = joiningFoundAllowMemberSE; 
+        const noGuests = joiningFoundNoGuests;
 
-        const newGroup = { id, name, pass, requireName: false, hostId, createdAt, isRadio, allowMemberSE };
+        const newGroup = { id, name, pass, noGuests, hostId, createdAt, isRadio, allowMemberSE };
         const index = customGroups.findIndex(g => g.id === id);
         if (index >= 0) {
           customGroups[index].pass = pass;
           customGroups[index].name = name;
           customGroups[index].isRadio = isRadio;
           customGroups[index].allowMemberSE = allowMemberSE; 
+          customGroups[index].noGuests = noGuests;
         } else {
           customGroups.push(newGroup);
         }
@@ -2272,9 +2312,9 @@
     window.addTestGroup = function(type) {
       let testGroup;
       if (type === 'public') {
-        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', requireName: false, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
+        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', noGuests: false, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
       } else {
-        testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
+        testGroup = { id: 'test-noguest', name: 'ゲスト禁止テスト', pass: '0000', noGuests: true, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
       }
       
       const index = customGroups.findIndex(g => g.id === testGroup.id);
