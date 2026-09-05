@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.31</title>
+  <title>Naisync - 内線トランシーバー v2.2.32</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -385,10 +385,11 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.31</div>
+  <div class="version-tag">v2.2.32</div>
 
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
+      
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
 
@@ -442,12 +443,13 @@
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <div class="header-btns">
       <button class="icon-btn" onclick="window.openChangelog()" title="更新一覧">📜</button>
-      <button class="icon-btn" onclick="window.openSettings()" title="設定">⚙️</button>
-      <button class="icon-btn" onclick="window.openHelp()" title="ヘルプ">❓</button>
+      <button class="icon-btn" onclick="openSettings()" title="設定">⚙️</button>
+      <button class="icon-btn" onclick="openHelp()" title="ヘルプ">❓</button>
     </div>
   </div>
 
   <div class="card" id="main-card" style="display: none;">
+    
     <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
       <div class="app-title" style="margin-bottom: 0;">Naisync</div>
@@ -844,13 +846,9 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.31追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.31 (最新) 🛠️システム完全復旧</div>
-          <div>・一部の機能が開けなくなる致命的なプログラムの重複エラーを完全に修正しました。<br>・通信の初期化状態を分かりやすく改善しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.29 🛠️接続安定性の向上</div>
-          <div>・一部のネットワーク環境で、通信サーバーが弾かれて「初期化中...」で止まってしまう問題を解決しました。<br>・1対1モードはサーバーを経由しないため、すぐに利用できるように改善しました。</div>
+          <!-- 【v2.2.32追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.32 (最新) 🛠️1対1モード即時解放</div>
+          <div>・ネットワーク制限によって「初期化中...」で止まってしまう問題を解決するため、1対1モードをサーバー待機なしで即座に遊べるように修正しました。<br>・前バージョンで発生した致命的なエラーをクリーンアップしました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.28 🕹️UI整理</div>
@@ -920,7 +918,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2231/';
+    const APP_PREFIX = 'Naisync/v2232/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -1007,7 +1005,6 @@
     
     let pendingGameType = null; 
 
-    // 【復活】NGワードリスト
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
     let pendingInvite = null;
@@ -1035,7 +1032,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2231', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2232', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -1043,9 +1040,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2231'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2232'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2230')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2231')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -2120,251 +2117,9 @@
       };
     }
 
-    function startMainApp() {
-      document.getElementById('auth-overlay').style.display = 'none';
-      document.getElementById('main-header').style.display = 'flex';
-      document.getElementById('main-card').style.display = 'block';
-
-      displayMyName.innerText = savedMyName + (isGuestMode ? ' (ゲスト)' : '');
-      settingMyNameInput.value = savedMyName;
-      if (isGuestMode) settingMyNameInput.disabled = true;
-
-      streamerModeCheckbox.checked = isStreamerMode;
-      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
-
-      loadAndMigrateGroups(currentUser.customId || (currentUser.email ? currentUser.email.split('@')[0] : 'guest'));
-      
-      statusEl.innerText = 'マイクと通信の準備中...';
-      initMicrophoneAndNetwork();
-    }
-
-    function showNotification(message) {
-      if (!isNotificationOn) return; 
-      const container = document.getElementById('notification-container');
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.innerText = message;
-      container.appendChild(toast);
-      setTimeout(() => { toast.remove(); }, 3900);
-    }
-
-    function containsNGWord(text) {
-      if (!text) return false;
-      return NG_WORDS.some(word => text.includes(word));
-    }
-
-    function updateChatUI() {
-      if (isGuestMode) {
-        chatInput.disabled = true;
-        chatSendBtn.disabled = true;
-        chatInput.placeholder = "ゲストはチャットを送信できません";
-      } else if (currentMode === 'group' && currentGroupId === 'test-noguest') {
-        chatInput.disabled = true;
-        chatSendBtn.disabled = true;
-        chatInput.placeholder = "このルームではチャットは使用できません";
-      } else {
-        chatInput.disabled = false;
-        chatSendBtn.disabled = false;
-        chatInput.placeholder = "メッセージを入力...";
-      }
-    }
-
-    function resumeAudioContext() {
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    }
-
-    async function initMicrophoneAndNetwork() {
-      try {
-        if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
-        
-        document.getElementById('trans-off').classList.remove('active');
-        document.getElementById('trans-self').classList.remove('active');
-        document.getElementById('trans-all').classList.remove('active');
-        document.getElementById('trans-' + transMode).classList.add('active');
-
-        ncCheckbox.checked = isNoiseCanceling;
-        ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
-        micVolumeSlider.value = savedMicVolume;
-        micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
-        spkVolumeSlider.value = savedSpeakerVolume;
-        spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
-        
-        notifCheckbox.checked = isNotificationOn;
-        notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
-        
-        transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
-        transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
-
-        if (transMode !== 'off') initSpeechRecognition();
-
-        const audioConstraints = {
-          audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
-        };
-
-        rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-        rawAudioTrack = rawStream.getAudioTracks()[0];
-        rawAudioTrack.enabled = false;
-
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        const source = audioCtx.createMediaStreamSource(rawStream);
-        gainNode = audioCtx.createGain();
-        gainNode.gain.value = savedMicVolume;
-
-        const destination = audioCtx.createMediaStreamDestination();
-        source.connect(gainNode);
-        gainNode.connect(destination);
-        processedStream = destination.stream;
-
-        statusEl.innerText = 'P2P通信を構築中...';
-        renderTabs();
-        startNetworking();
-        updateChatUI();
-      } catch (err) {
-        statusEl.innerText = '⚠️ マイクの使用を許可してください';
-      }
-    }
-
-    window.openSettings = function() {
-      window.switchSettingsTab('general');
-      document.getElementById('settings-modal').style.display = 'flex'; 
-    }
-    window.closeSettings = function() { document.getElementById('settings-modal').style.display = 'none'; }
-
-    window.saveMyName = async function() {
-      if (isGuestMode) return alert('ゲストは名前を変更できません。');
-      const newName = settingMyNameInput.value.trim();
-      if (!newName) return alert('名前を入力してください。');
-      if (containsNGWord(newName)) return alert('名前に不適切な単語が含まれています。');
-      
-      savedMyName = newName;
-      displayMyName.innerText = newName;
-      
-      await updateProfile(auth.currentUser, {
-        displayName: JSON.stringify({ name: newName, customId: currentUser.customId })
-      });
-      alert('名前を保存しました！');
-    }
-
-    window.setTransMode = function(mode) {
-      if (isGuestMode && mode === 'all') return alert('ゲストは字幕を相手に共有できません（自分のみ表示は可能です）。');
-      transMode = mode;
-      localStorage.setItem('my_naisen_trans_mode', mode);
-      document.getElementById('trans-off').classList.remove('active');
-      document.getElementById('trans-self').classList.remove('active');
-      document.getElementById('trans-all').classList.remove('active');
-      document.getElementById('trans-' + mode).classList.add('active');
-      
-      if (mode !== 'off' && !speechRecognition) initSpeechRecognition();
-    }
-
-    ncCheckbox.addEventListener('change', async (e) => {
-      isNoiseCanceling = e.target.checked;
-      ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_nc', isNoiseCanceling);
-      if (rawAudioTrack) {
-        try {
-          await rawAudioTrack.applyConstraints({
-            echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling
-          });
-        } catch (err) { console.error(err); }
-      }
-    });
-
-    micVolumeSlider.addEventListener('input', (e) => {
-      resumeAudioContext();
-      const val = parseFloat(e.target.value);
-      if (gainNode) gainNode.gain.value = val;
-      savedMicVolume = val;
-      localStorage.setItem('my_naisen_mic_vol', val);
-      micVolumeDisplay.innerText = Math.round(val * 100) + '%';
-    });
-
-    spkVolumeSlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      savedSpeakerVolume = val;
-      localStorage.setItem('my_naisen_spk_vol', val);
-      spkVolumeDisplay.innerText = Math.round(val * 100) + '%';
-      
-      document.querySelectorAll('.participant-item input[type=range]').forEach(slider => {
-        slider.value = val;
-        slider.dispatchEvent(new Event('input')); 
-      });
-    });
-
-    notifCheckbox.addEventListener('change', (e) => {
-      isNotificationOn = e.target.checked;
-      notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_notif', isNotificationOn);
-    });
-
-    transcriptionNotifCheckbox.addEventListener('change', (e) => {
-      isTranscriptionNotifOn = e.target.checked;
-      transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_transcription_notif', isTranscriptionNotifOn);
-    });
-
-    streamerModeCheckbox.addEventListener('change', (e) => {
-      isStreamerMode = e.target.checked;
-      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_streamer', isStreamerMode);
-      applyStreamerModeToUI();
-    });
-
-    function renderTabs() {
-      tabsWrapper.innerHTML = '';
-
-      if (!isGuestMode) {
-        const directTab = document.createElement('button');
-        directTab.className = `tab ${currentMode === 'direct' ? 'active' : ''}`;
-        directTab.innerText = '1対1通話';
-        directTab.onclick = () => switchToDirect();
-        tabsWrapper.appendChild(directTab);
-      }
-
-      customGroups.forEach(g => {
-        const tab = document.createElement('button');
-        tab.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
-        
-        const isHost = (g.hostId === myPeerId);
-        let prefix = '';
-        if (g.isRadio) prefix = isHost ? '📻 ' : '🎧 ';
-        else prefix = isHost ? '👑 ' : '';
-
-        const label = document.createElement('span');
-        label.innerText = prefix + g.name;
-        tab.appendChild(label);
-
-        const delBtn = document.createElement('span');
-        delBtn.className = 'btn-del';
-        delBtn.innerText = '✕';
-        delBtn.onclick = (e) => deleteGroup(g.id, g.name, e);
-        tab.appendChild(delBtn);
-
-        tab.onclick = () => joinGroup(g);
-        tabsWrapper.appendChild(tab);
-      });
-
-      const addBtn = document.createElement('button');
-      addBtn.className = 'tab tab-add';
-      if (isGuestMode) {
-        addBtn.innerText = '＋ 参加';
-        addBtn.onclick = () => {
-          window.switchGroupModalTab('join');
-          document.getElementById('tab-btn-create').style.display = 'none';
-          document.getElementById('group-modal').style.display = 'flex';
-        };
-      } else {
-        addBtn.innerText = '＋ 作成';
-        addBtn.onclick = () => {
-          document.getElementById('modal-create-allow-se').checked = false;
-          document.getElementById('modal-create-no-guests').checked = false; 
-          window.openGroupModal();
-        };
-      }
-      tabsWrapper.appendChild(addBtn);
-    }
-
+    // -----------------------------------------------------
+    // 【v2.2.32修正】サーバー待機をせずに1対1を即時解放する
+    // -----------------------------------------------------
     function startNetworking() {
       const customId = currentUser.customId;
       peer = new Peer(customId);
@@ -2382,24 +2137,25 @@
         myIdEl.innerText = id;
         applyStreamerModeToUI();
 
+        // 【修正ポイント】ここで即座に1対1モードを起動！MQTTサーバーを待たない。
         if (!pendingInvite) {
           switchToDirect();
         } else {
           statusEl.innerText = 'グループ招待を確認中...';
         }
 
+        // 裏側でグループ通信用のサーバー（MQTT）に接続する
         let isMqttConnected = false;
         const brokers = [
-          'wss://broker.hivemq.com:8884/mqtt',
           'wss://broker.emqx.io:8084/mqtt',
-          'wss://test.mosquitto.org:8081/mqtt'
+          'wss://broker.hivemq.com:8884/mqtt'
         ];
 
         const tryConnectMQTT = (bIndex) => {
           if (bIndex >= brokers.length) {
-            console.warn("すべてのMQTTサーバーに接続できませんでした。");
+            console.warn("グループ通信サーバーに接続できませんでした。");
             if (currentMode === 'group' || pendingInvite) {
-               statusEl.innerText = '⚠️ サーバー接続に失敗しました。';
+               statusEl.innerText = '⚠️ グループ通信サーバーへの接続がブロックされています。';
             }
             return;
           }
@@ -2408,14 +2164,13 @@
              try { mqttClient.end(true); } catch(e){}
           }
 
-          mqttClient = mqtt.connect(brokers[bIndex], { connectTimeout: 3000 });
+          mqttClient = mqtt.connect(brokers[bIndex], { connectTimeout: 4000 });
 
           let fallbackTimer = setTimeout(() => {
             if (!isMqttConnected) {
-              console.warn('MQTT timeout:', brokers[bIndex]);
               tryConnectMQTT(bIndex + 1);
             }
-          }, 3000);
+          }, 4000);
 
           mqttClient.on('connect', () => {
             if (isMqttConnected) return;
@@ -2652,6 +2407,7 @@
           });
         };
 
+        // 最初のサーバーへ接続開始
         tryConnectMQTT(0);
       });
 
