@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.20</title>
+  <title>Naisync - 内線トランシーバー v2.2.21</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -319,7 +319,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.20</div>
+  <div class="version-tag">v2.2.21</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -449,7 +449,6 @@
       </div>
       <canvas id="whiteboard-canvas" width="300" height="300" style="background: white; border: 2px solid #ccc; border-radius: 8px; touch-action: none; cursor: crosshair; max-width: 100%;"></canvas>
       
-      <!-- 【v2.2.20変更】ツールエリアにIDを付与 -->
       <div id="wb-tools" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px;">
         <button class="color-btn" style="background: #111;" onclick="window.setDrawColor('#111')"></button>
         <button class="color-btn" style="background: #dc3545;" onclick="window.setDrawColor('#dc3545')"></button>
@@ -575,6 +574,7 @@
     </div>
   </div>
 
+  <!-- グループ作成・参加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <div class="modal-tabs">
@@ -670,14 +670,18 @@
     </div>
   </div>
 
+  <!-- 【v2.2.21変更】裏モードという言葉を隠蔽 -->
   <div class="modal-overlay top-layer" id="changelog-modal">
     <div class="modal-box">
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.20追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.20 (最新) 🛠️バグ修正＆制限強化</div>
-          <div>・お絵かき機能利用時の通信最適化（バッチ処理）を行い、線が途切れるパケットロス問題を解消しました。<br>・特殊な条件（裏モード）でリスナーの操作権限を厳密に制限しました。</div>
+          <div class="changelog-version">v2.2.21 (最新) 🛠️テキスト修正</div>
+          <div>・一部の表示テキストを修正し、アプリの安定性を向上させました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.20</div>
+          <div>・お絵かき機能の通信を最適化し、線が滑らかに引けるように改善しました。<br>・一部の操作権限が正しく反映されない不具合を修正しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.19</div>
@@ -714,6 +718,22 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.2.10</div>
           <div>・タブを切り替えた際、部屋のメンバーと正常に再接続されない不具合を修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.9</div>
+          <div>・ゲストモード時に不要な通信を受信してしまう不具合を修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.8</div>
+          <div>・グループ参加時に、存在しないIDやパスワードを弾く検証機能を追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.7</div>
+          <div>・招待リンクから「ゲストとして参加（アカウント不要）」できる機能を追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.6</div>
+          <div>・タブを閉じた際の通信処理を最適化し、動作の安定性を向上させました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -755,7 +775,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2220/';
+    const APP_PREFIX = 'Naisync/v2221/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -817,7 +837,6 @@
     let lastY = 0;
     let wbCtx = null;
     
-    // 【v2.2.20追加】お絵かき通信の最適化（バッチ処理用バッファ）
     let drawBuffer = [];
     let drawTimer = null;
 
@@ -848,7 +867,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2220', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2221', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -856,9 +875,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2220'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2221'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2219')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2220')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -953,7 +972,6 @@
     window.pushQuizBtn = function() {
       if (isQuizLocked) return;
       
-      // 【v2.2.20変更】ラジオ局のリスナーは早押しボタン使用不可
       const g = customGroups.find(x => x.id === currentGroupId);
       if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
 
@@ -1018,7 +1036,6 @@
 
       const startDraw = (e) => {
         if (isGuestMode) return; 
-        // 【v2.2.20変更】ラジオ局のリスナーはお絵かき操作不可
         const g = customGroups.find(x => x.id === currentGroupId);
         if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
 
@@ -1062,7 +1079,6 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
 
-      // 【v2.2.20変更】通信パンク対策のパケットバッチ処理（0.05秒に1回まとめて送信）
       drawBuffer.push({ x0: Math.round(x0), y0: Math.round(y0), x1: Math.round(x1), y1: Math.round(y1), c: color });
 
       if (!drawTimer) {
@@ -1746,7 +1762,6 @@
           
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
 
-          // 【v2.2.20変更】バッチ処理された描画データの受信
           if (data.type === 'draw_batch' && data.senderId !== myPeerId) {
             if (document.getElementById('whiteboard-section').style.display !== 'block') {
                document.getElementById('whiteboard-section').style.display = 'block';
@@ -2084,7 +2099,6 @@
       activeDataConns[conn.peer] = conn;
 
       conn.on('data', (data) => {
-        // 【v2.2.20変更】バッチ処理された描画データの受信 (Direct)
         if (data && data.type === 'draw_batch') {
           if (document.getElementById('whiteboard-section').style.display !== 'block') {
              document.getElementById('whiteboard-section').style.display = 'block';
@@ -2587,7 +2601,6 @@
           talkBtn.innerText = '長押しで話す';
         }
         
-        // 【v2.2.20変更】各種制限のUI反映
         const isRadioListener = (g && g.isRadio && g.hostId !== myPeerId);
 
         const seBoard = document.getElementById('se-board');
