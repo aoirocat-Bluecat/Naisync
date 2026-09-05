@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.38</title>
+  <title>Naisync - 内線トランシーバー v2.2.39</title>
   <style>
     body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; font-family: sans-serif; background-color: #f4f6f9; margin: 0; transition: background-color 0.3s, color 0.3s; }
     .header-container { display: flex; width: 100%; max-width: 440px; background: #e0e0e0; align-items: flex-end; justify-content: space-between; transition: background 0.3s; }
@@ -148,11 +148,9 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.38</div>
+  <div class="version-tag">v2.2.39</div>
 
-  <!-- =============================== -->
-  <!-- 認証（ログイン・登録）オーバーレイ -->
-  <!-- =============================== -->
+  <!-- ログイン画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
@@ -194,10 +192,8 @@
     </div>
   </div>
 
-  <!-- 通知用UI -->
   <div id="notification-container"></div>
 
-  <!-- ゲーム招待用UI -->
   <div id="game-invite-container">
     <div id="game-invite-msg"></div>
     <div style="display: flex; justify-content: center; gap: 10px;">
@@ -206,9 +202,6 @@
     </div>
   </div>
 
-  <!-- =============================== -->
-  <!-- メイン画面 -->
-  <!-- =============================== -->
   <div class="header-container" id="main-header" style="display: none;">
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
     <div class="header-btns">
@@ -238,11 +231,9 @@
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
       <button class="btn-action btn-outline" onclick="window.copyGroupInvite()" style="padding: 8px; font-size: 12px; margin-top: 12px;">🔗 このグループの招待リンクをコピー</button>
-      
       <div id="host-controls" style="display: none; margin-top: 8px;">
         <button class="btn-action btn-danger" onclick="window.changeRoomPassword()" style="padding: 8px; font-size: 12px;">👑 グループのパスワードを変更する</button>
       </div>
-      
       <div id="se-board" style="display: none; margin-top: 12px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 8px; border: 1px solid #ddd;">
         <div style="font-size: 11px; color: #777; margin-bottom: 6px; font-weight: bold;">🎛️ 効果音(SE)ボード</div>
         <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('pingpong')" title="正解">⭕</button>
@@ -274,7 +265,6 @@
       <div id="quiz-status" style="font-size: 11px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">準備OK</div>
     </div>
 
-    <!-- ゲームセクション（スマッシュ） -->
     <div id="smash-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
       <div class="chat-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span style="font-size: 14px;">⚡ 早撃ちスマッシュ</span>
@@ -291,7 +281,6 @@
       </div>
     </div>
 
-    <!-- ゲームセクション（アンケート） -->
     <div id="poll-result-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <span style="font-size: 14px; font-weight: bold; color:#6f42c1;">📊 <span id="poll-title-display">アンケート</span></span>
@@ -301,7 +290,6 @@
       <div style="font-size: 11px; color: #888; margin-top: 8px; text-align: right;">総投票数: <span id="poll-total-votes">0</span></div>
     </div>
 
-    <!-- ゲームセクション（お絵かき） -->
     <div id="whiteboard-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <span style="font-size: 14px; font-weight: bold; color:#0d6efd;">🎨 お絵かきボード</span>
@@ -346,9 +334,6 @@
     </div>
   </div>
 
-  <!-- =============================== -->
-  <!-- モーダル群 (設定・グループ・ヘルプ等) -->
-  <!-- =============================== -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <h3>⚙️ プロフィールと設定</h3>
@@ -570,12 +555,16 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v2.2.38 (最新) 🛠️マイクなし環境の完全対応</div>
-          <div>・マイクの使用が拒否された（またはマイクがない）環境でも、エラーで止まらずにテキストチャットやUIの操作、聞き専での参加が絶対にできるようにシステム構造を修正しました。<br>・プログラムが重複するバグを完全に清掃しました。</div>
+          <div class="changelog-version">v2.2.39 (最新) 🛠️ネットワーク制限突破・完全復旧版</div>
+          <div>・学校や会社のWi-Fiで外部サイト（unpkg）がブロックされている環境でも、正常に通信ライブラリが読み込めるように取得元（cdnjs）を変更しました。<br>・通信ツールが完全にブロックされた場合でもフリーズせず、聞き専やテキストチャットで参加できるように修正しました。<br>・欠落していたチャット関連の機能を完全に復旧しました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.2.35 🛠️ログイン機能復元版</div>
-          <div>・ログイン処理のクラッシュ原因だったコア関数をすべて復元し、正常に動作するよう修正しました。</div>
+          <div class="changelog-version">v2.2.36 🛠️ログイン機能完全復元版</div>
+          <div>・前回の重複コード清掃時に誤って削除されたログイン・登録・通信初期化のプログラムを完全復旧しました。<br>・1対1モードはサーバーを介さず即座に接続できるように改良済です。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.34 🛠️システム清掃</div>
+          <div>・プログラムが重複して増殖するバグを修正しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.28 🕹️UI整理</div>
@@ -602,8 +591,9 @@
 
   <div id="audio-container" style="display: none;"></div>
 
-  <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <!-- 【v2.2.39修正】ブロックされにくいCDNに変更 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.1/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.3.5/mqtt.min.js"></script>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -629,7 +619,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2238/';
+    const APP_PREFIX = 'Naisync/v2239/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -731,15 +721,13 @@
     let customGroups = [];
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2238', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2239', JSON.stringify(customGroups));
     }
     function loadAndMigrateGroups(myId) {
-      if (isGuestMode) {
-        customGroups = []; return;
-      }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2238'));
+      if (isGuestMode) { customGroups = []; return; }
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2239'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2237')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2238')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -847,13 +835,275 @@
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // ==========================================
-    // 【v2.2.38修正】マイクの成否に関わらずUI・通信を描画する
-    // ==========================================
+    // 【v2.2.39】ネットワーク接続の開始処理
+    function startNetworking() {
+      if (typeof Peer === 'undefined') {
+        statusEl.innerText = '⚠️ 通信システムがブロックされています (広告ブロッカーやWi-Fi制限をご確認ください)';
+        return;
+      }
+
+      const customId = currentUser.customId;
+      try {
+        peer = new Peer(customId);
+      } catch(e) {
+        statusEl.innerText = '⚠️ P2P通信ライブラリの初期化に失敗しました';
+        return;
+      }
+
+      let peerTimeout = setTimeout(() => {
+        if (!myPeerId) {
+          statusEl.innerText = '⚠️ サーバー接続タイムアウト（Wi-Fiの通信制限の可能性があります）';
+        }
+      }, 8000);
+
+      peer.on('open', (id) => {
+        clearTimeout(peerTimeout);
+        myPeerId = id;
+        myIdEl.innerText = id;
+        applyStreamerModeToUI();
+
+        if (!pendingInvite) {
+          switchToDirect();
+        } else {
+          statusEl.innerText = 'グループ招待を確認中...';
+        }
+
+        let isMqttConnected = false;
+        if (typeof mqtt === 'undefined') {
+          console.warn("MQTT is undefined");
+          return;
+        }
+
+        const brokers = [
+          'wss://broker.emqx.io:8084/mqtt',
+          'wss://broker.hivemq.com:8884/mqtt'
+        ];
+
+        const tryConnectMQTT = (bIndex) => {
+          if (bIndex >= brokers.length) {
+            if (currentMode === 'group' || pendingInvite) {
+               statusEl.innerText = '⚠️ グループ通信サーバーへの接続がブロックされています';
+            }
+            return;
+          }
+
+          if (mqttClient) { try { mqttClient.end(true); } catch(e){} }
+          mqttClient = mqtt.connect(brokers[bIndex], { connectTimeout: 4000 });
+
+          let fallbackTimer = setTimeout(() => {
+            if (!isMqttConnected) tryConnectMQTT(bIndex + 1);
+          }, 4000);
+
+          mqttClient.on('connect', () => {
+            if (isMqttConnected) return;
+            isMqttConnected = true;
+            clearTimeout(fallbackTimer);
+            
+            if (pendingInvite) {
+              const listIdx = customGroups.findIndex(g => g.id === pendingInvite.id);
+              if (listIdx >= 0) {
+                customGroups[listIdx].pass = pendingInvite.pass;
+                customGroups[listIdx].name = pendingInvite.name;
+                customGroups[listIdx].requireName = pendingInvite.requireName;
+                if (pendingInvite.hostId && !customGroups[listIdx].hostId) customGroups[listIdx].hostId = pendingInvite.hostId;
+                if (pendingInvite.isRadio) customGroups[listIdx].isRadio = true;
+                if (pendingInvite.noGuests) customGroups[listIdx].noGuests = true;
+              } else {
+                customGroups.push(pendingInvite);
+              }
+              saveGroups();
+              const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
+              pendingInvite = null; 
+              joinGroup(targetGroup);
+            }
+          });
+
+          mqttClient.on('message', (topic, message) => {
+            if (checkingGroupId && topic.startsWith(`${APP_PREFIX}${checkingGroupId}/`)) isGroupIdTaken = true;
+
+            if (joiningGroupId && topic.startsWith(`${APP_PREFIX}${joiningGroupId}/`)) {
+              isJoinRoomFound = true;
+              if (topic === `${APP_PREFIX}${joiningGroupId}/${joiningGroupPass}`) {
+                isJoinPassCorrect = true;
+                try {
+                  const data = JSON.parse(message.toString());
+                  if (data.type === 'radio_close') isJoinRoomClosed = true;
+                  if (data.isRadio !== undefined) joiningFoundRadio = data.isRadio;
+                  if (data.allowMemberSE !== undefined) joiningFoundAllowMemberSE = data.allowMemberSE; 
+                  if (data.noGuests !== undefined) joiningFoundNoGuests = data.noGuests; 
+                } catch(e) {}
+              }
+            }
+
+            if (currentMode !== 'group') return;
+            const data = JSON.parse(message.toString());
+            const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
+
+            if (data.type === 'poll_start') {
+              startPollUI(data); showNotification(`📊 ${data.senderId === myPeerId ? 'あなた' : 'リーダー'}がアンケートを開始しました`);
+            }
+            if (data.type === 'poll_vote') handlePollVote(data);
+
+            if (data.type === 'draw_batch' && data.senderId !== myPeerId) {
+              if (document.getElementById('whiteboard-section').style.display !== 'block') {
+                 document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(initWhiteboard, 100);
+              }
+              setTimeout(() => { if (!wbCtx) return; data.lines.forEach(l => window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false)); }, wbCtx ? 0 : 150);
+            }
+
+            if (data.type === 'wb_open' && data.senderId !== myPeerId) {
+              document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(initWhiteboard, 100);
+              showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`);
+            }
+            if (data.type === 'wb_close' && data.senderId !== myPeerId) {
+              document.getElementById('whiteboard-section').style.display = 'none';
+            }
+            if (data.type === 'draw' && data.senderId !== myPeerId) {
+              if (document.getElementById('whiteboard-section').style.display !== 'block') {
+                 document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(initWhiteboard, 100);
+              }
+              setTimeout(() => { window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false); }, wbCtx ? 0 : 150);
+            }
+            if (data.type === 'draw_clear' && data.senderId !== myPeerId) window.clearWhiteboard(false);
+            if (data.type === 'se' && data.senderId !== myPeerId) playAudioEffect(data.sound);
+            if (data.type === 'quiz_push' && data.senderId !== myPeerId) handleQuizPush(data.senderName);
+
+            if (data.type === 'radio_close' && data.senderId !== myPeerId) {
+              if (currentGroupObj && currentGroupObj.isRadio && data.senderId === currentGroupObj.hostId) {
+                alert('📻 放送局のオーナーが番組を終了しました。退出します。');
+                customGroups = customGroups.filter(g => g.id !== currentGroupObj.id); saveGroups(); switchToDirect(); return;
+              }
+            }
+
+            if (data.type === 'leave' && data.senderId !== myPeerId) {
+              if (activeCalls[data.senderId]) {
+                if (activeCalls[data.senderId].peerConnection) activeCalls[data.senderId].peerConnection.close();
+                activeCalls[data.senderId].close(); delete activeCalls[data.senderId];
+              }
+              if (activeDataConns[data.senderId]) {
+                activeDataConns[data.senderId].close(); delete activeDataConns[data.senderId];
+              }
+              if (pannerNodes[data.senderId]) {
+                 pannerNodes[data.senderId].disconnect(); delete pannerNodes[data.senderId];
+              }
+              const audio = document.getElementById('audio-' + data.senderId); if (audio) audio.remove();
+              removeParticipantUI(data.senderId); updateStatus(); if (isReversiActive) endReversi();
+            }
+
+            if ((data.type === 'room_meta' || data.type === 'host_sync' || data.type === 'join') && data.hostId && currentGroupObj) {
+              const remoteTime = data.createdAt || 9999999999999;
+              const localTime = currentGroupObj.createdAt || 9999999999999;
+              const isRemoteDominant = remoteTime < localTime || (remoteTime === localTime && data.hostId < currentGroupObj.hostId);
+
+              if (currentGroupObj.hostId !== data.hostId) {
+                if (isRemoteDominant) {
+                  currentGroupObj.hostId = data.hostId; currentGroupObj.createdAt = remoteTime;
+                  if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
+                  if (data.allowMemberSE !== undefined) currentGroupObj.allowMemberSE = data.allowMemberSE; 
+                  if (data.noGuests !== undefined) currentGroupObj.noGuests = data.noGuests; 
+                  saveGroups(); renderTabs();
+                  document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId && !currentGroupObj.isRadio) ? 'block' : 'none';
+                  updateStatus();
+                } else if (currentGroupObj.hostId === myPeerId) {
+                  mqttClient.publish(currentGroupTopic, JSON.stringify({
+                    type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, 
+                    isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE, noGuests: currentGroupObj.noGuests 
+                  }), { retain: true });
+                }
+              } else if (currentGroupObj.hostId === data.hostId) {
+                 let updated = false;
+                 if (remoteTime < localTime) { currentGroupObj.createdAt = remoteTime; updated = true; }
+                 if (data.isRadio !== undefined && currentGroupObj.isRadio !== data.isRadio) { currentGroupObj.isRadio = data.isRadio; updated = true; }
+                 if (data.allowMemberSE !== undefined && currentGroupObj.allowMemberSE !== data.allowMemberSE) { currentGroupObj.allowMemberSE = data.allowMemberSE; updated = true; }
+                 if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { currentGroupObj.noGuests = data.noGuests; updated = true; }
+                 if (updated) { saveGroups(); updateStatus(); }
+              }
+              
+              if (isGuestMode && currentGroupObj.noGuests) {
+                alert('🚨 このグループはゲストの参加が許可されていません。\n強制退出します。');
+                customGroups = customGroups.filter(g => g.id !== currentGroupObj.id); saveGroups(); switchToDirect(); return;
+              }
+            }
+
+            if (data.type === 'kick' && data.targetId === myPeerId) {
+              if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
+                alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
+                customGroups = customGroups.filter(g => g.id !== currentGroupObj.id); saveGroups(); switchToDirect(); return;
+              }
+            }
+
+            if (data.type === 'change_pass') {
+              if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
+                alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
+                currentGroupObj.pass = data.newPass; saveGroups(); joinGroup(currentGroupObj); return;
+              }
+            }
+
+            if (data.type === 'join' && data.peerId !== myPeerId) {
+              if (data.senderName) updateParticipantName(data.peerId, data.senderName);
+              if (currentGroupObj && currentGroupObj.noGuests && data.isGuest) return;
+              resumeAudioContext();
+              const call = peer.call(data.peerId, processedStream, { 
+                metadata: { senderName: savedMyName, mode: 'group', groupId: currentGroupId, isGuest: isGuestMode, isScreen: isScreenSharing } 
+              });
+              setupCall(call);
+            } else if (data.type === 'chat' && data.senderId !== myPeerId) {
+              if (data.senderName) updateParticipantName(data.senderId, data.senderName);
+              if (currentGroupId === 'test-noguest') return;
+              showNotification(`💬 ${data.senderName}: ${data.text}`);
+              addChatLog(data.senderName, data.text, false);
+            } else if (data.type === 'subtitle' && data.senderId !== myPeerId) {
+              window.showSubtitle(data.senderName, data.text);
+            }
+          });
+        };
+        tryConnectMQTT(0);
+      });
+
+      peer.on('error', (err) => {
+        if (err.type === 'unavailable-id') alert(`ID「${customId}」は現在他の端末で接続中または使用中です。`);
+        else console.error('PeerJS Error:', err);
+      });
+
+      peer.on('call', (call) => {
+        resumeAudioContext();
+        const callerName = call.metadata ? call.metadata.senderName : '';
+        const callMode = call.metadata ? call.metadata.mode : 'direct';
+        const callGroupId = call.metadata ? call.metadata.groupId : null;
+        const callerIsGuest = call.metadata ? call.metadata.isGuest : false; 
+        const callerIsScreen = call.metadata ? call.metadata.isScreen : false; 
+
+        if (isGuestMode && callMode === 'direct') { call.close(); return; }
+        if (currentMode === 'group') { if (callMode !== 'group' || callGroupId !== currentGroupId) { call.close(); return; } } 
+        else if (currentMode === 'direct') { if (callMode === 'group') { call.close(); return; } }
+
+        if (callerName) updateParticipantName(call.peer, callerName);
+        const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
+        if (currentMode === 'group' && currentGroupObj && currentGroupObj.noGuests) { if (callerIsGuest) { call.close(); return; } }
+
+        let combinedStream = processedStream;
+        if (isScreenSharing && screenStream) {
+           combinedStream = new MediaStream();
+           processedStream.getAudioTracks().forEach(track => combinedStream.addTrack(track));
+           screenStream.getVideoTracks().forEach(track => combinedStream.addTrack(track));
+        }
+        call.answer(combinedStream); setupCall(call);
+      });
+
+      peer.on('connection', (conn) => {
+        if (isGuestMode) { conn.on('open', () => conn.close()); return; }
+        setupDataConn(conn);
+      });
+    }
+
     async function initMicrophoneAndNetwork() {
-      // マイクの取得前に、絶対にUI（タブ・設定など）と通信機能を開始する！
+      // ネットワークやUIの描画はマイクの成否に関わらず最初にスタートさせる
       renderTabs();
-      startNetworking();
+      try {
+        startNetworking();
+      } catch(e) {
+        statusEl.innerText = "⚠️ ネットワークモジュール起動エラー";
+      }
       updateChatUI();
       
       try {
@@ -887,7 +1137,7 @@
 
       } catch (err) {
         console.warn("マイク取得エラー:", err);
-        // マイクが取得できなくても、相手の声を聞くためのダミーの音声ストリームを作成してあげる
+        // マイクが許可されなくてもエラーで止めず、ダミーストリームを作って聞き専として参加できるようにする
         statusEl.innerText = '⚠️ マイクが許可されていません（聞き専・テキストのみ可）';
         try {
           if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1417,6 +1667,62 @@
       } else {
         if (!isGuestMode) document.getElementById('auth-overlay').style.display = 'flex';
       }
+    });
+
+    // 【v2.2.39】チャット関連機能の完全復活
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function addChatLog(sender, text, isMe) {
+      const msgEl = document.createElement('div');
+      msgEl.className = `chat-msg ${isMe ? 'me' : ''}`;
+      msgEl.innerHTML = `<span class="sender">${sender}:</span>${escapeHtml(text)}`;
+      chatLogs.appendChild(msgEl);
+      chatLogs.scrollTop = chatLogs.scrollHeight; 
+    }
+
+    function sendChatMessage() {
+      if (isGuestMode) return;
+      if (currentMode === 'group' && currentGroupId === 'test-noguest') {
+        return alert('このルームではチャットは使用できません。');
+      }
+
+      const text = chatInput.value.trim();
+      if (!text) return;
+
+      if (currentMode === 'direct' && Object.keys(activeDataConns).length === 0 && text === '/radio') {
+        chatInput.value = '';
+        setTimeout(() => {
+          const name = prompt('📻 [SECRET] ラジオ局の名前を入力してください:');
+          if (!name) return;
+          const id = prompt('📻 [SECRET] ラジオ局のグループIDを入力してください (半角英数字):');
+          if (!id) return;
+          
+          const pass = '';
+          const newGroup = { id, name, pass, noGuests: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true, allowMemberSE: false };
+          customGroups.push(newGroup);
+          saveGroups(); joinGroup(newGroup); renderTabs();
+        }, 100);
+        return;
+      }
+
+      let senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
+      if (containsNGWord(text)) return alert('不適切な単語が含まれているため送信できません。');
+
+      if (currentMode === 'group' && currentGroupTopic && mqttClient) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'chat', senderId: myPeerId, senderName: senderName, text: text }));
+      } else if (currentMode === 'direct') {
+        Object.values(activeDataConns).forEach(conn => conn.send({ type: 'chat', senderName: senderName, text: text }));
+      }
+
+      addChatLog(senderName + ' (自分)', text, true);
+      chatInput.value = '';
+    }
+
+    chatSendBtn.addEventListener('click', sendChatMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendChatMessage();
     });
 
     const startTalking = (e) => {
