@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.18</title>
+  <title>Naisync - 内線トランシーバー v2.2.19</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -130,7 +130,6 @@
     .participant-item .p-ctrl { display: flex; align-items: center; gap: 6px; }
     .participant-item input[type=range] { width: 90px; margin: 0; }
 
-    /* 【v2.2.18追加】お絵かき用スタイル */
     .color-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
     
     #subtitle-container { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 12px; }
@@ -320,7 +319,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.18</div>
+  <div class="version-tag">v2.2.19</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -429,7 +428,6 @@
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
-    <!-- 【v2.2.18変更】遊びエリアにお絵かきボタンを追加 -->
     <div id="play-section" style="margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
       <div class="chat-title">🎮 遊び・ゲーム</div>
       <div style="display: flex; justify-content: center; gap: 20px;">
@@ -444,7 +442,6 @@
       </div>
     </div>
 
-    <!-- 【v2.2.18追加】お絵かきボードエリア -->
     <div id="whiteboard-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <span style="font-size: 14px; font-weight: bold; color:#0d6efd;">🎨 お絵かきボード</span>
@@ -683,8 +680,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.18追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.18 (最新) 🎨 お絵かき追加</div>
+          <!-- 【v2.2.19追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.19 (最新) 🛠️バグ修正</div>
+          <div>・お絵かき機能で線が引けなくなる深刻な描画バグを修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.18 🎨 お絵かき追加</div>
           <div>・通話しながらみんなで描ける「リアルタイム・お絵かきボード」を遊びエリアに追加しました！（ゲストは閲覧のみ）</div>
         </div>
         <div class="changelog-item">
@@ -755,7 +756,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2218/';
+    const APP_PREFIX = 'Naisync/v2219/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -811,7 +812,6 @@
     let pendingReversiConn = null;
     let isQuizLocked = false;
 
-    // 【v2.2.18追加】お絵かき用変数
     let isDrawing = false;
     let drawColor = '#111';
     let lastX = 0;
@@ -845,7 +845,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2218', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2219', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -853,9 +853,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2218'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2219'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2217')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2218')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -986,27 +986,35 @@
     }
 
     // ==========================================
-    // 【v2.2.18追加】お絵かき（ホワイトボード）のロジック
+    // 【v2.2.19変更】お絵かきバグ修正
     // ==========================================
     const initWhiteboard = () => {
-      const canvas = document.getElementById('whiteboard-canvas');
+      let canvas = document.getElementById('whiteboard-canvas');
       if (!canvas) return;
+      
+      // イベントリスナーの多重登録を防ぐため、安全に新しいキャンバスに置き換える
+      const newCanvas = canvas.cloneNode(true);
+      canvas.replaceWith(newCanvas);
+      canvas = newCanvas; // 以降の処理はすべて新しいキャンバスを参照する
+      
       wbCtx = canvas.getContext('2d');
       wbCtx.lineCap = 'round';
       wbCtx.lineJoin = 'round';
       
       const getPos = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        // e.target を使うことで、確実に今タッチしているキャンバスの情報を取得する
+        const target = e.target;
+        const rect = target.getBoundingClientRect();
+        const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
         return {
-          x: (clientX - rect.left) * (canvas.width / rect.width),
-          y: (clientY - rect.top) * (canvas.height / rect.height)
+          x: (clientX - rect.left) * (target.width / rect.width),
+          y: (clientY - rect.top) * (target.height / rect.height)
         };
       };
 
       const startDraw = (e) => {
-        if (isGuestMode) return; // ゲストは描画不可
+        if (isGuestMode) return; 
         if(e.cancelable) e.preventDefault(); 
         isDrawing = true;
         const pos = getPos(e);
@@ -1023,20 +1031,13 @@
 
       const endDraw = () => { isDrawing = false; };
 
-      // 多重登録を防ぐため一旦消す
-      canvas.replaceWith(canvas.cloneNode(true));
-      const newCanvas = document.getElementById('whiteboard-canvas');
-      wbCtx = newCanvas.getContext('2d');
-      wbCtx.lineCap = 'round';
-      wbCtx.lineJoin = 'round';
-
-      newCanvas.addEventListener('mousedown', startDraw);
-      newCanvas.addEventListener('mousemove', draw);
-      newCanvas.addEventListener('mouseup', endDraw);
-      newCanvas.addEventListener('mouseout', endDraw);
-      newCanvas.addEventListener('touchstart', startDraw, {passive: false});
-      newCanvas.addEventListener('touchmove', draw, {passive: false});
-      newCanvas.addEventListener('touchend', endDraw);
+      canvas.addEventListener('mousedown', startDraw);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', endDraw);
+      canvas.addEventListener('mouseout', endDraw);
+      canvas.addEventListener('touchstart', startDraw, {passive: false});
+      canvas.addEventListener('touchmove', draw, {passive: false});
+      canvas.addEventListener('touchend', endDraw);
     };
 
     window.drawLine = function(x0, y0, x1, y1, color, emit) {
@@ -1717,7 +1718,6 @@
           
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
 
-          // 【v2.2.18追加】お絵かきのデータ受信処理
           if (data.type === 'wb_open' && data.senderId !== myPeerId) {
             document.getElementById('whiteboard-section').style.display = 'block';
             setTimeout(initWhiteboard, 100);
@@ -2040,7 +2040,6 @@
       activeDataConns[conn.peer] = conn;
 
       conn.on('data', (data) => {
-        // 【v2.2.18追加】お絵かきのデータ受信処理 (Direct)
         if (data && data.type === 'wb_open') {
           document.getElementById('whiteboard-section').style.display = 'block';
           setTimeout(initWhiteboard, 100);
