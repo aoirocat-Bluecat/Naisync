@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.14</title>
+  <title>Naisync - 内線トランシーバー v2.2.16</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -297,7 +297,7 @@
     body.dark-mode input[type="password"]::placeholder { color: #888; }
     body.dark-mode .btn-outline { background-color: #2a2d32; color: #4dabf7; border-color: #4dabf7; }
     body.dark-mode .modal-box { background: #1e1e1e; color: #e0e0e0; }
-    body.dark-mode .modal-box label,
+    body.dark-mode .modal-box label { color: #ccc; }
     body.dark-mode .faq-item strong,
     body.dark-mode .faq-item p,
     body.dark-mode .section-title,
@@ -316,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.14</div>
+  <div class="version-tag">v2.2.16</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -459,84 +459,88 @@
     </div>
   </div>
 
-  <!-- 設定モーダル -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <h3>⚙️ プロフィールと設定</h3>
 
-      <label>👤 あなたの名前（チャット・通話時の表示名）</label>
-      <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
-        <input type="text" id="setting-my-name" placeholder="名前を入力 (例: 田中)" style="flex-grow: 1; min-width: 120px;">
-        <button class="btn-action" style="width: auto; padding: 10px 14px; margin:0;" onclick="saveMyName()">保存</button>
+      <div class="modal-tabs" style="margin-bottom: 16px;">
+        <button class="modal-tab-btn active" id="settings-tab-general" onclick="window.switchSettingsTab('general')">一般</button>
+        <button class="modal-tab-btn" id="settings-tab-audio" onclick="window.switchSettingsTab('audio')">音声</button>
+        <button class="modal-tab-btn" id="settings-tab-notif" onclick="window.switchSettingsTab('notif')">字幕・通知</button>
       </div>
 
-      <label style="margin-top: 20px;">🎤 自分のマイク音量（相手への声の大きさ）</label>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <input type="range" id="mic-volume-slider" min="0" max="2" step="0.1" value="1">
-        <span id="mic-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
+      <div id="settings-content-general">
+        <label>👤 あなたの名前（チャット・通話時の表示名）</label>
+        <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+          <input type="text" id="setting-my-name" placeholder="名前を入力 (例: 田中)" style="flex-grow: 1; min-width: 120px;">
+          <button class="btn-action" style="width: auto; padding: 10px 14px; margin:0;" onclick="saveMyName()">保存</button>
+        </div>
+
+        <label style="margin-top: 20px;">👁️ 配信者モード（全ID欄を隠す）</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="streamer-mode-checkbox">
+          <div class="toggle-slider"></div>
+          <span id="streamer-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
+        </label>
+
+        <label style="margin-top: 20px;">🌙 ダークモード</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="dark-mode-checkbox">
+          <div class="toggle-slider"></div>
+          <span id="dark-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
+        </label>
+
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;">
+        <label>🚪 アカウント操作</label>
+        <button class="btn-action btn-danger" style="margin-top: 8px;" onclick="window.logout()">ログアウト</button>
       </div>
 
-      <label style="margin-top: 20px;">🔊 相手の基本音量（初期設定）</label>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <input type="range" id="spk-volume-slider" min="0" max="1" step="0.05" value="1">
-        <span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
+      <div id="settings-content-audio" style="display: none;">
+        <label>🎤 自分のマイク音量（相手への声の大きさ）</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="range" id="mic-volume-slider" min="0" max="2" step="0.1" value="1">
+          <span id="mic-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
+        </div>
+
+        <label style="margin-top: 20px;">🔊 相手の基本音量（初期設定）</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <input type="range" id="spk-volume-slider" min="0" max="1" step="0.05" value="1">
+          <span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span>
+        </div>
+
+        <label style="margin-top: 20px;">🎧 ノイズキャンセリング</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="nc-checkbox" checked>
+          <div class="toggle-slider"></div>
+          <span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
+        </label>
       </div>
 
-      <label style="margin-top: 24px;">🗣️ 自分の声の文字起こし</label>
-      <div class="modal-tabs" style="margin-top: 4px; margin-bottom: 0; border: none; padding-bottom: 0;">
-        <button class="modal-tab-btn active" id="trans-off" onclick="window.setTransMode('off')">OFF</button>
-        <button class="modal-tab-btn" id="trans-self" onclick="window.setTransMode('self')">自分のみ</button>
-        <button class="modal-tab-btn" id="trans-all" onclick="window.setTransMode('all')">相手に共有</button>
+      <div id="settings-content-notif" style="display: none;">
+        <label>🗣️ 自分の声の文字起こし</label>
+        <div class="modal-tabs" style="margin-top: 4px; margin-bottom: 0; border: none; padding-bottom: 0;">
+          <button class="modal-tab-btn active" id="trans-off" onclick="window.setTransMode('off')">OFF</button>
+          <button class="modal-tab-btn" id="trans-self" onclick="window.setTransMode('self')">自分のみ</button>
+          <button class="modal-tab-btn" id="trans-all" onclick="window.setTransMode('all')">相手に共有</button>
+        </div>
+        <p style="font-size: 11px; color: #888; margin-top: 6px; margin-bottom: 16px;">※「相手に共有」にすると、あなたの声が相手の画面にも字幕として表示されます。</p>
+
+        <label style="margin-top: 20px;">🔔 全般のポップアップ通知（着信・通常チャット）</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="notif-checkbox" checked>
+          <div class="toggle-slider"></div>
+          <span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
+        </label>
+
+        <label style="margin-top: 20px;">🔔 文字起こしのポップアップ通知</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="transcription-notif-checkbox" checked>
+          <div class="toggle-slider"></div>
+          <span id="transcription-notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
+        </label>
       </div>
-      <p style="font-size: 11px; color: #888; margin-top: 6px; margin-bottom: 16px;">※「相手に共有」にすると、あなたの声が相手の画面にも字幕として表示されます。</p>
 
-      <label style="margin-top: 20px;">🎧 ノイズキャンセリング</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="nc-checkbox" checked>
-        <div class="toggle-slider"></div>
-        <span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
-      </label>
-
-      <label style="margin-top: 20px;">📻 トランシーバー終了音（ロジャービープ）</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="roger-checkbox" checked>
-        <div class="toggle-slider"></div>
-        <span id="roger-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
-      </label>
-
-      <label style="margin-top: 20px;">🔔 全般のポップアップ通知（着信・通常チャット）</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="notif-checkbox" checked>
-        <div class="toggle-slider"></div>
-        <span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
-      </label>
-
-      <label style="margin-top: 20px;">🔔 文字起こしのポップアップ通知</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="transcription-notif-checkbox" checked>
-        <div class="toggle-slider"></div>
-        <span id="transcription-notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
-      </label>
-
-      <label style="margin-top: 20px;">👁️ 配信者モード（全ID欄を隠す）</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="streamer-mode-checkbox">
-        <div class="toggle-slider"></div>
-        <span id="streamer-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
-      </label>
-
-      <label style="margin-top: 20px;">🌙 ダークモード</label>
-      <label class="toggle-switch">
-        <input type="checkbox" id="dark-mode-checkbox">
-        <div class="toggle-slider"></div>
-        <span id="dark-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
-      </label>
-
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;">
-      <label>🚪 アカウント操作</label>
-      <button class="btn-action btn-danger" style="margin-top: 8px;" onclick="window.logout()">ログアウト</button>
-
-      <div class="modal-buttons">
+      <div class="modal-buttons" style="margin-top: 24px;">
         <button class="btn-action btn-secondary" onclick="closeSettings()">閉じる</button>
       </div>
     </div>
@@ -646,8 +650,16 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.14変更】履歴を追加 -->
-          <div class="changelog-version">v2.2.14 (最新)</div>
+          <!-- 【v2.2.16変更】バージョン更新 -->
+          <div class="changelog-version">v2.2.16 (最新)</div>
+          <div>・ファイル読み込みのパス指定を改善し、特定のサーバー環境での動作安定性を向上させました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.15</div>
+          <div>・設定画面の項目を「一般」「音声」「字幕・通知」のタブに分けて整理し、見やすくしました。<br>・トランシーバー終了音（ロジャービープ）を廃止しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.14</div>
           <div>・効果音（SE）を電子音からリアルな音声に変更し、臨場感をアップさせました！</div>
         </div>
         <div class="changelog-item">
@@ -656,7 +668,7 @@
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.11 🎉メガエンタメUP🎉</div>
-          <div>・【早押しボタン】全員で遊べるラグなしのクイズボタンを実装！<br>・【SEボード】番組を盛り上げる効果音ボタンを追加！<br>・【ロジャービープ】発言終了時にトランシーバー特有の終了音「ピッ」が鳴るようになりました！</div>
+          <div>・【早押しボタン】全員で遊べるラグなしのクイズボタンを実装！<br>・【SEボード】番組を盛り上げる効果音ボタンを追加！</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.10</div>
@@ -722,7 +734,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2214/';
+    const APP_PREFIX = 'Naisync/v2216/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -765,7 +777,6 @@
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
     let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
     let isTranscriptionNotifOn = localStorage.getItem('my_naisen_transcription_notif') !== 'false';
-    let isRogerBeepOn = localStorage.getItem('my_naisen_roger') !== 'false';
 
     let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
     let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
@@ -804,7 +815,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2214', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2216', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -812,9 +823,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2214'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2216'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2213')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2215')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -849,8 +860,6 @@
     const transcriptionStatusText = document.getElementById('transcription-status-text');
     const ncCheckbox = document.getElementById('nc-checkbox');
     const ncStatusText = document.getElementById('nc-status-text');
-    const rogerCheckbox = document.getElementById('roger-checkbox');
-    const rogerStatusText = document.getElementById('roger-status-text');
     const micVolumeSlider = document.getElementById('mic-volume-slider');
     const micVolumeDisplay = document.getElementById('mic-volume-display');
     const spkVolumeSlider = document.getElementById('spk-volume-slider');
@@ -866,23 +875,21 @@
     const darkModeStatusText = document.getElementById('dark-mode-status-text');
     const authError = document.getElementById('auth-error');
 
-    // 【v2.2.14変更】ユーザーが用意したMP3ファイルを読み込む設定
+    // 【v2.2.16変更】英語ファイル名に変更（GitHub Pagesでの404対策）
     const SE_FILES = {
-      'applause': 'audio_6dce5e.mp3',
-      'pingpong': 'audio_394d6e.mp3',
-      'buzzer': 'audio_bf11d1.mp3'
+      'applause': './applause.mp3',
+      'pingpong': './correct.mp3',
+      'buzzer': './wrong.mp3'
     };
 
     const playAudioEffect = (type) => {
-      // ユーザーの用意したファイルがある場合は優先して再生
       if (SE_FILES[type]) {
         const audio = new Audio(SE_FILES[type]);
-        audio.volume = savedSpeakerVolume; // 相手の基本音量を反映
+        audio.volume = savedSpeakerVolume; 
         audio.play().catch(e => console.warn("音声再生エラー:", e));
         return;
       }
 
-      // ファイルがないSE（roger, quizなど）は今まで通り電子音で生成
       if (!audioCtx || audioCtx.state === 'suspended') return;
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
@@ -890,14 +897,7 @@
       osc.connect(gain);
       gain.connect(audioCtx.destination);
 
-      if (type === 'roger') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1200, now);
-        gain.gain.setValueAtTime(0.05, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-        osc.start(now);
-        osc.stop(now + 0.1);
-      } else if (type === 'quiz') {
+      if (type === 'quiz') {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(880, now);
         gain.gain.setValueAtTime(0.1, now);
@@ -959,6 +959,16 @@
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
     window.closeChangelog = function() { document.getElementById('changelog-modal').style.display = 'none'; }
+
+    window.switchSettingsTab = function(tabName) {
+      const tabs = ['general', 'audio', 'notif'];
+      tabs.forEach(t => {
+        document.getElementById(`settings-tab-${t}`).classList.remove('active');
+        document.getElementById(`settings-content-${t}`).style.display = 'none';
+      });
+      document.getElementById(`settings-tab-${tabName}`).classList.add('active');
+      document.getElementById(`settings-content-${tabName}`).style.display = 'block';
+    }
 
     window.showSubtitle = function(sender, text) {
       const container = document.getElementById('subtitle-container');
@@ -1270,9 +1280,6 @@
       streamerModeCheckbox.checked = isStreamerMode;
       streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
 
-      rogerCheckbox.checked = isRogerBeepOn;
-      rogerStatusText.innerText = isRogerBeepOn ? 'ON' : 'OFF';
-
       loadAndMigrateGroups(currentUser.customId || (currentUser.email ? currentUser.email.split('@')[0] : 'guest'));
       initMicrophoneAndNetwork();
     }
@@ -1362,7 +1369,10 @@
       }
     }
 
-    window.openSettings = function() { document.getElementById('settings-modal').style.display = 'flex'; }
+    window.openSettings = function() {
+      window.switchSettingsTab('general');
+      document.getElementById('settings-modal').style.display = 'flex'; 
+    }
     window.closeSettings = function() { document.getElementById('settings-modal').style.display = 'none'; }
 
     window.saveMyName = async function() {
@@ -1403,12 +1413,6 @@
           });
         } catch (err) { console.error(err); }
       }
-    });
-
-    rogerCheckbox.addEventListener('change', (e) => {
-      isRogerBeepOn = e.target.checked;
-      rogerStatusText.innerText = isRogerBeepOn ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_roger', isRogerBeepOn);
     });
 
     micVolumeSlider.addEventListener('input', (e) => {
@@ -1564,9 +1568,6 @@
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
-          if (data.type === 'roger' && data.senderId !== myPeerId && isRogerBeepOn) {
-            playAudioEffect('roger');
-          }
           if (data.type === 'se' && data.senderId !== myPeerId) {
             playAudioEffect(data.sound);
           }
@@ -1855,9 +1856,7 @@
       activeDataConns[conn.peer] = conn;
 
       conn.on('data', (data) => {
-        if (data && data.type === 'roger' && isRogerBeepOn) {
-          playAudioEffect('roger');
-        } else if (data && data.type === 'se') {
+        if (data && data.type === 'se') {
           playAudioEffect(data.sound);
         } else if (data && data.type === 'quiz_push') {
           handleQuizPush(data.senderName);
@@ -2562,15 +2561,6 @@
         if (transMode !== 'off' && speechRecognition) {
           try { speechRecognition.stop(); } catch(err){}
         }
-        
-        if (isRogerBeepOn) {
-          playAudioEffect('roger');
-          if (currentMode === 'group' && currentGroupTopic) {
-            mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'roger', senderId: myPeerId }));
-          } else if (currentMode === 'direct') {
-            Object.values(activeDataConns).forEach(conn => conn.send({ type: 'roger', senderId: myPeerId }));
-          }
-        }
       }
     };
 
@@ -2618,15 +2608,6 @@
 
         if (transMode !== 'off' && speechRecognition) {
           try { speechRecognition.stop(); } catch(err){}
-        }
-        
-        if (isRogerBeepOn) {
-          playAudioEffect('roger');
-          if (currentMode === 'group' && currentGroupTopic) {
-            mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'roger', senderId: myPeerId }));
-          } else if (currentMode === 'direct') {
-            Object.values(activeDataConns).forEach(conn => conn.send({ type: 'roger', senderId: myPeerId }));
-          }
         }
       }
     });
