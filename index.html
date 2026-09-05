@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.21</title>
+  <title>Naisync - 内線トランシーバー v2.2.22</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -319,7 +319,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.21</div>
+  <div class="version-tag">v2.2.22</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -574,7 +574,6 @@
     </div>
   </div>
 
-  <!-- グループ作成・参加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <div class="modal-tabs">
@@ -670,13 +669,17 @@
     </div>
   </div>
 
-  <!-- 【v2.2.21変更】裏モードという言葉を隠蔽 -->
   <div class="modal-overlay top-layer" id="changelog-modal">
     <div class="modal-box">
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v2.2.21 (最新) 🛠️テキスト修正</div>
+          <!-- 【v2.2.22追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.22 (最新) 🛠️バグ修正</div>
+          <div>・他の人がお絵かきボードを開くと、今まで描いていた絵が消えてしまう不具合を修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.21 🛠️テキスト修正</div>
           <div>・一部の表示テキストを修正し、アプリの安定性を向上させました。</div>
         </div>
         <div class="changelog-item">
@@ -720,22 +723,6 @@
           <div>・タブを切り替えた際、部屋のメンバーと正常に再接続されない不具合を修正しました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.2.9</div>
-          <div>・ゲストモード時に不要な通信を受信してしまう不具合を修正しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.8</div>
-          <div>・グループ参加時に、存在しないIDやパスワードを弾く検証機能を追加しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.7</div>
-          <div>・招待リンクから「ゲストとして参加（アカウント不要）」できる機能を追加しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.6</div>
-          <div>・タブを閉じた際の通信処理を最適化し、動作の安定性を向上させました。</div>
-        </div>
-        <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
           <div>・Naisync リリース</div>
         </div>
@@ -775,7 +762,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2221/';
+    const APP_PREFIX = 'Naisync/v2222/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -836,6 +823,7 @@
     let lastX = 0;
     let lastY = 0;
     let wbCtx = null;
+    let isWhiteboardInitialized = false; // 【v2.2.22追加】初期化済みフラグ
     
     let drawBuffer = [];
     let drawTimer = null;
@@ -867,7 +855,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2221', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2222', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -875,9 +863,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2221'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2222'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2220')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2221')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -1011,13 +999,12 @@
       }
     }
 
+    // 【v2.2.22変更】描画バグ修正のため、cloneNodeを廃止しフラグ管理に変更
     const initWhiteboard = () => {
+      if (isWhiteboardInitialized) return; // 既に準備済みの場合はスキップして絵を消さない！
+      
       let canvas = document.getElementById('whiteboard-canvas');
       if (!canvas) return;
-      
-      const newCanvas = canvas.cloneNode(true);
-      canvas.replaceWith(newCanvas);
-      canvas = newCanvas; 
       
       wbCtx = canvas.getContext('2d');
       wbCtx.lineCap = 'round';
@@ -1062,6 +1049,8 @@
       canvas.addEventListener('touchstart', startDraw, {passive: false});
       canvas.addEventListener('touchmove', draw, {passive: false});
       canvas.addEventListener('touchend', endDraw);
+      
+      isWhiteboardInitialized = true; // 準備完了フラグを立てる
     };
 
     window.drawLine = function(x0, y0, x1, y1, color, emit) {
