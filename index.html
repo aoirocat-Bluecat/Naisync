@@ -849,7 +849,7 @@
         <div class="changelog-item">
           <!-- 【v2.2.29追加】履歴の更新 -->
           <div class="changelog-version">v2.2.29 (最新) 🛠️接続安定性の向上</div>
-          <div>・一部のネットワーク（学校や会社のWi-Fiなど）で、通信サーバーが弾かれて「初期化中...」で止まってしまう問題を解決するため、自動でサーバーを切り替える「フォールバック機能」を追加しました。</div>
+          <div>・一部のネットワーク環境で、通信サーバーが弾かれて「初期化中...」で止まってしまう問題を解決しました。<br>・1対1モードはサーバーを経由しないため、すぐに利用できるように改善しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.28 🕹️UI整理</div>
@@ -902,22 +902,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.2.16</div>
           <div>・ファイル読み込みのパス指定を改善し、特定のサーバー環境での動作安定性を向上させました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.15</div>
-          <div>・設定画面の項目を整理し、見やすくしました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.14</div>
-          <div>・効果音（SE）を電子音からリアルな音声に変更し、臨場感をアップさせました！</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.13</div>
-          <div>・グループの設定で「メンバー全員が効果音(SE)を使える」ようにする許可機能を追加しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.11 🎉メガエンタメUP🎉</div>
-          <div>・【早押しボタン】全員で遊べるクイズボタンを実装！<br>・【SEボード】番組を盛り上げる効果音ボタンを追加！</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -1199,7 +1183,7 @@
     window.sendSE = function(sound) {
       if (isGuestMode) return;
       playAudioEffect(sound);
-      if (currentMode === 'group' && currentGroupTopic) {
+      if (currentMode === 'group' && currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'se', sound: sound, senderId: myPeerId }));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => conn.send({ type: 'se', sound: sound, senderId: myPeerId }));
@@ -1305,7 +1289,7 @@
       const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
       const text = `🎲 ${count}d${faces} ＞ [${results.join(', ')}] ＝ **${total}**`;
 
-      if (currentMode === 'group' && currentGroupTopic) {
+      if (currentMode === 'group' && currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'chat', senderId: myPeerId, senderName: senderName, text: text }));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => conn.send({ type: 'chat', senderName: senderName, text: text }));
@@ -1354,7 +1338,7 @@
         senderId: myPeerId
       };
 
-      if (currentGroupTopic) {
+      if (currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify(pollData));
       }
       
@@ -1424,7 +1408,7 @@
       
       document.querySelectorAll('.poll-option-btn')[optionIndex].style.borderLeft = '4px solid #0d6efd';
 
-      if (currentGroupTopic) {
+      if (currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify({
           type: 'poll_vote', pollId: pollId, optionIndex: optionIndex
         }));
@@ -1467,7 +1451,7 @@
 
       const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
       
-      if (currentMode === 'group' && currentGroupTopic) {
+      if (currentMode === 'group' && currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'quiz_push', senderId: myPeerId, senderName: senderName }));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => conn.send({ type: 'quiz_push', senderId: myPeerId, senderName: senderName }));
@@ -1578,7 +1562,7 @@
       if (!drawTimer) {
         drawTimer = setTimeout(() => {
           const msg = { type: 'draw_batch', lines: drawBuffer, senderId: myPeerId };
-          if (currentMode === 'group' && currentGroupTopic) {
+          if (currentMode === 'group' && currentGroupTopic && mqttClient) {
             mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
           } else if (currentMode === 'direct') {
             Object.values(activeDataConns).forEach(conn => conn.send(msg));
@@ -1598,7 +1582,7 @@
       if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
 
       const msg = { type: 'draw_clear', senderId: myPeerId };
-      if (currentMode === 'group' && currentGroupTopic) {
+      if (currentMode === 'group' && currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => conn.send(msg));
@@ -1617,7 +1601,7 @@
       const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
       const msg = { type: 'wb_open', senderId: myPeerId, senderName: senderName };
       
-      if (currentMode === 'group' && currentGroupTopic) {
+      if (currentMode === 'group' && currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => conn.send(msg));
@@ -1631,11 +1615,218 @@
       if (isGuestMode || (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId)) return;
 
       const msg = { type: 'wb_close', senderId: myPeerId };
-      if (currentMode === 'group' && currentGroupTopic) {
+      if (currentMode === 'group' && currentGroupTopic && mqttClient) {
         mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => conn.send(msg));
       }
+    }
+
+    // ==========================================
+    // 早撃ちスマッシュ ゲームロジック
+    // ==========================================
+    window.inviteSmash = function() {
+      if (currentMode !== 'direct' || Object.keys(activeDataConns).length === 0) {
+        return alert('「早撃ちスマッシュ」は1対1通話（Directモード）専用のゲームです。相手と接続してからお試しください。');
+      }
+      Object.values(activeDataConns).forEach(conn => {
+        conn.send({ type: 'smash_req', senderName: savedMyName || myPeerId.substring(0,5) });
+      });
+      showNotification('相手に早撃ちスマッシュの対戦申し込みを送りました。返答待ちです...');
+    }
+
+    window.startSmash = function(isHostRole) {
+      isSmashActive = true;
+      isSmashHost = isHostRole;
+      smashMyScore = 0;
+      smashPartnerScore = 0;
+      document.getElementById('smash-my-score').innerText = '0';
+      document.getElementById('smash-partner-score').innerText = '0';
+      document.getElementById('smash-section').style.display = 'block';
+      
+      if (isSmashHost) {
+        setTimeout(startSmashRound, 2000);
+      }
+      document.getElementById('smash-status').innerText = '準備...！';
+      document.getElementById('smash-status').style.color = '#fff';
+    }
+
+    function startSmashRound() {
+      smashGameActive = false;
+      hideSmashTargets();
+      document.getElementById('smash-status').innerText = '準備...！';
+      document.getElementById('smash-status').style.color = '#fff';
+
+      const delay = Math.floor(Math.random() * 2500) + 1500;
+      
+      setTimeout(() => {
+        const isDummy = Math.random() < 0.3;
+        const startX = Math.floor(Math.random() * 80);
+        const startY = Math.floor(Math.random() * 75);
+        
+        const endX = Math.max(0, Math.min(85, startX + (Math.random() * 40 - 20)));
+        const endY = Math.max(0, Math.min(80, startY + (Math.random() * 40 - 20)));
+
+        const spawnData = { isDummy, startX, startY, endX, endY };
+        
+        showSmashTarget(spawnData);
+        Object.values(activeDataConns).forEach(conn => {
+          conn.send({ type: 'smash_spawn', spawnData });
+        });
+
+        smashRoundTimeout = setTimeout(() => {
+          if (smashGameActive) {
+            endSmashRound({ winner: 'draw', reason: 'timeout' });
+          }
+        }, 1500);
+      }, delay);
+    }
+
+    function showSmashTarget(data) {
+      const realTarget = document.getElementById('smash-target-real');
+      const dummyTarget = document.getElementById('smash-target-dummy');
+      const statusDisplay = document.getElementById('smash-status');
+
+      const target = data.isDummy ? dummyTarget : realTarget;
+      
+      target.style.transition = 'none';
+      target.style.left = data.startX + '%';
+      target.style.top = data.startY + '%';
+      target.style.display = 'block';
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          target.style.transition = 'left 1.5s linear, top 1.5s linear';
+          target.style.left = data.endX + '%';
+          target.style.top = data.endY + '%';
+        });
+      });
+
+      statusDisplay.textContent = data.isDummy ? "ダミーを撃つな！" : "撃て！！！";
+      statusDisplay.style.color = data.isDummy ? "#00e5ff" : "#ff4655";
+      smashGameActive = true;
+    }
+
+    function hideSmashTargets() {
+      document.getElementById('smash-target-real').style.display = 'none';
+      document.getElementById('smash-target-dummy').style.display = 'none';
+    }
+
+    window.shootSmash = function(clickedDummy, event) {
+      if (event && event.cancelable) event.preventDefault();
+      if (!smashGameActive) return;
+      smashGameActive = false; 
+      
+      const playerRole = isSmashHost ? 'host' : 'guest';
+      let resultData;
+
+      if (clickedDummy) {
+        resultData = { winner: isSmashHost ? 'guest' : 'host', reason: 'dummy' };
+      } else {
+        resultData = { winner: playerRole, reason: 'fastest' };
+      }
+
+      if (isSmashHost) {
+        clearTimeout(smashRoundTimeout);
+        endSmashRound(resultData);
+      } else {
+        Object.values(activeDataConns).forEach(conn => {
+          conn.send({ type: 'smash_end_round', resultData });
+        });
+      }
+    };
+
+    function endSmashRound(resultData) {
+      smashGameActive = false;
+      hideSmashTargets();
+
+      if (isSmashHost) {
+        clearTimeout(smashRoundTimeout);
+        Object.values(activeDataConns).forEach(conn => {
+          conn.send({ type: 'smash_end_round', resultData });
+        });
+      }
+      processSmashRoundEnd(resultData);
+    }
+
+    function processSmashRoundEnd(data) {
+      smashGameActive = false;
+      hideSmashTargets();
+
+      const myRole = isSmashHost ? 'host' : 'guest';
+      const statusDisplay = document.getElementById('smash-status');
+      
+      if (data.winner === 'draw') {
+        statusDisplay.textContent = "⏱️ 時間切れ！";
+        statusDisplay.style.color = "#aaa";
+      } else if (data.winner === myRole) {
+        smashMyScore++;
+        document.getElementById('smash-my-score').textContent = smashMyScore;
+        if (data.reason === 'dummy') {
+          statusDisplay.textContent = "🏆 相手がダミーを撃ちました！あなたの勝ち！";
+        } else {
+          statusDisplay.textContent = "🏆 撃ち勝ちました！ナイスエイム！";
+        }
+        statusDisplay.style.color = "#00ff00";
+        playAudioEffect('pingpong'); 
+      } else {
+        smashPartnerScore++;
+        document.getElementById('smash-partner-score').textContent = smashPartnerScore;
+        if (data.reason === 'dummy') {
+          statusDisplay.textContent = "💀 ダミーを撃ってしまった！自爆！";
+        } else {
+          statusDisplay.textContent = "💀 撃ち負けました...相手の方が早かった！";
+        }
+        statusDisplay.style.color = "#ff4655";
+        playAudioEffect('buzzer'); 
+      }
+
+      if (isSmashHost) {
+        setTimeout(startSmashRound, 2500); 
+      }
+    }
+
+    window.quitSmash = function() {
+      if (!confirm("早撃ちスマッシュを終了しますか？")) return;
+      Object.values(activeDataConns).forEach(conn => {
+        conn.send({ type: 'smash_quit' });
+      });
+      endSmash();
+    };
+
+    function endSmash() {
+      isSmashActive = false;
+      clearTimeout(smashRoundTimeout);
+      document.getElementById('smash-section').style.display = 'none';
+    }
+
+    // ==========================================
+    // 汎用ゲーム招待モーダルハンドラ
+    // ==========================================
+    window.acceptGameInvite = function() {
+      document.getElementById('game-invite-container').style.display = 'none';
+      if (pendingGameType === 'reversi' && pendingReversiConn && pendingReversiConn.open) {
+        pendingReversiConn.send({ type: 'reversi_acc', senderName: savedMyName || myPeerId.substring(0,5) });
+        startReversi(1);
+      } else if (pendingGameType === 'smash' && pendingSmashConn && pendingSmashConn.open) {
+        pendingSmashConn.send({ type: 'smash_acc', senderName: savedMyName || myPeerId.substring(0,5) });
+        startSmash(false);
+      }
+      pendingGameType = null;
+      pendingReversiConn = null;
+      pendingSmashConn = null;
+    }
+
+    window.declineGameInvite = function() {
+      document.getElementById('game-invite-container').style.display = 'none';
+      if (pendingGameType === 'reversi' && pendingReversiConn && pendingReversiConn.open) {
+        pendingReversiConn.send({ type: 'reversi_dec', senderName: savedMyName || myPeerId.substring(0,5) });
+      } else if (pendingGameType === 'smash' && pendingSmashConn && pendingSmashConn.open) {
+        pendingSmashConn.send({ type: 'smash_dec', senderName: savedMyName || myPeerId.substring(0,5) });
+      }
+      pendingGameType = null;
+      pendingReversiConn = null;
+      pendingSmashConn = null;
     }
 
     window.openAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'flex'; }
@@ -1724,18 +1915,22 @@
 
     window.kickUser = function(targetId, targetName) {
       if(!confirm(`${targetName} をグループから強制退出させますか？\n※相手が再度招待リンクを踏むと戻ってこれるため、完全にブロックしたい場合はパスワードを変更してください。`)) return;
-      mqttClient.publish(currentGroupTopic, JSON.stringify({
-        type: 'kick', senderId: myPeerId, targetId: targetId
-      }));
+      if (mqttClient) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify({
+          type: 'kick', senderId: myPeerId, targetId: targetId
+        }));
+      }
     }
 
     window.changeRoomPassword = function() {
       const newPass = prompt('新しいパスワードを入力してください（6文字以上推奨）。\n※この部屋にいる全員が自動的に新しいパスワードの部屋に移動します。');
       if(!newPass) return;
       
-      mqttClient.publish(currentGroupTopic, JSON.stringify({
-        type: 'change_pass', senderId: myPeerId, newPass: newPass
-      }));
+      if (mqttClient) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify({
+          type: 'change_pass', senderId: myPeerId, newPass: newPass
+        }));
+      }
       
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
@@ -1928,7 +2123,7 @@
           } else if (transMode === 'all') {
             window.showSubtitle(senderName, text.trim());
             
-            if (currentMode === 'group' && currentGroupTopic) {
+            if (currentMode === 'group' && currentGroupTopic && mqttClient) {
               mqttClient.publish(currentGroupTopic, JSON.stringify({
                 type: 'subtitle', senderId: myPeerId, senderName: senderName, text: text.trim()
               }));
@@ -1952,249 +2147,7 @@
       };
     }
 
-    function startMainApp() {
-      document.getElementById('auth-overlay').style.display = 'none';
-      document.getElementById('main-header').style.display = 'flex';
-      document.getElementById('main-card').style.display = 'block';
-
-      displayMyName.innerText = savedMyName + (isGuestMode ? ' (ゲスト)' : '');
-      settingMyNameInput.value = savedMyName;
-      if (isGuestMode) settingMyNameInput.disabled = true;
-
-      streamerModeCheckbox.checked = isStreamerMode;
-      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
-
-      loadAndMigrateGroups(currentUser.customId || (currentUser.email ? currentUser.email.split('@')[0] : 'guest'));
-      initMicrophoneAndNetwork();
-    }
-
-    function showNotification(message) {
-      if (!isNotificationOn) return; 
-      const container = document.getElementById('notification-container');
-      const toast = document.createElement('div');
-      toast.className = 'toast';
-      toast.innerText = message;
-      container.appendChild(toast);
-      setTimeout(() => { toast.remove(); }, 3900);
-    }
-
-    function containsNGWord(text) {
-      if (!text) return false;
-      return NG_WORDS.some(word => text.includes(word));
-    }
-
-    function updateChatUI() {
-      if (isGuestMode) {
-        chatInput.disabled = true;
-        chatSendBtn.disabled = true;
-        chatInput.placeholder = "ゲストはチャットを送信できません";
-      } else if (currentMode === 'group' && currentGroupId === 'test-noguest') {
-        chatInput.disabled = true;
-        chatSendBtn.disabled = true;
-        chatInput.placeholder = "このルームではチャットは使用できません";
-      } else {
-        chatInput.disabled = false;
-        chatSendBtn.disabled = false;
-        chatInput.placeholder = "メッセージを入力...";
-      }
-    }
-
-    function resumeAudioContext() {
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-    }
-
-    // 【v2.2.29追加】サーバー自動切り替え・通信復帰ロジックの実装
-    async function initMicrophoneAndNetwork() {
-      try {
-        if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
-        
-        document.getElementById('trans-off').classList.remove('active');
-        document.getElementById('trans-self').classList.remove('active');
-        document.getElementById('trans-all').classList.remove('active');
-        document.getElementById('trans-' + transMode).classList.add('active');
-
-        ncCheckbox.checked = isNoiseCanceling;
-        ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
-        micVolumeSlider.value = savedMicVolume;
-        micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
-        spkVolumeSlider.value = savedSpeakerVolume;
-        spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
-        
-        notifCheckbox.checked = isNotificationOn;
-        notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
-        
-        transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
-        transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
-
-        if (transMode !== 'off') initSpeechRecognition();
-
-        const audioConstraints = {
-          audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
-        };
-
-        rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-        rawAudioTrack = rawStream.getAudioTracks()[0];
-        rawAudioTrack.enabled = false;
-
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        const source = audioCtx.createMediaStreamSource(rawStream);
-        gainNode = audioCtx.createGain();
-        gainNode.gain.value = savedMicVolume;
-
-        const destination = audioCtx.createMediaStreamDestination();
-        source.connect(gainNode);
-        gainNode.connect(destination);
-        processedStream = destination.stream;
-
-        renderTabs();
-        startNetworking();
-        updateChatUI();
-      } catch (err) {
-        statusEl.innerText = 'マイクの使用を許可してください';
-      }
-    }
-
-    window.openSettings = function() {
-      window.switchSettingsTab('general');
-      document.getElementById('settings-modal').style.display = 'flex'; 
-    }
-    window.closeSettings = function() { document.getElementById('settings-modal').style.display = 'none'; }
-
-    window.saveMyName = async function() {
-      if (isGuestMode) return alert('ゲストは名前を変更できません。');
-      const newName = settingMyNameInput.value.trim();
-      if (!newName) return alert('名前を入力してください。');
-      if (containsNGWord(newName)) return alert('名前に不適切な単語が含まれています。');
-      
-      savedMyName = newName;
-      displayMyName.innerText = newName;
-      
-      await updateProfile(auth.currentUser, {
-        displayName: JSON.stringify({ name: newName, customId: currentUser.customId })
-      });
-      alert('名前を保存しました！');
-    }
-
-    window.setTransMode = function(mode) {
-      if (isGuestMode && mode === 'all') return alert('ゲストは字幕を相手に共有できません（自分のみ表示は可能です）。');
-      transMode = mode;
-      localStorage.setItem('my_naisen_trans_mode', mode);
-      document.getElementById('trans-off').classList.remove('active');
-      document.getElementById('trans-self').classList.remove('active');
-      document.getElementById('trans-all').classList.remove('active');
-      document.getElementById('trans-' + mode).classList.add('active');
-      
-      if (mode !== 'off' && !speechRecognition) initSpeechRecognition();
-    }
-
-    ncCheckbox.addEventListener('change', async (e) => {
-      isNoiseCanceling = e.target.checked;
-      ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_nc', isNoiseCanceling);
-      if (rawAudioTrack) {
-        try {
-          await rawAudioTrack.applyConstraints({
-            echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling
-          });
-        } catch (err) { console.error(err); }
-      }
-    });
-
-    micVolumeSlider.addEventListener('input', (e) => {
-      resumeAudioContext();
-      const val = parseFloat(e.target.value);
-      if (gainNode) gainNode.gain.value = val;
-      savedMicVolume = val;
-      localStorage.setItem('my_naisen_mic_vol', val);
-      micVolumeDisplay.innerText = Math.round(val * 100) + '%';
-    });
-
-    spkVolumeSlider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      savedSpeakerVolume = val;
-      localStorage.setItem('my_naisen_spk_vol', val);
-      spkVolumeDisplay.innerText = Math.round(val * 100) + '%';
-      
-      document.querySelectorAll('.participant-item input[type=range]').forEach(slider => {
-        slider.value = val;
-        slider.dispatchEvent(new Event('input')); 
-      });
-    });
-
-    notifCheckbox.addEventListener('change', (e) => {
-      isNotificationOn = e.target.checked;
-      notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_notif', isNotificationOn);
-    });
-
-    transcriptionNotifCheckbox.addEventListener('change', (e) => {
-      isTranscriptionNotifOn = e.target.checked;
-      transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_transcription_notif', isTranscriptionNotifOn);
-    });
-
-    streamerModeCheckbox.addEventListener('change', (e) => {
-      isStreamerMode = e.target.checked;
-      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
-      localStorage.setItem('my_naisen_streamer', isStreamerMode);
-      applyStreamerModeToUI();
-    });
-
-    function renderTabs() {
-      tabsWrapper.innerHTML = '';
-
-      if (!isGuestMode) {
-        const directTab = document.createElement('button');
-        directTab.className = `tab ${currentMode === 'direct' ? 'active' : ''}`;
-        directTab.innerText = '1対1通話';
-        directTab.onclick = () => switchToDirect();
-        tabsWrapper.appendChild(directTab);
-      }
-
-      customGroups.forEach(g => {
-        const tab = document.createElement('button');
-        tab.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
-        
-        const isHost = (g.hostId === myPeerId);
-        let prefix = '';
-        if (g.isRadio) prefix = isHost ? '📻 ' : '🎧 ';
-        else prefix = isHost ? '👑 ' : '';
-
-        const label = document.createElement('span');
-        label.innerText = prefix + g.name;
-        tab.appendChild(label);
-
-        const delBtn = document.createElement('span');
-        delBtn.className = 'btn-del';
-        delBtn.innerText = '✕';
-        delBtn.onclick = (e) => deleteGroup(g.id, g.name, e);
-        tab.appendChild(delBtn);
-
-        tab.onclick = () => joinGroup(g);
-        tabsWrapper.appendChild(tab);
-      });
-
-      const addBtn = document.createElement('button');
-      addBtn.className = 'tab tab-add';
-      if (isGuestMode) {
-        addBtn.innerText = '＋ 参加';
-        addBtn.onclick = () => {
-          window.switchGroupModalTab('join');
-          document.getElementById('tab-btn-create').style.display = 'none';
-          document.getElementById('group-modal').style.display = 'flex';
-        };
-      } else {
-        addBtn.innerText = '＋ 作成';
-        addBtn.onclick = () => {
-          document.getElementById('modal-create-allow-se').checked = false;
-          document.getElementById('modal-create-no-guests').checked = false; 
-          window.openGroupModal();
-        };
-      }
-      tabsWrapper.appendChild(addBtn);
-    }
-
+    // 【v2.2.29修正】通信接続の初期化プロセス
     function startNetworking() {
       const customId = currentUser.customId;
       peer = new Peer(customId);
@@ -2204,31 +2157,39 @@
         myIdEl.innerText = id;
         applyStreamerModeToUI();
 
-        // 【v2.2.29変更】通信サーバーの自動フォールバック機能
+        // 1対1はグループサーバー（MQTT）の接続を待たずに、ここで即座にUIを解放する
+        if (!pendingInvite) {
+          switchToDirect();
+        } else {
+          statusEl.innerText = 'グループ招待を確認中...';
+        }
+
+        // 裏でグループ用のMQTT接続（フォールバック機能付き）を行う
         let isMqttConnected = false;
         const brokers = [
-          'wss://broker.hivemq.com:8884/mqtt', // より安定しているサーバーを1番目に
+          'wss://broker.hivemq.com:8884/mqtt',
           'wss://broker.emqx.io:8084/mqtt',
           'wss://test.mosquitto.org:8081/mqtt'
         ];
 
         const tryConnectMQTT = (bIndex) => {
           if (bIndex >= brokers.length) {
-            statusEl.innerText = '⚠️ 通信サーバーへの接続がブロックされています。別のWi-Fiなどをお試しください。';
+            console.warn("すべてのMQTTサーバーに接続できませんでした。");
+            if (currentMode === 'group' || pendingInvite) {
+               statusEl.innerText = '⚠️ サーバー接続に失敗しました。';
+            }
             return;
           }
 
-          statusEl.innerText = `通信経路を構築中... (${bIndex + 1}/${brokers.length})`;
-          
           if (mqttClient) {
              try { mqttClient.end(true); } catch(e){}
           }
-          
+
           mqttClient = mqtt.connect(brokers[bIndex], { connectTimeout: 3000 });
-          
+
           let fallbackTimer = setTimeout(() => {
             if (!isMqttConnected) {
-              console.warn('MQTT connection timeout for broker:', brokers[bIndex]);
+              console.warn('MQTT timeout:', brokers[bIndex]);
               tryConnectMQTT(bIndex + 1);
             }
           }, 3000);
@@ -2237,7 +2198,7 @@
             if (isMqttConnected) return;
             isMqttConnected = true;
             clearTimeout(fallbackTimer);
-            
+
             if (pendingInvite) {
               const listIdx = customGroups.findIndex(g => g.id === pendingInvite.id);
               if (listIdx >= 0) {
@@ -2250,19 +2211,17 @@
                 if (pendingInvite.isRadio) {
                   customGroups[listIdx].isRadio = true;
                 }
-                if (pendingInvite.noGuests) { 
+                if (pendingInvite.noGuests) {
                   customGroups[listIdx].noGuests = true;
                 }
               } else {
                 customGroups.push(pendingInvite);
               }
               saveGroups();
-              
+
               const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
-              pendingInvite = null; 
+              pendingInvite = null;
               joinGroup(targetGroup);
-            } else {
-              switchToDirect();
             }
           });
 
@@ -2470,7 +2429,6 @@
           });
         };
 
-        // 最初のサーバーへ接続開始
         tryConnectMQTT(0);
       });
 
@@ -2539,766 +2497,55 @@
       });
     }
 
-    function updateParticipantName(peerId, name) {
-      peerNames[peerId] = name;
-      const nameEl = document.getElementById('name-' + peerId);
-      if (nameEl) nameEl.innerText = name;
-    }
-
-    function updateSpatialPosition(peerId, pos) {
-      if (!pannerNodes[peerId]) return;
-      const panner = pannerNodes[peerId];
-      switch(pos) {
-        case 'center': panner.positionX.value = 0; panner.positionY.value = 0; panner.positionZ.value = 0; break;
-        case 'left':   panner.positionX.value = -1.5; panner.positionY.value = 0; panner.positionZ.value = 0; break;
-        case 'right':  panner.positionX.value = 1.5; panner.positionY.value = 0; panner.positionZ.value = 0; break;
-        case 'top':    panner.positionX.value = 0; panner.positionY.value = 1; panner.positionZ.value = 2; break; 
-        case 'bottom': panner.positionX.value = 0; panner.positionY.value = -1; panner.positionZ.value = -2; break; 
-        case 'top-left':  panner.positionX.value = -1.5; panner.positionY.value = 1; panner.positionZ.value = 1.5; break;
-        case 'top-right': panner.positionX.value = 1.5; panner.positionY.value = 1; panner.positionZ.value = 1.5; break;
-      }
-    }
-
-    function addParticipantUI(peerId) {
-      if (document.getElementById('ui-' + peerId)) return;
-
-      const name = peerNames[peerId] || peerId.substring(0, 5) + " (不明)";
-      
-      const div = document.createElement('div');
-      div.className = 'participant-item';
-      div.id = 'ui-' + peerId;
-      
-      const mainDiv = document.createElement('div');
-      mainDiv.className = 'participant-main';
-
-      const nameEl = document.createElement('span');
-      nameEl.className = 'p-name';
-      nameEl.id = 'name-' + peerId;
-      nameEl.innerText = name;
-      
-      const ctrlDiv = document.createElement('div');
-      ctrlDiv.className = 'p-ctrl';
-      
-      const icon = document.createElement('span');
-      icon.innerText = '🔊';
-      icon.style.fontSize = '14px';
-      
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.min = '0';
-      slider.max = '1';
-      slider.step = '0.05';
-      slider.value = savedSpeakerVolume; 
-      
-      slider.addEventListener('input', (e) => {
-        const audio = document.getElementById('audio-' + peerId);
-        if (audio) {
-          audio.volume = e.target.value;
-          icon.innerText = e.target.value == 0 ? '🔇' : '🔊';
-        }
-      });
-      
-      ctrlDiv.appendChild(icon);
-      ctrlDiv.appendChild(slider);
-      
-      const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
-      const isHost = currentGroupObj && currentGroupObj.hostId === myPeerId;
-      if (isHost && peerId !== myPeerId) {
-        const kickBtn = document.createElement('button');
-        kickBtn.innerText = '✕ 退出';
-        kickBtn.className = 'btn-kick';
-        kickBtn.onclick = () => window.kickUser(peerId, name);
-        ctrlDiv.appendChild(kickBtn);
-      }
-
-      mainDiv.appendChild(nameEl);
-      mainDiv.appendChild(ctrlDiv);
-
-      const spatialDiv = document.createElement('div');
-      spatialDiv.style.display = 'flex';
-      spatialDiv.style.justifyContent = 'space-between';
-      spatialDiv.style.alignItems = 'center';
-      spatialDiv.style.paddingTop = '6px';
-      spatialDiv.style.borderTop = '1px dashed #e0e0e0';
-
-      const spatialLabel = document.createElement('span');
-      spatialLabel.innerText = '🗺️ 3D配置:';
-      spatialLabel.style.fontSize = '11px';
-      spatialLabel.style.color = '#777';
-
-      const spatialSelect = document.createElement('select');
-      spatialSelect.className = 'spatial-select';
-      const options = [
-        {val: 'center', txt: '正面 (通常)'},
-        {val: 'left', txt: '左方向'},
-        {val: 'right', txt: '右方向'},
-        {val: 'top', txt: '上方向 (天の声)'},
-        {val: 'bottom', txt: '下方向 (足元)'},
-        {val: 'top-left', txt: '左上'},
-        {val: 'top-right', txt: '右上'}
-      ];
-      options.forEach(opt => {
-        const o = document.createElement('option');
-        o.value = opt.val;
-        o.innerText = opt.txt;
-        spatialSelect.appendChild(o);
-      });
-
-      const savedPos = spatialSettings[peerId] || 'center';
-      spatialSelect.value = savedPos;
-      
-      spatialSelect.addEventListener('change', (e) => {
-        const pos = e.target.value;
-        spatialSettings[peerId] = pos;
-        localStorage.setItem('my_naisen_spatial', JSON.stringify(spatialSettings));
-        updateSpatialPosition(peerId, pos);
-      });
-
-      spatialDiv.appendChild(spatialLabel);
-      spatialDiv.appendChild(spatialSelect);
-
-      div.appendChild(mainDiv);
-      div.appendChild(spatialDiv);
-      
-      participantsList.appendChild(div);
-      participantsSection.style.display = 'block';
-
-      if (pannerNodes[peerId]) updateSpatialPosition(peerId, savedPos);
-    }
-
-    function removeParticipantUI(peerId) {
-      const el = document.getElementById('ui-' + peerId);
-      if (el) el.remove();
-      if (participantsList.children.length === 0) {
-        participantsSection.style.display = 'none';
-      }
-    }
-
-    function setupCall(call) {
-      if (activeCalls[call.peer]) {
-        if (activeCalls[call.peer].peerConnection) activeCalls[call.peer].peerConnection.close();
-        activeCalls[call.peer].close();
-        delete activeCalls[call.peer];
-      }
-      activeCalls[call.peer] = call;
-      updateStatus();
-
-      call.on('stream', (remoteStream) => {
-        let audio = document.getElementById('audio-' + call.peer);
-        if (!audio) {
-          audio = document.createElement('audio');
-          audio.id = 'audio-' + call.peer;
-          audio.autoplay = true;
-          audio.playsinline = true;
-          audio.volume = savedSpeakerVolume; 
-          audioContainer.appendChild(audio);
-        }
-
-        const hasVideo = remoteStream.getVideoTracks().length > 0;
-        if (hasVideo) {
-          screenShareVideo.srcObject = remoteStream;
-          const sName = call.metadata ? call.metadata.senderName : '誰か';
-          screenShareLabel.innerText = `${sName} のField`;
-          screenShareContainer.style.display = 'block';
-        } else {
-          if (screenShareVideo.srcObject && screenShareVideo.srcObject.id === remoteStream.id) {
-             screenShareVideo.srcObject = null;
-             screenShareContainer.style.display = 'none';
-          }
-        }
-
-        if (audioCtx && audioCtx.state !== 'closed') {
-           audio.srcObject = remoteStream;
-           audio.muted = true; 
-           
-           if (pannerNodes[call.peer]) pannerNodes[call.peer].disconnect();
-
-           const audioStream = new MediaStream(remoteStream.getAudioTracks());
-           const sourceNode = audioCtx.createMediaStreamSource(audioStream);
-           
-           const panner = audioCtx.createPanner();
-           panner.panningModel = 'HRTF';
-           panner.distanceModel = 'inverse';
-           panner.refDistance = 1;
-           panner.maxDistance = 10000;
-           panner.rolloffFactor = 1;
-
-           const volGain = audioCtx.createGain();
-           volGain.gain.value = savedSpeakerVolume;
-
-           sourceNode.connect(panner);
-           panner.connect(volGain);
-           volGain.connect(audioCtx.destination);
-
-           pannerNodes[call.peer] = panner;
-
-           setTimeout(() => {
-             const slider = document.querySelector(`#ui-${call.peer} input[type=range]`);
-             const icon = document.querySelector(`#ui-${call.peer} span`);
-             if (slider) {
-                const newSlider = slider.cloneNode(true);
-                slider.parentNode.replaceChild(newSlider, slider);
-                newSlider.addEventListener('input', (e) => {
-                  volGain.gain.value = e.target.value;
-                  icon.innerText = e.target.value == 0 ? '🔇' : '🔊';
-                });
-             }
-             const savedPos = spatialSettings[call.peer] || 'center';
-             updateSpatialPosition(call.peer, savedPos);
-           }, 200);
-
-        } else {
-           audio.srcObject = remoteStream;
-        }
-
-        addParticipantUI(call.peer);
-      });
-
-      call.on('close', () => {
-        if (pannerNodes[call.peer]) {
-           pannerNodes[call.peer].disconnect();
-           delete pannerNodes[call.peer];
-        }
-        const audio = document.getElementById('audio-' + call.peer);
-        if (audio) audio.remove();
-        delete activeCalls[call.peer];
+    async function initMicrophoneAndNetwork() {
+      try {
+        if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
         
-        if (screenShareVideo.srcObject) {
-           screenShareVideo.srcObject = null;
-           screenShareContainer.style.display = 'none';
-        }
+        document.getElementById('trans-off').classList.remove('active');
+        document.getElementById('trans-self').classList.remove('active');
+        document.getElementById('trans-all').classList.remove('active');
+        document.getElementById('trans-' + transMode).classList.add('active');
+
+        ncCheckbox.checked = isNoiseCanceling;
+        ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
+        micVolumeSlider.value = savedMicVolume;
+        micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
+        spkVolumeSlider.value = savedSpeakerVolume;
+        spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
         
-        updateStatus();
-        removeParticipantUI(call.peer);
-      });
-    }
+        notifCheckbox.checked = isNotificationOn;
+        notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
+        
+        transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
+        transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
 
-    function setupDataConn(conn) {
-      if (isGuestMode) return; 
+        if (transMode !== 'off') initSpeechRecognition();
 
-      if (activeDataConns[conn.peer]) {
-        activeDataConns[conn.peer].close();
-        delete activeDataConns[conn.peer];
+        const audioConstraints = {
+          audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
+        };
+
+        rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+        rawAudioTrack = rawStream.getAudioTracks()[0];
+        rawAudioTrack.enabled = false;
+
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const source = audioCtx.createMediaStreamSource(rawStream);
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = savedMicVolume;
+
+        const destination = audioCtx.createMediaStreamDestination();
+        source.connect(gainNode);
+        gainNode.connect(destination);
+        processedStream = destination.stream;
+
+        renderTabs();
+        startNetworking();
+        updateChatUI();
+      } catch (err) {
+        statusEl.innerText = 'マイクの使用を許可してください';
       }
-      activeDataConns[conn.peer] = conn;
-
-      conn.on('data', (data) => {
-        if (data && data.type === 'poll_start') {
-          startPollUI(data);
-          showNotification(`📊 ${data.senderId === myPeerId ? 'あなた' : 'リーダー'}がアンケートを開始しました`);
-        } else if (data && data.type === 'poll_vote') {
-          handlePollVote(data);
-        } else if (data && data.type === 'draw_batch') {
-          if (document.getElementById('whiteboard-section').style.display !== 'block') {
-             document.getElementById('whiteboard-section').style.display = 'block';
-             setTimeout(initWhiteboard, 100);
-          }
-          setTimeout(() => {
-            if (!wbCtx) return;
-            data.lines.forEach(l => {
-              window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false);
-            });
-          }, wbCtx ? 0 : 150);
-        }
-
-        else if (data && data.type === 'wb_open') {
-          document.getElementById('whiteboard-section').style.display = 'block';
-          setTimeout(initWhiteboard, 100);
-          showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`);
-        } else if (data && data.type === 'wb_close') {
-          document.getElementById('whiteboard-section').style.display = 'none';
-        } else if (data && data.type === 'draw') {
-          if (document.getElementById('whiteboard-section').style.display !== 'block') {
-             document.getElementById('whiteboard-section').style.display = 'block';
-             setTimeout(initWhiteboard, 100);
-          }
-          setTimeout(() => {
-            window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
-          }, wbCtx ? 0 : 150);
-        } else if (data && data.type === 'draw_clear') {
-          window.clearWhiteboard(false);
-        } else if (data && data.type === 'se') {
-          playAudioEffect(data.sound);
-        } else if (data && data.type === 'quiz_push') {
-          handleQuizPush(data.senderName);
-
-        } else if (data && data.type === 'chat') {
-          updateParticipantName(conn.peer, data.senderName);
-          showNotification(`💬 ${data.senderName}: ${data.text}`);
-          addChatLog(data.senderName, data.text, false);
-
-        } else if (data && data.type === 'subtitle') {
-          window.showSubtitle(data.senderName, data.text);
-
-        } else if (data && data.type === 'smash_req') {
-          pendingGameType = 'smash';
-          pendingSmashConn = conn;
-          document.getElementById('game-invite-msg').innerText = `⚡ ${data.senderName} さんから「早撃ちスマッシュ」の対戦申し込みが届きました！`;
-          document.getElementById('game-invite-container').style.display = 'block';
-        } else if (data && data.type === 'smash_acc') {
-          startSmash(true);
-          showNotification(`⚡ ${data.senderName}さんが対戦を承諾しました！`);
-        } else if (data && data.type === 'smash_dec') {
-          showNotification(`⚡ ${data.senderName} さんに対戦を断られました。`);
-        } else if (data && data.type === 'smash_spawn') {
-          showSmashTarget(data.spawnData);
-        } else if (data && data.type === 'smash_end_round') {
-          processSmashRoundEnd(data.resultData);
-        } else if (data && data.type === 'smash_quit') {
-          showNotification('⚡ 相手が早撃ちスマッシュを終了しました。');
-          endSmash();
-
-        } else if (data && data.type === 'reversi_req') {
-          pendingGameType = 'reversi';
-          pendingReversiConn = conn;
-          document.getElementById('game-invite-msg').innerText = `🎮 ${data.senderName} さんからリバーシの対戦申し込みが届きました！\n(あなたが先手・黒番になります)`;
-          document.getElementById('game-invite-container').style.display = 'block';
-
-        } else if (data && data.type === 'reversi_acc') {
-          startReversi(2);
-          showNotification(`🎮 ${data.senderName}さんが対戦を承諾しました！(あなたは後手・白番です)`);
-        } else if (data && data.type === 'reversi_dec') {
-          showNotification(`🎮 ${data.senderName} さんにリバーシの対戦を断られました。`);
-        } else if (data && data.type === 'reversi_move') {
-          applyReversiMove(data.r, data.c, data.color);
-        } else if (data && data.type === 'reversi_pass') {
-          showNotification('相手は置ける場所がないためパスしました。');
-          reversiCurrentTurn = reversiMyColor;
-          updateReversiUI();
-          checkReversiPassOrEnd();
-        } else if (data && data.type === 'reversi_quit') {
-          showNotification('🎮 相手がリバーシを終了しました。');
-          endReversi();
-        } else if (data && data.type === 'leave') {
-          if (activeCalls[conn.peer]) {
-            if (activeCalls[conn.peer].peerConnection) activeCalls[conn.peer].peerConnection.close();
-            activeCalls[conn.peer].close();
-            delete activeCalls[conn.peer];
-          }
-          if (pannerNodes[conn.peer]) {
-             pannerNodes[conn.peer].disconnect();
-             delete pannerNodes[conn.peer];
-          }
-          const audio = document.getElementById('audio-' + conn.peer);
-          if (audio) audio.remove();
-          removeParticipantUI(conn.peer);
-          updateStatus();
-          if (isReversiActive) endReversi(); 
-          if (isSmashActive) endSmash();
-        }
-      });
-      conn.on('close', () => delete activeDataConns[conn.peer]);
-    }
-
-    function closeAllCalls() {
-      if (currentGroupTopic && mqttClient) {
-        mqttClient.publish(currentGroupTopic, JSON.stringify({
-          type: 'leave', senderId: myPeerId
-        }));
-        mqttClient.unsubscribe(currentGroupTopic);
-      }
-      
-      stopScreenShare();
-      
-      Object.values(activeDataConns).forEach(conn => {
-        if (conn.open) {
-           conn.send({ type: 'leave', senderId: myPeerId });
-           setTimeout(() => { if (conn.close) conn.close(); }, 200);
-        } else {
-           if (conn.close) conn.close();
-        }
-      });
-
-      Object.values(activeCalls).forEach(call => {
-        if (call.peerConnection) call.peerConnection.close();
-        call.close();
-      });
-
-      if (peer && peer.connections) {
-        Object.keys(peer.connections).forEach(peerId => {
-          peer.connections[peerId].forEach(conn => {
-            if (conn.close) conn.close();
-          });
-        });
-      }
-      
-      Object.values(pannerNodes).forEach(p => p.disconnect());
-      pannerNodes = {};
-
-      activeCalls = {};
-      activeDataConns = {};
-      audioContainer.innerHTML = '';
-      currentGroupTopic = null;
-      chatLogs.innerHTML = ''; 
-      
-      participantsList.innerHTML = '';
-      participantsSection.style.display = 'none';
-      peerNames = {}; 
-
-      document.getElementById('game-invite-container').style.display = 'none';
-      pendingReversiConn = null;
-      pendingSmashConn = null;
-      pendingGameType = null;
-      
-      document.getElementById('poll-result-section').style.display = 'none';
-      if (pollInterval) clearInterval(pollInterval);
-      currentPollId = null;
-    }
-
-    function switchToDirect() {
-      closeAllCalls();
-      currentMode = 'direct';
-      currentGroupId = null;
-      endReversi(); 
-      endSmash();
-      renderTabs();
-      updateChatUI();
-      directPanel.style.display = 'block';
-      groupPanel.style.display = 'none';
-
-      if (isGuestMode) {
-        statusEl.innerText = 'ゲストモード中は1対1通話を利用できません';
-        talkBtn.disabled = true;
-        toggleBtn.disabled = true;
-        connectBtn.disabled = true;
-        peerIdInput.disabled = true;
-        document.getElementById('direct-connected-actions').style.display = 'none';
-        screenShareBtn.disabled = true;
-      } else {
-        statusEl.innerText = '1対1モード: 相手のIDを入力してください';
-        talkBtn.disabled = true;
-        toggleBtn.disabled = true;
-        talkBtn.innerText = '接続待ち';
-        document.getElementById('direct-connected-actions').style.display = 'none';
-        screenShareBtn.disabled = true;
-      }
-    }
-
-    connectBtn.addEventListener('click', () => {
-      resumeAudioContext();
-      const targetId = peerIdInput.value.trim();
-      if (!targetId) return alert('相手の内線IDを入力してください');
-      
-      statusEl.innerText = '発信中...';
-      const call = peer.call(targetId, processedStream, { 
-        metadata: { senderName: savedMyName, mode: 'direct', isScreen: isScreenSharing } 
-      });
-      setupCall(call);
-
-      const conn = peer.connect(targetId);
-      setupDataConn(conn);
-    });
-
-    function joinGroup(groupObj) {
-      if (groupObj.noGuests && isGuestMode) {
-        alert(`🚨 【${groupObj.name}】はゲストでの参加が禁止されています。\nログインしてからご参加ください。`);
-        switchToDirect();
-        return;
-      }
-
-      resumeAudioContext();
-      closeAllCalls();
-      currentMode = 'group';
-      currentGroupId = groupObj.id;
-
-      renderTabs();
-      updateChatUI();
-      directPanel.style.display = 'none';
-      groupPanel.style.display = 'block';
-
-      const isHost = (groupObj.hostId === myPeerId);
-      document.getElementById('host-controls').style.display = isHost && !groupObj.isRadio ? 'block' : 'none';
-      
-      const seBoard = document.getElementById('se-board');
-      if (seBoard) {
-        if (groupObj.isRadio) {
-          seBoard.style.display = isHost ? 'block' : 'none'; 
-        } else {
-          seBoard.style.display = (isHost || (groupObj.allowMemberSE && !isGuestMode)) ? 'block' : 'none'; 
-        }
-      }
-
-      currentGroupTopic = `${APP_PREFIX}${groupObj.id}/${groupObj.pass}`;
-
-      mqttClient.subscribe(currentGroupTopic);
-
-      if (isHost) {
-        mqttClient.publish(currentGroupTopic, JSON.stringify({ 
-          type: 'room_meta', 
-          peerId: myPeerId,
-          senderName: savedMyName,
-          hostId: groupObj.hostId,
-          createdAt: groupObj.createdAt,
-          isRadio: groupObj.isRadio,
-          allowMemberSE: groupObj.allowMemberSE,
-          noGuests: groupObj.noGuests 
-        }), { retain: true });
-      }
-      
-      mqttClient.publish(currentGroupTopic, JSON.stringify({ 
-        type: 'join', 
-        peerId: myPeerId,
-        senderName: savedMyName,
-        isGuest: isGuestMode, 
-        hostId: groupObj.hostId,
-        createdAt: groupObj.createdAt
-      }));
-
-      updateStatus(); 
-    }
-
-    // --- チャット ---
-    function sendChatMessage() {
-      if (isGuestMode) return;
-      if (currentMode === 'group' && currentGroupId === 'test-noguest') {
-        return alert('このルームではチャットは使用できません。');
-      }
-
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      if (currentMode === 'direct' && Object.keys(activeDataConns).length === 0 && text === '/radio') {
-        chatInput.value = '';
-        setTimeout(() => {
-          const name = prompt('📻 [SECRET] ラジオ局の名前を入力してください:');
-          if (!name) return;
-          const id = prompt('📻 [SECRET] ラジオ局のグループIDを入力してください (半角英数字):');
-          if (!id) return;
-          
-          const pass = '';
-
-          const newGroup = { id, name, pass, noGuests: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true, allowMemberSE: false };
-          customGroups.push(newGroup);
-          saveGroups();
-          joinGroup(newGroup);
-          renderTabs();
-        }, 100);
-        return;
-      }
-
-      let senderName = savedMyName;
-      if (!senderName) senderName = myPeerId ? myPeerId.substring(0, 5) : '自分';
-
-      if (containsNGWord(text)) return alert('不適切な単語が含まれているため送信できません。');
-
-      if (currentMode === 'group' && currentGroupTopic) {
-        mqttClient.publish(currentGroupTopic, JSON.stringify({
-          type: 'chat', senderId: myPeerId, senderName: senderName, text: text
-        }));
-      } else if (currentMode === 'direct') {
-        Object.values(activeDataConns).forEach(conn => {
-          conn.send({ type: 'chat', senderName: senderName, text: text });
-        });
-      }
-
-      addChatLog(senderName + ' (自分)', text, true);
-      chatInput.value = '';
-    }
-
-    function addChatLog(sender, text, isMe) {
-      const msgEl = document.createElement('div');
-      msgEl.className = `chat-msg ${isMe ? 'me' : ''}`;
-      msgEl.innerHTML = `<span class="sender">${sender}:</span>${escapeHtml(text)}`;
-      chatLogs.appendChild(msgEl);
-      chatLogs.scrollTop = chatLogs.scrollHeight; 
-    }
-
-    function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    chatSendBtn.addEventListener('click', sendChatMessage);
-    chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendChatMessage();
-    });
-
-    window.openGroupModal = function() {
-      if (isGuestMode) {
-        window.switchGroupModalTab('join');
-        document.getElementById('tab-btn-create').style.display = 'none';
-      } else {
-        window.switchGroupModalTab('create');
-        document.getElementById('tab-btn-create').style.display = 'block';
-      }
-      document.getElementById('modal-create-name').value = '';
-      document.getElementById('modal-create-id').value = '';
-      document.getElementById('modal-create-pass').value = '';
-      document.getElementById('modal-create-no-guests').checked = false; 
-      document.getElementById('modal-create-allow-se').checked = false; 
-
-      document.getElementById('modal-join-name').value = '';
-      document.getElementById('modal-join-id').value = '';
-      document.getElementById('modal-join-pass').value = '';
-
-      document.getElementById('group-modal').style.display = 'flex';
-    }
-    window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
-
-    window.executeCreateGroup = function() {
-      if (isGuestMode) return alert('ゲストは新しくグループを作成できません。');
-      // 自動フォールバック対応により、一時的な未接続を許容（代わりに警告を減らす）
-      if (!mqttClient) return alert('通信サーバーの準備中です。数秒待ってから再度お試しください。');
-
-      const name = document.getElementById('modal-create-name').value.trim();
-      const id = document.getElementById('modal-create-id').value.trim();
-      const pass = document.getElementById('modal-create-pass').value.trim();
-      const noGuests = document.getElementById('modal-create-no-guests').checked; 
-      const allowMemberSE = document.getElementById('modal-create-allow-se').checked; 
-
-      if (!name || !id || pass === '') return alert('全項目を入力してください（グループ作成にはパスワードが必須です）');
-      if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
-
-      const existingGroup = customGroups.find(g => g.id === id);
-      if (existingGroup) {
-        alert(`グループID「${id}」はすでにあなたのリストに存在します。\n「参加」タブからご参加ください。`);
-        return;
-      }
-
-      const btn = document.getElementById('btn-create-submit');
-      btn.disabled = true;
-      btn.innerText = 'IDの空き状況を確認中...';
-
-      checkingGroupId = id;
-      isGroupIdTaken = false;
-      
-      const checkTopic = `${APP_PREFIX}${id}/#`;
-
-      mqttClient.subscribe(checkTopic);
-
-      setTimeout(() => {
-        mqttClient.unsubscribe(checkTopic);
-
-        if (isGroupIdTaken) {
-          alert(`🚨 グループID「${id}」はすでに世界中の誰かが使用しています！\n別のグループIDを指定するか、パスワードを知っている場合は「参加」タブからご参加ください。`);
-          btn.disabled = false;
-          btn.innerText = '作成して参加';
-          checkingGroupId = null;
-        } else {
-          checkingGroupId = null;
-          const newGroup = { id, name, pass, noGuests: noGuests, hostId: myPeerId, createdAt: Date.now(), isRadio: false, allowMemberSE: allowMemberSE };
-          customGroups.push(newGroup);
-
-          saveGroups();
-          window.closeGroupModal();
-          btn.disabled = false;
-          btn.innerText = '作成して参加';
-          joinGroup(newGroup);
-        }
-      }, 1000);
-    }
-
-    window.executeJoinGroup = function() {
-      if (!mqttClient) return alert('通信サーバーの準備中です。数秒待ってから再度お試しください。');
-
-      const name = document.getElementById('modal-join-name').value.trim();
-      const id = document.getElementById('modal-join-id').value.trim();
-      const pass = document.getElementById('modal-join-pass').value.trim();
-
-      if (!name || !id) return alert('表示名とグループIDを入力してください');
-      if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
-
-      const btn = document.getElementById('btn-join-submit');
-      btn.disabled = true;
-      btn.innerText = 'グループを検索中...';
-
-      joiningGroupId = id;
-      joiningGroupPass = pass;
-      isJoinRoomFound = false;
-      isJoinPassCorrect = false;
-      isJoinRoomClosed = false;
-      joiningFoundRadio = false;
-      joiningFoundAllowMemberSE = false; 
-      joiningFoundNoGuests = false; 
-
-      const checkTopic = `${APP_PREFIX}${id}/#`;
-      mqttClient.subscribe(checkTopic);
-
-      setTimeout(() => {
-        mqttClient.unsubscribe(checkTopic);
-
-        if (!isJoinRoomFound) {
-          alert(`🚨 グループID「${id}」が見つかりません。\nIDが間違っているか、まだ作成されていません。`);
-          btn.disabled = false;
-          btn.innerText = '参加する';
-          joiningGroupId = null;
-          return;
-        }
-
-        if (!isJoinPassCorrect) {
-          alert(`🚨 パスワードが間違っています！`);
-          btn.disabled = false;
-          btn.innerText = '参加する';
-          joiningGroupId = null;
-          return;
-        }
-
-        if (isJoinRoomClosed) {
-          alert(`🚨 このラジオ局（またはグループ）はすでに放送終了・解散されています。`);
-          btn.disabled = false;
-          btn.innerText = '参加する';
-          joiningGroupId = null;
-          return;
-        }
-
-        if (isGuestMode && joiningFoundNoGuests) {
-          alert(`🚨 このグループはゲストの参加が許可されていません。\nログインしてから再度お試しください。`);
-          btn.disabled = false;
-          btn.innerText = '参加する';
-          joiningGroupId = null;
-          return;
-        }
-
-        joiningGroupId = null;
-        joiningGroupPass = null;
-
-        const existingGroup = customGroups.find(g => g.id === id);
-        const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : null;
-        const createdAt = (existingGroup && existingGroup.createdAt) ? existingGroup.createdAt : 9999999999999;
-        const isRadio = joiningFoundRadio;
-        const allowMemberSE = joiningFoundAllowMemberSE; 
-        const noGuests = joiningFoundNoGuests;
-
-        const newGroup = { id, name, pass, noGuests, hostId, createdAt, isRadio, allowMemberSE };
-        const index = customGroups.findIndex(g => g.id === id);
-        if (index >= 0) {
-          customGroups[index].pass = pass;
-          customGroups[index].name = name;
-          customGroups[index].isRadio = isRadio;
-          customGroups[index].allowMemberSE = allowMemberSE; 
-          customGroups[index].noGuests = noGuests;
-        } else {
-          customGroups.push(newGroup);
-        }
-
-        saveGroups();
-        window.closeGroupModal();
-        btn.disabled = false;
-        btn.innerText = '参加する';
-        joinGroup(customGroups.find(g => g.id === id));
-
-      }, 1000);
-    }
-
-    window.openHelp = function() { document.getElementById('help-modal').style.display = 'flex'; }
-    window.closeHelp = function() { document.getElementById('help-modal').style.display = 'none'; }
-
-    window.addTestGroup = function(type) {
-      let testGroup;
-      if (type === 'public') {
-        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', noGuests: false, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
-      } else {
-        testGroup = { id: 'test-noguest', name: 'ゲスト禁止テスト', pass: '0000', noGuests: true, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
-      }
-      
-      const index = customGroups.findIndex(g => g.id === testGroup.id);
-      if (index >= 0) {
-        customGroups[index] = testGroup;
-      } else {
-        customGroups.push(testGroup);
-      }
-      saveGroups();
-      window.closeHelp();
-      joinGroup(testGroup);
     }
 
     function updateStatus() {
@@ -3413,173 +2660,6 @@
             pollBtn.style.cursor = 'not-allowed';
         }
       }
-    }
-
-    // ==========================================
-    // リバーシ (オセロ) のゲームロジック
-    // ==========================================
-    window.inviteReversi = function() {
-      if (currentMode !== 'direct' || Object.keys(activeDataConns).length === 0) {
-        return alert('「リバーシ」は1対1通話（Directモード）専用のゲームです。相手と接続してからお試しください。');
-      }
-      Object.values(activeDataConns).forEach(conn => {
-        conn.send({ type: 'reversi_req', senderName: savedMyName || myPeerId.substring(0,5) });
-      });
-      showNotification('相手にリバーシの対戦申し込みを送りました。返答待ちです...');
-    }
-
-    function startReversi(color) {
-      isReversiActive = true;
-      reversiMyColor = color;
-      reversiCurrentTurn = 1;
-      document.getElementById('reversi-section').style.display = 'block';
-      initReversiBoard();
-      updateReversiUI();
-    }
-
-    function initReversiBoard() {
-      reversiBoard = Array(8).fill().map(() => Array(8).fill(0));
-      reversiBoard[3][3] = 2; // 白
-      reversiBoard[3][4] = 1; // 黒
-      reversiBoard[4][3] = 1; // 黒
-      reversiBoard[4][4] = 2; // 白
-    }
-
-    function renderReversiBoard() {
-      const boardEl = document.getElementById('reversi-board');
-      boardEl.innerHTML = '';
-      let bCount = 0, wCount = 0;
-      
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const val = reversiBoard[r][c];
-          if (val === 1) bCount++;
-          if (val === 2) wCount++;
-
-          const cell = document.createElement('div');
-          cell.className = 'reversi-cell';
-          cell.onclick = () => handleReversiClick(r, c);
-          
-          if (val !== 0) {
-            const piece = document.createElement('div');
-            piece.className = 'reversi-piece ' + (val === 1 ? 'black' : 'white');
-            cell.appendChild(piece);
-          } else if (isReversiActive && reversiCurrentTurn === reversiMyColor) {
-            if (getFlippablePieces(r, c, reversiMyColor).length > 0) {
-               const hint = document.createElement('div');
-               hint.className = 'reversi-hint';
-               cell.appendChild(hint);
-            }
-          }
-          boardEl.appendChild(cell);
-        }
-      }
-      return { bCount, wCount };
-    }
-
-    function updateReversiUI() {
-      const { bCount, wCount } = renderReversiBoard();
-      const infoEl = document.getElementById('reversi-info');
-      
-      let myColorStr = reversiMyColor === 1 ? '黒' : '白';
-      let turnStr = (reversiCurrentTurn === reversiMyColor) ? '🔵 あなたの番です' : '⏳ 相手の番です';
-      
-      infoEl.innerText = `${turnStr} (あなたは${myColorStr}) | 黒: ${bCount} 白: ${wCount}`;
-    }
-
-    function getFlippablePieces(r, c, color) {
-      if (reversiBoard[r][c] !== 0) return [];
-      const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-      const opp = color === 1 ? 2 : 1;
-      let flippable = [];
-
-      for (const [dr, dc] of dirs) {
-        let nr = r + dr, nc = c + dc;
-        let temp = [];
-        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === opp) {
-          temp.push([nr, nc]);
-          nr += dr; nc += dc;
-        }
-        if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === color && temp.length > 0) {
-          flippable.push(...temp);
-        }
-      }
-      return flippable;
-    }
-
-    function handleReversiClick(r, c) {
-      if (!isReversiActive || reversiCurrentTurn !== reversiMyColor) return;
-      const flips = getFlippablePieces(r, c, reversiMyColor);
-      if (flips.length === 0) return;
-
-      applyReversiMove(r, c, reversiMyColor, flips);
-
-      Object.values(activeDataConns).forEach(conn => {
-        conn.send({ type: 'reversi_move', r, c, color: reversiMyColor });
-      });
-    }
-
-    function applyReversiMove(r, c, color, preCalcFlips = null) {
-      const flips = preCalcFlips || getFlippablePieces(r, c, color);
-      reversiBoard[r][c] = color;
-      flips.forEach(([fr, fc]) => { reversiBoard[fr][fc] = color; });
-      
-      reversiCurrentTurn = (color === 1) ? 2 : 1;
-      updateReversiUI();
-      checkReversiPassOrEnd();
-    }
-
-    function checkReversiPassOrEnd() {
-      let canMove = false;
-      for (let r=0; r<8; r++) {
-        for (let c=0; c<8; c++) {
-           if (getFlippablePieces(r, c, reversiCurrentTurn).length > 0) canMove = true;
-        }
-      }
-
-      if (!canMove) {
-        const nextTurn = reversiCurrentTurn === 1 ? 2 : 1;
-        let oppCanMove = false;
-        for (let r=0; r<8; r++) {
-          for (let c=0; c<8; c++) {
-             if (getFlippablePieces(r, c, nextTurn).length > 0) oppCanMove = true;
-          }
-        }
-
-        if (!oppCanMove) {
-           setTimeout(() => {
-             const {bCount, wCount} = renderReversiBoard();
-             let msg = `🏁 ゲーム終了！ 黒:${bCount} 白:${wCount}\n`;
-             if(bCount > wCount) msg += "黒の勝ち！";
-             else if (wCount > bCount) msg += "白の勝ち！";
-             else msg += "引き分け！";
-             alert(msg);
-             endReversi();
-           }, 500);
-        } else {
-           if (reversiCurrentTurn === reversiMyColor) {
-              showNotification('置ける場所がないためパスになります。');
-              reversiCurrentTurn = nextTurn;
-              updateReversiUI();
-              Object.values(activeDataConns).forEach(conn => {
-                conn.send({ type: 'reversi_pass' });
-              });
-           }
-        }
-      }
-    }
-
-    window.quitReversi = function() {
-      if(!confirm("リバーシを終了しますか？")) return;
-      Object.values(activeDataConns).forEach(conn => {
-        conn.send({ type: 'reversi_quit' });
-      });
-      endReversi();
-    }
-
-    function endReversi() {
-      isReversiActive = false;
-      document.getElementById('reversi-section').style.display = 'none';
     }
 
     const startTalking = (e) => {
