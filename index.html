@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.17</title>
+  <title>Naisync - 内線トランシーバー v2.2.18</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -130,6 +130,9 @@
     .participant-item .p-ctrl { display: flex; align-items: center; gap: 6px; }
     .participant-item input[type=range] { width: 90px; margin: 0; }
 
+    /* 【v2.2.18追加】お絵かき用スタイル */
+    .color-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    
     #subtitle-container { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 12px; }
     .subtitle-box {
       background: rgba(0, 0, 0, 0.75); color: white; padding: 10px 14px;
@@ -312,11 +315,12 @@
     body.dark-mode .modal-tab-btn { background: #333; color: #aaa; }
     body.dark-mode .modal-tab-btn.active { background: #007bff; color: white; }
     body.dark-mode .reversi-info { color: #e0e0e0; }
+    body.dark-mode #whiteboard-canvas { background: #fff !important; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">v2.2.17</div>
+  <div class="version-tag">v2.2.18</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -425,10 +429,38 @@
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
+    <!-- 【v2.2.18変更】遊びエリアにお絵かきボタンを追加 -->
     <div id="play-section" style="margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
       <div class="chat-title">🎮 遊び・ゲーム</div>
-      <button id="quiz-btn" onclick="window.pushQuizBtn()" style="width: 80px; height: 80px; border-radius: 50%; background: #dc3545; color: white; font-weight: bold; font-size: 14px; border: 4px solid #b02a37; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">早押し</button>
-      <div id="quiz-status" style="font-size: 13px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">準備OK</div>
+      <div style="display: flex; justify-content: center; gap: 20px;">
+        <div>
+          <button id="quiz-btn" onclick="window.pushQuizBtn()" style="width: 70px; height: 70px; border-radius: 50%; background: #dc3545; color: white; font-weight: bold; font-size: 13px; border: 4px solid #b02a37; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">早押し</button>
+          <div id="quiz-status" style="font-size: 11px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">準備OK</div>
+        </div>
+        <div>
+          <button onclick="window.toggleWhiteboard()" style="width: 70px; height: 70px; border-radius: 50%; background: #0d6efd; color: white; font-weight: bold; font-size: 13px; border: 4px solid #0a58ca; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">🎨<br>お絵かき</button>
+          <div style="font-size: 11px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">共有ボード</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 【v2.2.18追加】お絵かきボードエリア -->
+    <div id="whiteboard-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 14px; font-weight: bold; color:#0d6efd;">🎨 お絵かきボード</span>
+        <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitWhiteboard()">閉じる</button>
+      </div>
+      <!-- touch-action:none でキャンバス上でのスクロールを防止 -->
+      <canvas id="whiteboard-canvas" width="300" height="300" style="background: white; border: 2px solid #ccc; border-radius: 8px; touch-action: none; cursor: crosshair; max-width: 100%;"></canvas>
+      
+      <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px;">
+        <button class="color-btn" style="background: #111;" onclick="window.setDrawColor('#111')"></button>
+        <button class="color-btn" style="background: #dc3545;" onclick="window.setDrawColor('#dc3545')"></button>
+        <button class="color-btn" style="background: #0d6efd;" onclick="window.setDrawColor('#0d6efd')"></button>
+        <button class="color-btn" style="background: #198754;" onclick="window.setDrawColor('#198754')"></button>
+        <button class="color-btn" style="background: white; border: 1px solid #ccc; color: #333;" onclick="window.setDrawColor('white')" title="消しゴム">消</button>
+        <button class="btn-action btn-secondary" style="width: auto; padding: 4px 8px; margin: 0 0 0 12px; font-size: 11px;" onclick="window.clearWhiteboard(true)">全消去</button>
+      </div>
     </div>
 
     <div class="participants-section" id="participants-section" style="display: none;">
@@ -459,6 +491,7 @@
     </div>
   </div>
 
+  <!-- 設定モーダル -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <h3>⚙️ プロフィールと設定</h3>
@@ -563,7 +596,6 @@
         <label>パスワード (必須)</label>
         <input type="password" id="modal-create-pass" placeholder="パスワードを入力">
         
-        <!-- 【v2.2.17変更】名前必須を廃止し、ゲスト参加禁止オプションに変更 -->
         <label class="checkbox-label">
           <input type="checkbox" id="modal-create-no-guests">
           ゲスト（未ログイン）の参加を禁止する
@@ -622,7 +654,6 @@
       <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;" id="test-server-wrap">
         <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 公式テストサーバー</h4>
         <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('public')">公式パブリックルームに参加 (誰でも会話可)</button>
-        <!-- 【v2.2.17変更】ゲスト禁止ルームの追加ボタンに変更 -->
         <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="addTestGroup('noguest')">ゲスト禁止ルームを追加</button>
       </div>
 
@@ -652,8 +683,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.17追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.17 (最新) 🛡️荒らし対策強化</div>
+          <!-- 【v2.2.18追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.18 (最新) 🎨 お絵かき追加</div>
+          <div>・通話しながらみんなで描ける「リアルタイム・お絵かきボード」を遊びエリアに追加しました！（ゲストは閲覧のみ）</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.17 🛡️荒らし対策強化</div>
           <div>・グループ作成時に「ゲスト（未ログイン）の参加を禁止する」オプションを追加しました。</div>
         </div>
         <div class="changelog-item">
@@ -662,7 +697,7 @@
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.15</div>
-          <div>・設定画面の項目を「一般」「音声」「字幕・通知」のタブに分けて整理し、見やすくしました。<br>・トランシーバー終了音（ロジャービープ）を廃止しました。</div>
+          <div>・設定画面の項目を「一般」「音声」「字幕・通知」のタブに分けて整理し、見やすくしました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.14</div>
@@ -679,22 +714,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.2.10</div>
           <div>・タブを切り替えた際、部屋のメンバーと正常に再接続されない不具合を修正しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.9</div>
-          <div>・ゲストモード中に他者から直接招待を受信できてしまう裏道を封鎖しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.8</div>
-          <div>・グループ参加時に、存在しないIDやパスワードを弾く検証機能を追加しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.7</div>
-          <div>・招待リンクから「ゲストとして参加（アカウント不要）」できる機能を追加しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.6</div>
-          <div>・タブを閉じた際の通信処理を最適化し、動作の安定性を向上させました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -736,7 +755,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2217/';
+    const APP_PREFIX = 'Naisync/v2218/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -770,7 +789,7 @@
     let isJoinRoomClosed = false;
     let joiningFoundRadio = false;
     let joiningFoundAllowMemberSE = false;
-    let joiningFoundNoGuests = false; // 【v2.2.17追加】
+    let joiningFoundNoGuests = false;
 
     let transMode = localStorage.getItem('my_naisen_trans_mode') || 'off';
     let speechRecognition = null;
@@ -792,6 +811,13 @@
     let pendingReversiConn = null;
     let isQuizLocked = false;
 
+    // 【v2.2.18追加】お絵かき用変数
+    let isDrawing = false;
+    let drawColor = '#111';
+    let lastX = 0;
+    let lastY = 0;
+    let wbCtx = null;
+
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
     let pendingInvite = null;
@@ -802,7 +828,8 @@
           id: params.get('g'),
           pass: params.get('p'),
           name: params.get('n') || params.get('g'),
-          noGuests: params.get('ng') === '1', // 【v2.2.17変更】
+          requireName: params.get('req') === '1',
+          noGuests: params.get('ng') === '1', 
           hostId: null, 
           createdAt: 9999999999999,
           isRadio: params.get('r') === '1'
@@ -818,7 +845,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2217', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2218', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -826,14 +853,14 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2217'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2218'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2216')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2217')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
            if (g.allowMemberSE === undefined) g.allowMemberSE = false;
-           if (g.noGuests === undefined) g.noGuests = false; // 【v2.2.17変更】
+           if (g.noGuests === undefined) g.noGuests = false; 
            return g;
          });
          saveGroups();
@@ -958,6 +985,120 @@
       }
     }
 
+    // ==========================================
+    // 【v2.2.18追加】お絵かき（ホワイトボード）のロジック
+    // ==========================================
+    const initWhiteboard = () => {
+      const canvas = document.getElementById('whiteboard-canvas');
+      if (!canvas) return;
+      wbCtx = canvas.getContext('2d');
+      wbCtx.lineCap = 'round';
+      wbCtx.lineJoin = 'round';
+      
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height)
+        };
+      };
+
+      const startDraw = (e) => {
+        if (isGuestMode) return; // ゲストは描画不可
+        if(e.cancelable) e.preventDefault(); 
+        isDrawing = true;
+        const pos = getPos(e);
+        lastX = pos.x; lastY = pos.y;
+      };
+
+      const draw = (e) => {
+        if (!isDrawing || isGuestMode) return;
+        if(e.cancelable) e.preventDefault();
+        const pos = getPos(e);
+        window.drawLine(lastX, lastY, pos.x, pos.y, drawColor, true);
+        lastX = pos.x; lastY = pos.y;
+      };
+
+      const endDraw = () => { isDrawing = false; };
+
+      // 多重登録を防ぐため一旦消す
+      canvas.replaceWith(canvas.cloneNode(true));
+      const newCanvas = document.getElementById('whiteboard-canvas');
+      wbCtx = newCanvas.getContext('2d');
+      wbCtx.lineCap = 'round';
+      wbCtx.lineJoin = 'round';
+
+      newCanvas.addEventListener('mousedown', startDraw);
+      newCanvas.addEventListener('mousemove', draw);
+      newCanvas.addEventListener('mouseup', endDraw);
+      newCanvas.addEventListener('mouseout', endDraw);
+      newCanvas.addEventListener('touchstart', startDraw, {passive: false});
+      newCanvas.addEventListener('touchmove', draw, {passive: false});
+      newCanvas.addEventListener('touchend', endDraw);
+    };
+
+    window.drawLine = function(x0, y0, x1, y1, color, emit) {
+      if(!wbCtx) return;
+      wbCtx.beginPath();
+      wbCtx.moveTo(x0, y0);
+      wbCtx.lineTo(x1, y1);
+      wbCtx.strokeStyle = color;
+      wbCtx.lineWidth = color === 'white' ? 15 : 3;
+      wbCtx.stroke();
+      wbCtx.closePath();
+
+      if (!emit || isGuestMode) return;
+
+      const msg = { type: 'draw', x0: Math.round(x0), y0: Math.round(y0), x1: Math.round(x1), y1: Math.round(y1), color, senderId: myPeerId };
+      if (currentMode === 'group' && currentGroupTopic) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
+      } else if (currentMode === 'direct') {
+        Object.values(activeDataConns).forEach(conn => conn.send(msg));
+      }
+    };
+
+    window.clearWhiteboard = function(emit) {
+      if(!wbCtx) return;
+      wbCtx.clearRect(0, 0, 300, 300);
+      if (!emit || isGuestMode) return;
+      
+      const msg = { type: 'draw_clear', senderId: myPeerId };
+      if (currentMode === 'group' && currentGroupTopic) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
+      } else if (currentMode === 'direct') {
+        Object.values(activeDataConns).forEach(conn => conn.send(msg));
+      }
+    };
+
+    window.setDrawColor = function(c) { drawColor = c; };
+
+    window.toggleWhiteboard = function() {
+      document.getElementById('whiteboard-section').style.display = 'block';
+      setTimeout(initWhiteboard, 100);
+      
+      const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
+      const msg = { type: 'wb_open', senderId: myPeerId, senderName: senderName };
+      
+      if (currentMode === 'group' && currentGroupTopic) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
+      } else if (currentMode === 'direct') {
+        Object.values(activeDataConns).forEach(conn => conn.send(msg));
+      }
+    }
+    
+    window.quitWhiteboard = function() {
+      document.getElementById('whiteboard-section').style.display = 'none';
+      const msg = { type: 'wb_close', senderId: myPeerId };
+      if (currentMode === 'group' && currentGroupTopic) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
+      } else if (currentMode === 'direct') {
+        Object.values(activeDataConns).forEach(conn => conn.send(msg));
+      }
+    }
+    // ==========================================
+
     window.openAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'flex'; }
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
     window.openChangelog = function() { document.getElementById('changelog-modal').style.display = 'flex'; }
@@ -1018,7 +1159,8 @@
       url.searchParams.set('g', g.id);
       url.searchParams.set('p', g.pass);
       url.searchParams.set('n', g.name);
-      if (g.noGuests) url.searchParams.set('ng', '1'); // 【v2.2.17変更】
+      if (g.requireName) url.searchParams.set('req', '1');
+      if (g.noGuests) url.searchParams.set('ng', '1');
       if (g.isRadio) url.searchParams.set('r', '1');
 
       let text = '';
@@ -1505,7 +1647,7 @@
         addBtn.innerText = '＋ 作成';
         addBtn.onclick = () => {
           document.getElementById('modal-create-allow-se').checked = false;
-          document.getElementById('modal-create-no-guests').checked = false; // 【v2.2.17追加】
+          document.getElementById('modal-create-no-guests').checked = false; 
           window.openGroupModal();
         };
       }
@@ -1535,7 +1677,7 @@
               if (pendingInvite.isRadio) {
                 customGroups[index].isRadio = true;
               }
-              if (pendingInvite.noGuests) { // 【v2.2.17追加】
+              if (pendingInvite.noGuests) { 
                 customGroups[index].noGuests = true;
               }
             } else {
@@ -1565,7 +1707,7 @@
                 if (data.type === 'radio_close') isJoinRoomClosed = true;
                 if (data.isRadio !== undefined) joiningFoundRadio = data.isRadio;
                 if (data.allowMemberSE !== undefined) joiningFoundAllowMemberSE = data.allowMemberSE; 
-                if (data.noGuests !== undefined) joiningFoundNoGuests = data.noGuests; // 【v2.2.17追加】
+                if (data.noGuests !== undefined) joiningFoundNoGuests = data.noGuests; 
               } catch(e) {}
             }
           }
@@ -1574,6 +1716,26 @@
           const data = JSON.parse(message.toString());
           
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
+
+          // 【v2.2.18追加】お絵かきのデータ受信処理
+          if (data.type === 'wb_open' && data.senderId !== myPeerId) {
+            document.getElementById('whiteboard-section').style.display = 'block';
+            setTimeout(initWhiteboard, 100);
+            showNotification(`🎨 ${data.senderName}さんがお絵かきボードを開きました`);
+          }
+          if (data.type === 'wb_close' && data.senderId !== myPeerId) {
+            document.getElementById('whiteboard-section').style.display = 'none';
+          }
+          if (data.type === 'draw' && data.senderId !== myPeerId) {
+            if (document.getElementById('whiteboard-section').style.display !== 'block') {
+               document.getElementById('whiteboard-section').style.display = 'block';
+               setTimeout(initWhiteboard, 100);
+            }
+            window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
+          }
+          if (data.type === 'draw_clear' && data.senderId !== myPeerId) {
+            window.clearWhiteboard(false);
+          }
 
           if (data.type === 'se' && data.senderId !== myPeerId) {
             playAudioEffect(data.sound);
@@ -1621,7 +1783,7 @@
                 currentGroupObj.createdAt = remoteTime;
                 if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
                 if (data.allowMemberSE !== undefined) currentGroupObj.allowMemberSE = data.allowMemberSE; 
-                if (data.noGuests !== undefined) currentGroupObj.noGuests = data.noGuests; // 【v2.2.17追加】
+                if (data.noGuests !== undefined) currentGroupObj.noGuests = data.noGuests; 
                 saveGroups();
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId && !currentGroupObj.isRadio) ? 'block' : 'none';
@@ -1630,7 +1792,7 @@
                 mqttClient.publish(currentGroupTopic, JSON.stringify({
                   type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, 
                   isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE,
-                  noGuests: currentGroupObj.noGuests // 【v2.2.17追加】
+                  noGuests: currentGroupObj.noGuests 
                 }), { retain: true });
               }
             } else if (currentGroupObj.hostId === data.hostId) {
@@ -1647,7 +1809,7 @@
                  currentGroupObj.allowMemberSE = data.allowMemberSE;
                  updated = true;
                }
-               if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { // 【v2.2.17追加】
+               if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { 
                  currentGroupObj.noGuests = data.noGuests;
                  updated = true;
                }
@@ -1657,7 +1819,6 @@
                }
             }
             
-            // 【v2.2.17追加】受信した部屋情報でゲスト禁止だった場合、強制退出させる
             if (isGuestMode && currentGroupObj.noGuests) {
               alert('🚨 このグループはゲストの参加が許可されていません。\n強制退出します。');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
@@ -1690,7 +1851,6 @@
           if (data.type === 'join' && data.peerId !== myPeerId) {
             if (data.senderName) updateParticipantName(data.peerId, data.senderName);
             
-            // 【v2.2.17追加】ゲスト禁止部屋にゲストからJoinが来た場合は通信を構築しない
             if (currentGroupObj && currentGroupObj.noGuests && data.isGuest) return;
 
             resumeAudioContext();
@@ -1725,7 +1885,7 @@
         const callerName = call.metadata ? call.metadata.senderName : '';
         const callMode = call.metadata ? call.metadata.mode : 'direct';
         const callGroupId = call.metadata ? call.metadata.groupId : null;
-        const callerIsGuest = call.metadata ? call.metadata.isGuest : false; // 【v2.2.17追加】
+        const callerIsGuest = call.metadata ? call.metadata.isGuest : false; 
 
         if (isGuestMode && callMode === 'direct') {
           call.close();
@@ -1748,7 +1908,6 @@
         
         const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
         
-        // 【v2.2.17変更】ゲスト禁止の部屋にゲストから着信が来た場合は切断する
         if (currentMode === 'group' && currentGroupObj && currentGroupObj.noGuests) {
           if (callerIsGuest) {
             call.close();
@@ -1881,7 +2040,22 @@
       activeDataConns[conn.peer] = conn;
 
       conn.on('data', (data) => {
-        if (data && data.type === 'se') {
+        // 【v2.2.18追加】お絵かきのデータ受信処理 (Direct)
+        if (data && data.type === 'wb_open') {
+          document.getElementById('whiteboard-section').style.display = 'block';
+          setTimeout(initWhiteboard, 100);
+          showNotification(`🎨 ${data.senderName}さんがお絵かきボードを開きました`);
+        } else if (data && data.type === 'wb_close') {
+          document.getElementById('whiteboard-section').style.display = 'none';
+        } else if (data && data.type === 'draw') {
+          if (document.getElementById('whiteboard-section').style.display !== 'block') {
+             document.getElementById('whiteboard-section').style.display = 'block';
+             setTimeout(initWhiteboard, 100);
+          }
+          window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
+        } else if (data && data.type === 'draw_clear') {
+          window.clearWhiteboard(false);
+        } else if (data && data.type === 'se') {
           playAudioEffect(data.sound);
         } else if (data && data.type === 'quiz_push') {
           handleQuizPush(data.senderName);
@@ -2016,7 +2190,6 @@
     });
 
     function joinGroup(groupObj) {
-      // 【v2.2.17変更】ゲスト参加禁止チェックを最優先で実施
       if (groupObj.noGuests && isGuestMode) {
         alert(`🚨 【${groupObj.name}】はゲストでの参加が禁止されています。\nログインしてからご参加ください。`);
         switchToDirect();
@@ -2058,7 +2231,7 @@
           createdAt: groupObj.createdAt,
           isRadio: groupObj.isRadio,
           allowMemberSE: groupObj.allowMemberSE,
-          noGuests: groupObj.noGuests // 【v2.2.17追加】
+          noGuests: groupObj.noGuests 
         }), { retain: true });
       }
       
@@ -2066,7 +2239,7 @@
         type: 'join', 
         peerId: myPeerId,
         senderName: savedMyName,
-        isGuest: isGuestMode, // 【v2.2.17追加】
+        isGuest: isGuestMode, 
         hostId: groupObj.hostId,
         createdAt: groupObj.createdAt
       }));
@@ -2168,7 +2341,7 @@
       const name = document.getElementById('modal-create-name').value.trim();
       const id = document.getElementById('modal-create-id').value.trim();
       const pass = document.getElementById('modal-create-pass').value.trim();
-      const noGuests = document.getElementById('modal-create-no-guests').checked; // 【v2.2.17追加】
+      const noGuests = document.getElementById('modal-create-no-guests').checked; 
       const allowMemberSE = document.getElementById('modal-create-allow-se').checked; 
 
       if (!name || !id || pass === '') return alert('全項目を入力してください（グループ作成にはパスワードが必須です）');
@@ -2234,7 +2407,7 @@
       isJoinRoomClosed = false;
       joiningFoundRadio = false;
       joiningFoundAllowMemberSE = false; 
-      joiningFoundNoGuests = false; // 【v2.2.17追加】
+      joiningFoundNoGuests = false; 
 
       const checkTopic = `${APP_PREFIX}${id}/#`;
       mqttClient.subscribe(checkTopic);
@@ -2266,7 +2439,6 @@
           return;
         }
 
-        // 【v2.2.17追加】ゲスト禁止チェック
         if (isGuestMode && joiningFoundNoGuests) {
           alert(`🚨 このグループはゲストの参加が許可されていません。\nログインしてから再度お試しください。`);
           btn.disabled = false;
