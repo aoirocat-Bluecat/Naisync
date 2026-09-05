@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.6</title>
+  <title>Naisync - 内線トランシーバー v2.2.7</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -316,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.6</div>
+  <div class="version-tag">v2.2.7</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -324,6 +324,12 @@
       
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
+
+      <!-- 【v2.2.7追加】招待リンク連動のお知らせUI -->
+      <div id="invite-alert" style="display: none; background: #eef2f5; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: bold; color: #007bff; border: 1px solid #007bff;">
+        ✉️ 「<span id="invite-group-name"></span>」への招待が届いています！<br>
+        <span style="font-size: 11px; color: #555; font-weight: normal;">ログインするか、一時的なゲストとして参加してください。</span>
+      </div>
       
       <div id="login-panel">
         <h3 style="margin-top:0; color: inherit;">ログイン</h3>
@@ -343,6 +349,12 @@
       </div>
       
       <div id="auth-error" style="color: #dc3545; font-size: 13px; margin-top: 12px; font-weight: bold; min-height: 20px;"></div>
+
+      <!-- 【v2.2.7追加】ゲスト参加ボタン -->
+      <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 16px;">
+        <p style="font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold;">アカウントを作らずに一時的に参加</p>
+        <button class="btn-action btn-secondary" onclick="window.doGuestLogin()">👤 ゲストとして参加 (機能制限あり)</button>
+      </div>
 
       <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px; font-size: 12px;">
         <a href="#" onclick="window.openAuthHelp()" style="color:#888; text-decoration: none; font-weight: bold;">❓ Q&A</a>
@@ -611,8 +623,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 秘密のアップデート（証拠隠滅済） -->
-          <div class="changelog-version">v2.2.6 (最新)</div>
+          <!-- 【v2.2.7変更】履歴を追加 -->
+          <div class="changelog-version">v2.2.7 (最新)</div>
+          <div>・招待リンクから「ゲストとして参加（アカウント不要）」できる機能を追加しました。気軽に友達を誘って通話を楽しめます。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.6</div>
           <div>・タブを閉じた際の通信処理を最適化し、動作の安定性を向上させました。</div>
         </div>
         <div class="changelog-item">
@@ -679,7 +695,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v226/';
+    const APP_PREFIX = 'Naisync/v227/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -701,6 +717,9 @@
     let currentUser = null;
     let savedMyName = '';
     
+    // 【v2.2.7追加】ゲストモードフラグ
+    let isGuestMode = false;
+
     let checkingGroupId = null;
     let isGroupIdTaken = false;
 
@@ -739,21 +758,35 @@
           isRadio: params.get('r') === '1'
         };
         window.history.replaceState(null, '', window.location.pathname);
+        
+        // 【v2.2.7追加】招待リンクがある場合はお知らせを表示
+        document.getElementById('invite-alert').style.display = 'block';
+        document.getElementById('invite-group-name').innerText = pendingInvite.name;
       }
     });
 
     let customGroups = [];
 
+    // 【v2.2.7追加】ゲストユーザーのグループ保存を防ぐヘルパー
+    function saveGroups() {
+      if (isGuestMode) return;
+      localStorage.setItem('my_naisen_groups_v227', JSON.stringify(customGroups));
+    }
+
     function loadAndMigrateGroups(myId) {
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v226'));
+      if (isGuestMode) {
+        customGroups = [];
+        return;
+      }
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v227'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v225')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v226')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
            return g;
          });
-         localStorage.setItem('my_naisen_groups_v226', JSON.stringify(groups));
+         saveGroups();
       }
       customGroups = groups;
     }
@@ -777,6 +810,8 @@
     const participantsList = document.getElementById('participants-list');
     const participantsSection = document.getElementById('participants-section');
 
+    const transcriptionCheckbox = document.getElementById('transcription-checkbox');
+    const transcriptionStatusText = document.getElementById('transcription-status-text');
     const ncCheckbox = document.getElementById('nc-checkbox');
     const ncStatusText = document.getElementById('nc-status-text');
     const micVolumeSlider = document.getElementById('mic-volume-slider');
@@ -885,7 +920,7 @@
       const g = customGroups.find(x => x.id === currentGroupId);
       if(g) {
         g.pass = newPass;
-        localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+        saveGroups();
         setTimeout(() => joinGroup(g), 500); 
       }
     }
@@ -906,7 +941,7 @@
       }
 
       customGroups = customGroups.filter(x => x.id !== groupId);
-      localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+      saveGroups();
 
       if (currentGroupId === groupId) switchToDirect();
       else renderTabs();
@@ -1005,10 +1040,25 @@
       }
     }
 
+    // 【v2.2.7追加】ゲストモードログイン処理
+    window.doGuestLogin = function() {
+      isGuestMode = true;
+      const randomId = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+      currentUser = { customId: 'guest-' + randomId };
+      savedMyName = 'ゲスト' + randomId;
+      
+      document.getElementById('auth-overlay').style.display = 'none';
+      startMainApp();
+    }
+
     window.logout = async function() {
-      if (!confirm('ログアウトしますか？')) return;
-      await signOut(auth);
-      location.reload();
+      if (!confirm('ログアウト(退出)しますか？')) return;
+      if (isGuestMode) {
+        location.reload();
+      } else {
+        await signOut(auth);
+        location.reload();
+      }
     }
 
     function parseUserData(user) {
@@ -1028,7 +1078,9 @@
         parseUserData(user);
         startMainApp();
       } else {
-        document.getElementById('auth-overlay').style.display = 'flex';
+        if (!isGuestMode) {
+          document.getElementById('auth-overlay').style.display = 'flex';
+        }
       }
     });
 
@@ -1086,13 +1138,14 @@
       document.getElementById('main-header').style.display = 'flex';
       document.getElementById('main-card').style.display = 'block';
 
-      displayMyName.innerText = savedMyName;
+      displayMyName.innerText = savedMyName + (isGuestMode ? ' (ゲスト)' : '');
       settingMyNameInput.value = savedMyName;
+      if (isGuestMode) settingMyNameInput.disabled = true;
 
       streamerModeCheckbox.checked = isStreamerMode;
       streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
 
-      loadAndMigrateGroups(currentUser.customId || currentUser.email.split('@')[0]);
+      loadAndMigrateGroups(currentUser.customId || (currentUser.email ? currentUser.email.split('@')[0] : 'guest'));
       initMicrophoneAndNetwork();
     }
 
@@ -1111,8 +1164,13 @@
       return NG_WORDS.some(word => text.includes(word));
     }
 
+    // 【v2.2.7変更】ゲストはチャットを利用不可に
     function updateChatUI() {
-      if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
+      if (isGuestMode) {
+        chatInput.disabled = true;
+        chatSendBtn.disabled = true;
+        chatInput.placeholder = "ゲストはチャットを送信できません";
+      } else if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
         chatInput.disabled = true;
         chatSendBtn.disabled = true;
         chatInput.placeholder = "このルームではチャットは使用できません";
@@ -1181,6 +1239,7 @@
     window.closeSettings = function() { document.getElementById('settings-modal').style.display = 'none'; }
 
     window.saveMyName = async function() {
+      if (isGuestMode) return alert('ゲストは名前を変更できません。');
       const newName = settingMyNameInput.value.trim();
       if (!newName) return alert('名前を入力してください。');
       if (containsNGWord(newName)) return alert('名前に不適切な単語が含まれています。');
@@ -1195,6 +1254,7 @@
     }
 
     window.setTransMode = function(mode) {
+      if (isGuestMode && mode === 'all') return alert('ゲストは字幕を相手に共有できません（自分のみ表示は可能です）。');
       transMode = mode;
       localStorage.setItem('my_naisen_trans_mode', mode);
       document.getElementById('trans-off').classList.remove('active');
@@ -1258,14 +1318,17 @@
       applyStreamerModeToUI();
     });
 
+    // 【v2.2.7変更】ゲストモード時は1対1通話タブと作成ボタンを隠す
     function renderTabs() {
       tabsWrapper.innerHTML = '';
 
-      const directTab = document.createElement('button');
-      directTab.className = `tab ${currentMode === 'direct' ? 'active' : ''}`;
-      directTab.innerText = '1対1通話';
-      directTab.onclick = () => switchToDirect();
-      tabsWrapper.appendChild(directTab);
+      if (!isGuestMode) {
+        const directTab = document.createElement('button');
+        directTab.className = `tab ${currentMode === 'direct' ? 'active' : ''}`;
+        directTab.innerText = '1対1通話';
+        directTab.onclick = () => switchToDirect();
+        tabsWrapper.appendChild(directTab);
+      }
 
       customGroups.forEach(g => {
         const tab = document.createElement('button');
@@ -1292,13 +1355,22 @@
 
       const addBtn = document.createElement('button');
       addBtn.className = 'tab tab-add';
-      addBtn.innerText = '＋ 作成';
-      addBtn.onclick = window.openGroupModal;
+      if (isGuestMode) {
+        addBtn.innerText = '＋ 参加';
+        addBtn.onclick = () => {
+          window.switchGroupModalTab('join');
+          document.getElementById('tab-btn-create').style.display = 'none';
+          document.getElementById('group-modal').style.display = 'flex';
+        };
+      } else {
+        addBtn.innerText = '＋ 作成';
+        addBtn.onclick = window.openGroupModal;
+      }
       tabsWrapper.appendChild(addBtn);
     }
 
     function startNetworking() {
-      const customId = currentUser.customId || currentUser.email.split('@')[0];
+      const customId = currentUser.customId;
       peer = new Peer(customId);
 
       peer.on('open', (id) => {
@@ -1323,7 +1395,7 @@
             } else {
               customGroups.push(pendingInvite);
             }
-            localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+            saveGroups();
             
             const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
             pendingInvite = null; 
@@ -1348,7 +1420,7 @@
             if (currentGroupObj && currentGroupObj.isRadio && data.senderId === currentGroupObj.hostId) {
               alert('📻 放送局のオーナーが番組を終了しました。退出します。');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+              saveGroups();
               switchToDirect();
               return;
             }
@@ -1365,7 +1437,7 @@
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
                 if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
-                localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+                saveGroups();
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId) ? 'block' : 'none';
                 updateStatus();
@@ -1385,7 +1457,7 @@
                  updated = true;
                }
                if (updated) {
-                 localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+                 saveGroups();
                  updateStatus();
                }
             }
@@ -1395,7 +1467,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
               customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+              saveGroups();
               switchToDirect();
               return;
             }
@@ -1405,7 +1477,7 @@
             if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
               alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
               currentGroupObj.pass = data.newPass;
-              localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+              saveGroups();
               joinGroup(currentGroupObj);
               return;
             }
@@ -1670,11 +1742,21 @@
       directPanel.style.display = 'block';
       groupPanel.style.display = 'none';
 
-      statusEl.innerText = '1対1モード: 相手のIDを入力してください';
-      talkBtn.disabled = true;
-      toggleBtn.disabled = true;
-      talkBtn.innerText = '接続待ち';
-      document.getElementById('direct-connected-actions').style.display = 'none';
+      // 【v2.2.7変更】ゲストは1対1通信に切り替え不可のUIに変更
+      if (isGuestMode) {
+        statusEl.innerText = 'ゲストモード中は1対1通話を利用できません';
+        talkBtn.disabled = true;
+        toggleBtn.disabled = true;
+        connectBtn.disabled = true;
+        peerIdInput.disabled = true;
+        document.getElementById('direct-connected-actions').style.display = 'none';
+      } else {
+        statusEl.innerText = '1対1モード: 相手のIDを入力してください';
+        talkBtn.disabled = true;
+        toggleBtn.disabled = true;
+        talkBtn.innerText = '接続待ち';
+        document.getElementById('direct-connected-actions').style.display = 'none';
+      }
     }
 
     connectBtn.addEventListener('click', () => {
@@ -1740,6 +1822,7 @@
 
     // --- チャット ---
     function sendChatMessage() {
+      if (isGuestMode) return;
       if (currentMode === 'group' && currentGroupId === 'test-nameroom') {
         return alert('このルームではチャットは使用できません。');
       }
@@ -1759,7 +1842,7 @@
 
           const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true };
           customGroups.push(newGroup);
-          localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+          saveGroups();
           joinGroup(newGroup);
           renderTabs();
         }, 100);
@@ -1803,7 +1886,13 @@
     });
 
     window.openGroupModal = function() {
-      window.switchGroupModalTab('create');
+      if (isGuestMode) {
+        window.switchGroupModalTab('join');
+        document.getElementById('tab-btn-create').style.display = 'none';
+      } else {
+        window.switchGroupModalTab('create');
+        document.getElementById('tab-btn-create').style.display = 'block';
+      }
       document.getElementById('modal-create-name').value = '';
       document.getElementById('modal-create-id').value = '';
       document.getElementById('modal-create-pass').value = '';
@@ -1818,6 +1907,7 @@
     window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; }
 
     window.executeCreateGroup = function() {
+      if (isGuestMode) return alert('ゲストは新しくグループを作成できません。');
       if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
 
       const name = document.getElementById('modal-create-name').value.trim();
@@ -1858,7 +1948,7 @@
           const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false };
           customGroups.push(newGroup);
 
-          localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+          saveGroups();
           window.closeGroupModal();
           btn.disabled = false;
           btn.innerText = '作成して参加';
@@ -1889,7 +1979,7 @@
         customGroups.push(newGroup);
       }
 
-      localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+      saveGroups();
       window.closeGroupModal();
       joinGroup(customGroups.find(g => g.id === id));
     }
@@ -1911,7 +2001,7 @@
       } else {
         customGroups.push(testGroup);
       }
-      localStorage.setItem('my_naisen_groups_v226', JSON.stringify(customGroups));
+      saveGroups();
       window.closeHelp();
       joinGroup(testGroup);
     }
@@ -1944,7 +2034,12 @@
           talkBtn.innerText = '長押しで話す';
         }
       } else if (currentMode === 'direct') {
-        statusEl.innerText = count > 0 ? '1対1通話中！' : '相手のIDを入力して発信してください';
+        if (isGuestMode) {
+          statusEl.innerText = 'ゲストモード中は1対1通話を利用できません';
+        } else {
+          statusEl.innerText = count > 0 ? '1対1通話中！' : '相手のIDを入力して発信してください';
+        }
+        
         talkBtn.disabled = count === 0;
         toggleBtn.disabled = count === 0;
         if (count > 0) {
