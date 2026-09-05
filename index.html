@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.19</title>
+  <title>Naisync - 内線トランシーバー v2.2.20</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -319,7 +319,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.19</div>
+  <div class="version-tag">v2.2.20</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -436,7 +436,7 @@
           <div id="quiz-status" style="font-size: 11px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">準備OK</div>
         </div>
         <div>
-          <button onclick="window.toggleWhiteboard()" style="width: 70px; height: 70px; border-radius: 50%; background: #0d6efd; color: white; font-weight: bold; font-size: 13px; border: 4px solid #0a58ca; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">🎨<br>お絵かき</button>
+          <button id="wb-btn" onclick="window.toggleWhiteboard()" style="width: 70px; height: 70px; border-radius: 50%; background: #0d6efd; color: white; font-weight: bold; font-size: 13px; border: 4px solid #0a58ca; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">🎨<br>お絵かき</button>
           <div style="font-size: 11px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">共有ボード</div>
         </div>
       </div>
@@ -447,10 +447,10 @@
         <span style="font-size: 14px; font-weight: bold; color:#0d6efd;">🎨 お絵かきボード</span>
         <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitWhiteboard()">閉じる</button>
       </div>
-      <!-- touch-action:none でキャンバス上でのスクロールを防止 -->
       <canvas id="whiteboard-canvas" width="300" height="300" style="background: white; border: 2px solid #ccc; border-radius: 8px; touch-action: none; cursor: crosshair; max-width: 100%;"></canvas>
       
-      <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px;">
+      <!-- 【v2.2.20変更】ツールエリアにIDを付与 -->
+      <div id="wb-tools" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px;">
         <button class="color-btn" style="background: #111;" onclick="window.setDrawColor('#111')"></button>
         <button class="color-btn" style="background: #dc3545;" onclick="window.setDrawColor('#dc3545')"></button>
         <button class="color-btn" style="background: #0d6efd;" onclick="window.setDrawColor('#0d6efd')"></button>
@@ -488,7 +488,6 @@
     </div>
   </div>
 
-  <!-- 設定モーダル -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <h3>⚙️ プロフィールと設定</h3>
@@ -576,7 +575,6 @@
     </div>
   </div>
 
-  <!-- グループ作成・参加モーダル -->
   <div class="modal-overlay" id="group-modal">
     <div class="modal-box">
       <div class="modal-tabs">
@@ -627,7 +625,6 @@
     </div>
   </div>
 
-  <!-- メインヘルプモーダル -->
   <div class="modal-overlay" id="help-modal">
     <div class="modal-box">
       <h3>❓ Naisync よくある質問</h3>
@@ -660,7 +657,6 @@
     </div>
   </div>
 
-  <!-- ログイン画面用 Q&Aモーダル -->
   <div class="modal-overlay top-layer" id="auth-help-modal">
     <div class="modal-box">
       <h3>❓ ログイン・登録のQ&A</h3>
@@ -674,14 +670,17 @@
     </div>
   </div>
 
-  <!-- 更新一覧（履歴）モーダル -->
   <div class="modal-overlay top-layer" id="changelog-modal">
     <div class="modal-box">
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.19追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.19 (最新) 🛠️バグ修正</div>
+          <!-- 【v2.2.20追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.20 (最新) 🛠️バグ修正＆制限強化</div>
+          <div>・お絵かき機能利用時の通信最適化（バッチ処理）を行い、線が途切れるパケットロス問題を解消しました。<br>・特殊な条件（裏モード）でリスナーの操作権限を厳密に制限しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.19</div>
           <div>・お絵かき機能で線が引けなくなる深刻な描画バグを修正しました。</div>
         </div>
         <div class="changelog-item">
@@ -698,7 +697,7 @@
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.15</div>
-          <div>・設定画面の項目を「一般」「音声」「字幕・通知」のタブに分けて整理し、見やすくしました。</div>
+          <div>・設定画面の項目を整理し、見やすくしました。<br>・トランシーバー終了音（ロジャービープ）を廃止しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.14</div>
@@ -756,7 +755,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2219/';
+    const APP_PREFIX = 'Naisync/v2220/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -817,6 +816,10 @@
     let lastX = 0;
     let lastY = 0;
     let wbCtx = null;
+    
+    // 【v2.2.20追加】お絵かき通信の最適化（バッチ処理用バッファ）
+    let drawBuffer = [];
+    let drawTimer = null;
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
@@ -845,7 +848,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2219', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2220', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -853,9 +856,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2219'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2220'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2218')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2219')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -949,6 +952,11 @@
 
     window.pushQuizBtn = function() {
       if (isQuizLocked) return;
+      
+      // 【v2.2.20変更】ラジオ局のリスナーは早押しボタン使用不可
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
+
       const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
       
       if (currentMode === 'group' && currentGroupTopic) {
@@ -985,24 +993,19 @@
       }
     }
 
-    // ==========================================
-    // 【v2.2.19変更】お絵かきバグ修正
-    // ==========================================
     const initWhiteboard = () => {
       let canvas = document.getElementById('whiteboard-canvas');
       if (!canvas) return;
       
-      // イベントリスナーの多重登録を防ぐため、安全に新しいキャンバスに置き換える
       const newCanvas = canvas.cloneNode(true);
       canvas.replaceWith(newCanvas);
-      canvas = newCanvas; // 以降の処理はすべて新しいキャンバスを参照する
+      canvas = newCanvas; 
       
       wbCtx = canvas.getContext('2d');
       wbCtx.lineCap = 'round';
       wbCtx.lineJoin = 'round';
       
       const getPos = (e) => {
-        // e.target を使うことで、確実に今タッチしているキャンバスの情報を取得する
         const target = e.target;
         const rect = target.getBoundingClientRect();
         const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
@@ -1015,6 +1018,10 @@
 
       const startDraw = (e) => {
         if (isGuestMode) return; 
+        // 【v2.2.20変更】ラジオ局のリスナーはお絵かき操作不可
+        const g = customGroups.find(x => x.id === currentGroupId);
+        if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
+
         if(e.cancelable) e.preventDefault(); 
         isDrawing = true;
         const pos = getPos(e);
@@ -1052,11 +1059,23 @@
 
       if (!emit || isGuestMode) return;
 
-      const msg = { type: 'draw', x0: Math.round(x0), y0: Math.round(y0), x1: Math.round(x1), y1: Math.round(y1), color, senderId: myPeerId };
-      if (currentMode === 'group' && currentGroupTopic) {
-        mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
-      } else if (currentMode === 'direct') {
-        Object.values(activeDataConns).forEach(conn => conn.send(msg));
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
+
+      // 【v2.2.20変更】通信パンク対策のパケットバッチ処理（0.05秒に1回まとめて送信）
+      drawBuffer.push({ x0: Math.round(x0), y0: Math.round(y0), x1: Math.round(x1), y1: Math.round(y1), c: color });
+
+      if (!drawTimer) {
+        drawTimer = setTimeout(() => {
+          const msg = { type: 'draw_batch', lines: drawBuffer, senderId: myPeerId };
+          if (currentMode === 'group' && currentGroupTopic) {
+            mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
+          } else if (currentMode === 'direct') {
+            Object.values(activeDataConns).forEach(conn => conn.send(msg));
+          }
+          drawBuffer = [];
+          drawTimer = null;
+        }, 50); 
       }
     };
 
@@ -1065,6 +1084,9 @@
       wbCtx.clearRect(0, 0, 300, 300);
       if (!emit || isGuestMode) return;
       
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
+
       const msg = { type: 'draw_clear', senderId: myPeerId };
       if (currentMode === 'group' && currentGroupTopic) {
         mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
@@ -1079,6 +1101,9 @@
       document.getElementById('whiteboard-section').style.display = 'block';
       setTimeout(initWhiteboard, 100);
       
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if (isGuestMode || (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId)) return;
+      
       const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
       const msg = { type: 'wb_open', senderId: myPeerId, senderName: senderName };
       
@@ -1091,6 +1116,10 @@
     
     window.quitWhiteboard = function() {
       document.getElementById('whiteboard-section').style.display = 'none';
+      
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if (isGuestMode || (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId)) return;
+
       const msg = { type: 'wb_close', senderId: myPeerId };
       if (currentMode === 'group' && currentGroupTopic) {
         mqttClient.publish(currentGroupTopic, JSON.stringify(msg));
@@ -1098,7 +1127,6 @@
         Object.values(activeDataConns).forEach(conn => conn.send(msg));
       }
     }
-    // ==========================================
 
     window.openAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'flex'; }
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
@@ -1718,6 +1746,20 @@
           
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
 
+          // 【v2.2.20変更】バッチ処理された描画データの受信
+          if (data.type === 'draw_batch' && data.senderId !== myPeerId) {
+            if (document.getElementById('whiteboard-section').style.display !== 'block') {
+               document.getElementById('whiteboard-section').style.display = 'block';
+               setTimeout(initWhiteboard, 100);
+            }
+            setTimeout(() => {
+              if (!wbCtx) return;
+              data.lines.forEach(l => {
+                window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false);
+              });
+            }, wbCtx ? 0 : 150);
+          }
+
           if (data.type === 'wb_open' && data.senderId !== myPeerId) {
             document.getElementById('whiteboard-section').style.display = 'block';
             setTimeout(initWhiteboard, 100);
@@ -1731,7 +1773,9 @@
                document.getElementById('whiteboard-section').style.display = 'block';
                setTimeout(initWhiteboard, 100);
             }
-            window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
+            setTimeout(() => {
+              window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
+            }, wbCtx ? 0 : 150);
           }
           if (data.type === 'draw_clear' && data.senderId !== myPeerId) {
             window.clearWhiteboard(false);
@@ -2040,7 +2084,21 @@
       activeDataConns[conn.peer] = conn;
 
       conn.on('data', (data) => {
-        if (data && data.type === 'wb_open') {
+        // 【v2.2.20変更】バッチ処理された描画データの受信 (Direct)
+        if (data && data.type === 'draw_batch') {
+          if (document.getElementById('whiteboard-section').style.display !== 'block') {
+             document.getElementById('whiteboard-section').style.display = 'block';
+             setTimeout(initWhiteboard, 100);
+          }
+          setTimeout(() => {
+            if (!wbCtx) return;
+            data.lines.forEach(l => {
+              window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false);
+            });
+          }, wbCtx ? 0 : 150);
+        }
+
+        else if (data && data.type === 'wb_open') {
           document.getElementById('whiteboard-section').style.display = 'block';
           setTimeout(initWhiteboard, 100);
           showNotification(`🎨 ${data.senderName}さんがお絵かきボードを開きました`);
@@ -2051,7 +2109,9 @@
              document.getElementById('whiteboard-section').style.display = 'block';
              setTimeout(initWhiteboard, 100);
           }
-          window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
+          setTimeout(() => {
+            window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
+          }, wbCtx ? 0 : 150);
         } else if (data && data.type === 'draw_clear') {
           window.clearWhiteboard(false);
         } else if (data && data.type === 'se') {
@@ -2527,6 +2587,9 @@
           talkBtn.innerText = '長押しで話す';
         }
         
+        // 【v2.2.20変更】各種制限のUI反映
+        const isRadioListener = (g && g.isRadio && g.hostId !== myPeerId);
+
         const seBoard = document.getElementById('se-board');
         if (seBoard && g) {
           const isHost = (g.hostId === myPeerId);
@@ -2536,6 +2599,25 @@
             seBoard.style.display = (isHost || (g.allowMemberSE && !isGuestMode)) ? 'block' : 'none'; 
           }
         }
+
+        const quizBtn = document.getElementById('quiz-btn');
+        if (quizBtn) {
+          if (isRadioListener) {
+            quizBtn.disabled = true;
+            quizBtn.style.opacity = '0.3';
+            quizBtn.style.cursor = 'not-allowed';
+          } else {
+            quizBtn.disabled = false;
+            quizBtn.style.opacity = '1';
+            quizBtn.style.cursor = 'pointer';
+          }
+        }
+
+        const wbTools = document.getElementById('wb-tools');
+        if (wbTools) {
+          wbTools.style.display = (isRadioListener || isGuestMode) ? 'none' : 'flex';
+        }
+
       } else if (currentMode === 'direct') {
         if (isGuestMode) {
           statusEl.innerText = 'ゲストモード中は1対1通話を利用できません';
