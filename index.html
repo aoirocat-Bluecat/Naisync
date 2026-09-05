@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.27</title>
+  <title>Naisync - 内線トランシーバー v2.2.28</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -340,11 +340,53 @@
       position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7);
       color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;
     }
+
+    /* 【v2.2.28追加】ゲームメニューリストのスタイル */
+    .game-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .game-list-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fafafa;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #eee;
+      text-align: left;
+    }
+    body.dark-mode .game-list-item { background: #2a2d32; border-color: #444; }
+    
+    .game-btn {
+      width: 110px;
+      height: 40px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 13px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 0px rgba(0,0,0,0.2);
+      transition: transform 0.1s, box-shadow 0.1s;
+      flex-shrink: 0;
+    }
+    .game-btn:active { 
+      transform: translateY(4px); 
+      box-shadow: 0 0px 0px rgba(0,0,0,0.2); 
+    }
+    .game-desc {
+      font-size: 11px;
+      color: #555;
+      line-height: 1.4;
+    }
+    body.dark-mode .game-desc { color: #ccc; }
   </style>
 </head>
 <body>
 
-  <div class="version-tag">v2.2.27</div>
+  <div class="version-tag">v2.2.28</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -424,10 +466,6 @@
     <div id="direct-panel" style="display: none;">
       <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
       <button class="btn-action" id="connect-btn">1対1で発信</button>
-      
-      <div id="direct-connected-actions" style="display: none; margin-top: 12px;">
-        <button class="btn-action btn-success" id="btn-reversi-invite" onclick="window.inviteReversi()">🎮 リバーシ対戦を申し込む</button>
-      </div>
     </div>
 
     <div id="group-panel" style="display: none;">
@@ -461,41 +499,28 @@
       <video id="screen-share-video" class="screen-share-video" autoplay playsinline></video>
     </div>
 
+    <!-- 【v2.2.28変更】遊びエリアをスッキリさせ、メニューを開くボタンに変更 -->
     <div id="play-section" style="margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
       <div class="chat-title">🎮 遊び・ゲーム</div>
-      <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-        <div>
-          <button id="quiz-btn" onclick="window.pushQuizBtn()" style="width: 60px; height: 60px; border-radius: 50%; background: #dc3545; color: white; font-weight: bold; font-size: 12px; border: 3px solid #b02a37; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">早押し</button>
-        </div>
-        <div>
-          <button id="wb-btn" onclick="window.toggleWhiteboard()" style="width: 60px; height: 60px; border-radius: 50%; background: #0d6efd; color: white; font-weight: bold; font-size: 11px; border: 3px solid #0a58ca; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">🎨<br>お絵かき</button>
-        </div>
-        <div>
-          <button id="dice-btn" onclick="window.openDiceModal()" style="width: 60px; height: 60px; border-radius: 50%; background: #198754; color: white; font-weight: bold; font-size: 12px; border: 3px solid #146c43; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">🎲<br>サイコロ</button>
-        </div>
-        <div>
-          <button id="poll-btn" onclick="window.openPollModal()" style="width: 60px; height: 60px; border-radius: 50%; background: #6f42c1; color: white; font-weight: bold; font-size: 11px; border: 3px solid #59359a; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">📊<br>アンケート</button>
-        </div>
-        <!-- 【v2.2.27追加】早撃ちスマッシュボタン -->
-        <div>
-          <button id="smash-invite-btn" onclick="window.inviteSmash()" style="width: 60px; height: 60px; border-radius: 50%; background: #fd7e14; color: white; font-weight: bold; font-size: 12px; border: 3px solid #d36b00; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">⚡<br>早撃ち</button>
-        </div>
-      </div>
+      <button class="btn-action btn-outline" onclick="window.openGameMenuModal()" style="padding: 12px; font-weight: bold; font-size: 14px;">
+        🕹️ ゲーム・遊びメニューを開く
+      </button>
       <div id="quiz-status" style="font-size: 11px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">準備OK</div>
     </div>
 
-    <!-- 【v2.2.27追加】早撃ちスマッシュのゲームエリア -->
     <div id="smash-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
       <div class="chat-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <span style="font-size: 14px;">⚡ 早撃ちスマッシュ</span>
         <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitSmash()">対戦終了</button>
       </div>
+      <!-- 【v2.2.28追加】早撃ちスマッシュのルール説明を配置 -->
+      <div style="font-size: 11px; color: #888; margin-bottom: 8px;">ルール: <span style="color:#ff4655; font-weight:bold;">赤(本物)</span>を撃て！ <span style="color:#00e5ff; font-weight:bold;">青(ダミー)</span>を撃つと負け！</div>
+      
       <div id="smash-score-board" style="font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #007bff;">
         あなた: <span id="smash-my-score">0</span> | 相手: <span id="smash-partner-score">0</span>
       </div>
       <div id="smash-status" style="font-size: 12px; font-weight: bold; color: #555; margin-bottom: 8px;">準備中...</div>
       
-      <!-- スマホ対応用に横幅100%、アスペクト比でレスポンシブなボードを作成 -->
       <div id="smash-board" style="width: 100%; aspect-ratio: 3/2; background-color: #2c2c2c; position: relative; overflow: hidden; border-radius: 8px; cursor: crosshair; margin: 0 auto; max-width: 400px; touch-action: none;">
         <div id="smash-target-real" style="width: 40px; height: 40px; border-radius: 50%; position: absolute; display: none; cursor: pointer; background-color: #ff4655; box-shadow: 0 0 10px #ff4655; transition: left 1.5s linear, top 1.5s linear; z-index: 10;" onmousedown="window.shootSmash(false, event)" ontouchstart="window.shootSmash(false, event)"></div>
         <div id="smash-target-dummy" style="width: 40px; height: 40px; border-radius: 50%; position: absolute; display: none; cursor: pointer; background-color: #00e5ff; box-shadow: 0 0 10px #00e5ff; transition: left 1.5s linear, top 1.5s linear; z-index: 5;" onmousedown="window.shootSmash(true, event)" ontouchstart="window.shootSmash(true, event)"></div>
@@ -778,13 +803,60 @@
     </div>
   </div>
 
+  <!-- 【v2.2.28追加】ゲーム・遊びメニューのモーダル -->
+  <div class="modal-overlay top-layer" id="game-menu-modal">
+    <div class="modal-box" style="max-width: 400px;">
+      <h3 style="margin-top:0;">🕹️ ゲーム・遊びメニュー</h3>
+      
+      <div class="game-list">
+        <div class="game-list-item">
+          <button id="quiz-btn" onclick="window.pushQuizBtn(); window.closeGameMenuModal();" class="game-btn" style="background: #dc3545; color: white;">💡 早押し</button>
+          <div class="game-desc">誰が一番早くボタンを押したか判定します。クイズ大会などに！</div>
+        </div>
+
+        <div class="game-list-item">
+          <button id="wb-btn" onclick="window.toggleWhiteboard(); window.closeGameMenuModal();" class="game-btn" style="background: #0d6efd; color: white;">🎨 お絵かき</button>
+          <div class="game-desc">全員の画面に同期されるお絵かきボードを開いて共有します。</div>
+        </div>
+
+        <div class="game-list-item">
+          <button id="dice-btn" onclick="window.openDiceModal(); window.closeGameMenuModal();" class="game-btn" style="background: #198754; color: white;">🎲 サイコロ</button>
+          <div class="game-desc">TRPGのようにサイコロを振り、全員に結果を送信します。</div>
+        </div>
+
+        <div class="game-list-item">
+          <button id="poll-btn" onclick="window.openPollModal(); window.closeGameMenuModal();" class="game-btn" style="background: #6f42c1; color: white;">📊 アンケート</button>
+          <div class="game-desc">選択肢を設定して多数決をとります。(ホストのみ作成可能)</div>
+        </div>
+
+        <div class="game-list-item">
+          <button id="btn-reversi-invite" onclick="window.inviteReversi(); window.closeGameMenuModal();" class="game-btn" style="background: #28a745; color: white;">🎮 リバーシ</button>
+          <div class="game-desc">【1対1専用】相手にリバーシ（オセロ）の対戦を申し込みます。</div>
+        </div>
+
+        <div class="game-list-item">
+          <button id="smash-invite-btn" onclick="window.inviteSmash(); window.closeGameMenuModal();" class="game-btn" style="background: #fd7e14; color: white;">⚡ 早撃ち</button>
+          <div class="game-desc">【1対1専用】出現する的を先に撃ち抜いた方の勝ち！<br><span style="color:#ff4655; font-weight:bold;">赤が本物</span>、<span style="color:#00e5ff; font-weight:bold;">青がダミー</span>。ダミーを撃つと自爆します。</div>
+        </div>
+      </div>
+
+      <div class="modal-buttons" style="margin-top: 16px;">
+        <button class="btn-action btn-secondary" onclick="window.closeGameMenuModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay top-layer" id="changelog-modal">
     <div class="modal-box">
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.27追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.27 (最新) ⚡早撃ちスマッシュ追加</div>
+          <!-- 【v2.2.28追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.28 (最新) 🕹️UI整理</div>
+          <div>・遊びやゲームのメニューをリスト形式に整理し、分かりやすい説明文を追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.27 ⚡早撃ちスマッシュ追加</div>
           <div>・1対1で遊べる反射神経ゲーム「早撃ちスマッシュ」を遊びエリアに追加しました。<br>・表示テキストを最適化しました。</div>
         </div>
         <div class="changelog-item">
@@ -891,7 +963,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2227/';
+    const APP_PREFIX = 'Naisync/v2228/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -968,7 +1040,6 @@
     let pollInterval = null;
     let hasVoted = false;
 
-    // 【v2.2.27追加】早撃ちスマッシュ用変数
     let isSmashActive = false;
     let isSmashHost = false;
     let smashGameActive = false;
@@ -977,7 +1048,6 @@
     let smashRoundTimeout;
     let pendingSmashConn = null;
     
-    // 【v2.2.27追加】ゲーム招待の汎用管理変数
     let pendingGameType = null; 
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
@@ -1007,7 +1077,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2227', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2228', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -1015,9 +1085,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2227'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2228'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2226')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2227')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -1203,6 +1273,14 @@
          setupCall(call);
       });
     }
+
+    // 【v2.2.28追加】ゲームメニューの開閉関数
+    window.openGameMenuModal = function() {
+      document.getElementById('game-menu-modal').style.display = 'flex';
+    };
+    window.closeGameMenuModal = function() {
+      document.getElementById('game-menu-modal').style.display = 'none';
+    };
 
     window.openDiceModal = function() {
       const g = customGroups.find(x => x.id === currentGroupId);
@@ -1563,214 +1641,6 @@
       } else if (currentMode === 'direct') {
         Object.values(activeDataConns).forEach(conn => conn.send(msg));
       }
-    }
-
-    // ==========================================
-    // 【v2.2.27追加】早撃ちスマッシュ ゲームロジック
-    // ==========================================
-    window.inviteSmash = function() {
-      if (currentMode !== 'direct' || Object.keys(activeDataConns).length === 0) {
-        return alert('「早撃ちスマッシュ」は1対1通話（Directモード）専用のゲームです。相手と接続してからお試しください。');
-      }
-      Object.values(activeDataConns).forEach(conn => {
-        conn.send({ type: 'smash_req', senderName: savedMyName || myPeerId.substring(0,5) });
-      });
-      showNotification('相手に早撃ちスマッシュの対戦申し込みを送りました。返答待ちです...');
-    }
-
-    window.startSmash = function(isHostRole) {
-      isSmashActive = true;
-      isSmashHost = isHostRole;
-      smashMyScore = 0;
-      smashPartnerScore = 0;
-      document.getElementById('smash-my-score').innerText = '0';
-      document.getElementById('smash-partner-score').innerText = '0';
-      document.getElementById('smash-section').style.display = 'block';
-      
-      if (isSmashHost) {
-        setTimeout(startSmashRound, 2000);
-      }
-      document.getElementById('smash-status').innerText = '準備...！';
-      document.getElementById('smash-status').style.color = '#fff';
-    }
-
-    function startSmashRound() {
-      smashGameActive = false;
-      hideSmashTargets();
-      document.getElementById('smash-status').innerText = '準備...！';
-      document.getElementById('smash-status').style.color = '#fff';
-
-      const delay = Math.floor(Math.random() * 2500) + 1500;
-      
-      setTimeout(() => {
-        const isDummy = Math.random() < 0.3;
-        // ボード枠内（0〜85%付近）にランダム配置
-        const startX = Math.floor(Math.random() * 80);
-        const startY = Math.floor(Math.random() * 75);
-        
-        const endX = Math.max(0, Math.min(85, startX + (Math.random() * 40 - 20)));
-        const endY = Math.max(0, Math.min(80, startY + (Math.random() * 40 - 20)));
-
-        const spawnData = { isDummy, startX, startY, endX, endY };
-        
-        showSmashTarget(spawnData);
-        Object.values(activeDataConns).forEach(conn => {
-          conn.send({ type: 'smash_spawn', spawnData });
-        });
-
-        smashRoundTimeout = setTimeout(() => {
-          if (smashGameActive) {
-            endSmashRound({ winner: 'draw', reason: 'timeout' });
-          }
-        }, 1500);
-      }, delay);
-    }
-
-    function showSmashTarget(data) {
-      const realTarget = document.getElementById('smash-target-real');
-      const dummyTarget = document.getElementById('smash-target-dummy');
-      const statusDisplay = document.getElementById('smash-status');
-
-      const target = data.isDummy ? dummyTarget : realTarget;
-      
-      target.style.transition = 'none';
-      target.style.left = data.startX + '%';
-      target.style.top = data.startY + '%';
-      target.style.display = 'block';
-
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          target.style.transition = 'left 1.5s linear, top 1.5s linear';
-          target.style.left = data.endX + '%';
-          target.style.top = data.endY + '%';
-        });
-      });
-
-      statusDisplay.textContent = data.isDummy ? "ダミーを撃つな！" : "撃て！！！";
-      statusDisplay.style.color = data.isDummy ? "#00e5ff" : "#ff4655";
-      smashGameActive = true;
-    }
-
-    function hideSmashTargets() {
-      document.getElementById('smash-target-real').style.display = 'none';
-      document.getElementById('smash-target-dummy').style.display = 'none';
-    }
-
-    window.shootSmash = function(clickedDummy, event) {
-      if (event && event.cancelable) event.preventDefault();
-      if (!smashGameActive) return;
-      smashGameActive = false; 
-      
-      const playerRole = isSmashHost ? 'host' : 'guest';
-      let resultData;
-
-      if (clickedDummy) {
-        resultData = { winner: isSmashHost ? 'guest' : 'host', reason: 'dummy' };
-      } else {
-        resultData = { winner: playerRole, reason: 'fastest' };
-      }
-
-      if (isSmashHost) {
-        clearTimeout(smashRoundTimeout);
-        endSmashRound(resultData);
-      } else {
-        Object.values(activeDataConns).forEach(conn => {
-          conn.send({ type: 'smash_end_round', resultData });
-        });
-      }
-    };
-
-    function endSmashRound(resultData) {
-      smashGameActive = false;
-      hideSmashTargets();
-
-      if (isSmashHost) {
-        clearTimeout(smashRoundTimeout);
-        Object.values(activeDataConns).forEach(conn => {
-          conn.send({ type: 'smash_end_round', resultData });
-        });
-      }
-      processSmashRoundEnd(resultData);
-    }
-
-    function processSmashRoundEnd(data) {
-      smashGameActive = false;
-      hideSmashTargets();
-
-      const myRole = isSmashHost ? 'host' : 'guest';
-      const statusDisplay = document.getElementById('smash-status');
-      
-      if (data.winner === 'draw') {
-        statusDisplay.textContent = "⏱️ 時間切れ！";
-        statusDisplay.style.color = "#aaa";
-      } else if (data.winner === myRole) {
-        smashMyScore++;
-        document.getElementById('smash-my-score').textContent = smashMyScore;
-        if (data.reason === 'dummy') {
-          statusDisplay.textContent = "🏆 相手がダミーを撃ちました！あなたの勝ち！";
-        } else {
-          statusDisplay.textContent = "🏆 撃ち勝ちました！ナイスエイム！";
-        }
-        statusDisplay.style.color = "#00ff00";
-        playAudioEffect('pingpong'); 
-      } else {
-        smashPartnerScore++;
-        document.getElementById('smash-partner-score').textContent = smashPartnerScore;
-        if (data.reason === 'dummy') {
-          statusDisplay.textContent = "💀 ダミーを撃ってしまった！自爆！";
-        } else {
-          statusDisplay.textContent = "💀 撃ち負けました...相手の方が早かった！";
-        }
-        statusDisplay.style.color = "#ff4655";
-        playAudioEffect('buzzer'); 
-      }
-
-      if (isSmashHost) {
-        setTimeout(startSmashRound, 2500); 
-      }
-    }
-
-    window.quitSmash = function() {
-      if (!confirm("早撃ちスマッシュを終了しますか？")) return;
-      Object.values(activeDataConns).forEach(conn => {
-        conn.send({ type: 'smash_quit' });
-      });
-      endSmash();
-    };
-
-    function endSmash() {
-      isSmashActive = false;
-      clearTimeout(smashRoundTimeout);
-      document.getElementById('smash-section').style.display = 'none';
-    }
-
-    // ==========================================
-    // 汎用ゲーム招待モーダルハンドラ
-    // ==========================================
-    window.acceptGameInvite = function() {
-      document.getElementById('game-invite-container').style.display = 'none';
-      if (pendingGameType === 'reversi' && pendingReversiConn && pendingReversiConn.open) {
-        pendingReversiConn.send({ type: 'reversi_acc', senderName: savedMyName || myPeerId.substring(0,5) });
-        startReversi(1);
-      } else if (pendingGameType === 'smash' && pendingSmashConn && pendingSmashConn.open) {
-        pendingSmashConn.send({ type: 'smash_acc', senderName: savedMyName || myPeerId.substring(0,5) });
-        startSmash(false);
-      }
-      pendingGameType = null;
-      pendingReversiConn = null;
-      pendingSmashConn = null;
-    }
-
-    window.declineGameInvite = function() {
-      document.getElementById('game-invite-container').style.display = 'none';
-      if (pendingGameType === 'reversi' && pendingReversiConn && pendingReversiConn.open) {
-        pendingReversiConn.send({ type: 'reversi_dec', senderName: savedMyName || myPeerId.substring(0,5) });
-      } else if (pendingGameType === 'smash' && pendingSmashConn && pendingSmashConn.open) {
-        pendingSmashConn.send({ type: 'smash_dec', senderName: savedMyName || myPeerId.substring(0,5) });
-      }
-      pendingGameType = null;
-      pendingReversiConn = null;
-      pendingSmashConn = null;
     }
 
     window.openAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'flex'; }
@@ -2928,7 +2798,6 @@
         } else if (data && data.type === 'subtitle') {
           window.showSubtitle(data.senderName, data.text);
 
-        // 【v2.2.27追加】早撃ちスマッシュ通信処理
         } else if (data && data.type === 'smash_req') {
           pendingGameType = 'smash';
           pendingSmashConn = conn;
@@ -3517,7 +3386,9 @@
     // リバーシ (オセロ) のゲームロジック
     // ==========================================
     window.inviteReversi = function() {
-      if (Object.keys(activeDataConns).length === 0) return alert('対戦相手がいません。');
+      if (currentMode !== 'direct' || Object.keys(activeDataConns).length === 0) {
+        return alert('「リバーシ」は1対1通話（Directモード）専用のゲームです。相手と接続してからお試しください。');
+      }
       Object.values(activeDataConns).forEach(conn => {
         conn.send({ type: 'reversi_req', senderName: savedMyName || myPeerId.substring(0,5) });
       });
