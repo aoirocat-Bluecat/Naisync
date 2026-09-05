@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.22</title>
+  <title>Naisync - 内線トランシーバー v2.2.23</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -80,7 +80,7 @@
       filter: blur(0px);
     }
 
-    input[type="text"], input[type="password"], .btn-action {
+    input[type="text"], input[type="password"], select, .btn-action {
       font-size: 14px; padding: 10px; margin: 4px 0; width: 100%;
       box-sizing: border-box; border-radius: 8px;
       transition: background 0.3s, color 0.3s, border-color 0.3s;
@@ -118,17 +118,23 @@
       transition: border-color 0.3s;
     }
     .participant-item {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; flex-direction: column; gap: 8px;
       background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px;
-      padding: 8px 12px; margin-bottom: 6px;
+      padding: 10px 12px; margin-bottom: 6px;
       transition: background 0.3s, border-color 0.3s;
     }
+    .participant-main { display: flex; align-items: center; justify-content: space-between; }
     .participant-item .p-name {
       font-size: 13px; font-weight: bold; color: #333;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%;
     }
     .participant-item .p-ctrl { display: flex; align-items: center; gap: 6px; }
-    .participant-item input[type=range] { width: 90px; margin: 0; }
+    .participant-item input[type=range] { width: 80px; margin: 0; }
+    
+    /* 【v2.2.23追加】空間オーディオ用セレクトボックス */
+    .spatial-select {
+      padding: 4px; font-size: 11px; border-radius: 4px; border: 1px solid #ccc; background: white; width: auto;
+    }
 
     .color-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
     
@@ -294,7 +300,8 @@
     body.dark-mode .tab.active { background: #1e1e1e; color: #4dabf7; }
     body.dark-mode .id-box { background: #2a2d32; color: #fff; }
     body.dark-mode input[type="text"], 
-    body.dark-mode input[type="password"] { background-color: #2a2d32; border-color: #444; color: #fff; }
+    body.dark-mode input[type="password"],
+    body.dark-mode select { background-color: #2a2d32; border-color: #444; color: #fff; }
     body.dark-mode input[type="text"]::placeholder, 
     body.dark-mode input[type="password"]::placeholder { color: #888; }
     body.dark-mode .btn-outline { background-color: #2a2d32; color: #4dabf7; border-color: #4dabf7; }
@@ -319,7 +326,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.22</div>
+  <div class="version-tag">v2.2.23</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -460,7 +467,7 @@
     </div>
 
     <div class="participants-section" id="participants-section" style="display: none;">
-      <div class="chat-title">👥 参加者の個別音量</div>
+      <div class="chat-title">👥 参加者の個別音量 ＆ 3D配置</div>
       <div id="participants-list"></div>
     </div>
 
@@ -674,8 +681,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.22追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.22 (最新) 🛠️バグ修正</div>
+          <!-- 【v2.2.23追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.23 (最新) 🎧3D空間オーディオ</div>
+          <div>・参加者ごとに声が聞こえる方向を指定できる「3D配置機能」を追加しました！<br>・効果音が天井スピーカーのように上から聞こえるようになりました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.22 🛠️バグ修正</div>
           <div>・他の人がお絵かきボードを開くと、今まで描いていた絵が消えてしまう不具合を修正しました。</div>
         </div>
         <div class="changelog-item">
@@ -704,23 +715,15 @@
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.15</div>
-          <div>・設定画面の項目を整理し、見やすくしました。<br>・トランシーバー終了音（ロジャービープ）を廃止しました。</div>
+          <div>・設定画面の項目を整理し、見やすくしました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.14</div>
           <div>・効果音（SE）を電子音からリアルな音声に変更し、臨場感をアップさせました！</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.2.13</div>
-          <div>・グループの設定で「メンバー全員が効果音(SE)を使える」ようにする許可機能を追加しました。</div>
-        </div>
-        <div class="changelog-item">
           <div class="changelog-version">v2.2.11 🎉メガエンタメUP🎉</div>
-          <div>・【早押しボタン】全員で遊べるラグなしのクイズボタンを実装！<br>・【SEボード】番組を盛り上げる効果音ボタンを追加！</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.10</div>
-          <div>・タブを切り替えた際、部屋のメンバーと正常に再接続されない不具合を修正しました。</div>
+          <div>・【早押しボタン】全員で遊べるクイズボタンを実装！<br>・【SEボード】番組を盛り上げる効果音ボタンを追加！</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -762,7 +765,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2222/';
+    const APP_PREFIX = 'Naisync/v2223/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -773,6 +776,10 @@
     let activeCalls = {};
     let activeDataConns = {};
     let peerNames = {};
+    
+    // 【v2.2.23追加】空間オーディオ用の保存データと管理ノード
+    let spatialSettings = JSON.parse(localStorage.getItem('my_naisen_spatial') || '{}');
+    let pannerNodes = {}; 
 
     let rawStream = null;
     let rawAudioTrack = null;
@@ -823,7 +830,7 @@
     let lastX = 0;
     let lastY = 0;
     let wbCtx = null;
-    let isWhiteboardInitialized = false; // 【v2.2.22追加】初期化済みフラグ
+    let isWhiteboardInitialized = false; 
     
     let drawBuffer = [];
     let drawTimer = null;
@@ -855,7 +862,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2222', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2223', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -863,9 +870,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2222'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2223'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2221')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2222')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -922,20 +929,49 @@
       'buzzer': './wrong.mp3'
     };
 
+    // 【v2.2.23変更】効果音の再生に3D音響（Panner）を適用し天井から鳴らす
     const playAudioEffect = (type) => {
+      if (!audioCtx || audioCtx.state === 'suspended') return;
+      const now = audioCtx.currentTime;
+
+      // 共通の空間オーディオノード（天井スピーカーのイメージ）
+      const panner = audioCtx.createPanner();
+      panner.panningModel = 'HRTF';
+      panner.distanceModel = 'inverse';
+      panner.refDistance = 1;
+      panner.maxDistance = 10000;
+      panner.rolloffFactor = 1;
+      panner.positionX.value = 0;
+      panner.positionY.value = 2; // 少し前
+      panner.positionZ.value = 3; // 頭上から
+
       if (SE_FILES[type]) {
-        const audio = new Audio(SE_FILES[type]);
-        audio.volume = savedSpeakerVolume; 
-        audio.play().catch(e => console.warn("音声再生エラー:", e));
+        // FetchでMP3データを取得してAudioBufferとしてデコード（Web Audio API上で扱うため）
+        fetch(SE_FILES[type])
+          .then(response => response.arrayBuffer())
+          .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+          .then(audioBuffer => {
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            
+            const gain = audioCtx.createGain();
+            gain.gain.value = savedSpeakerVolume;
+
+            source.connect(gain);
+            gain.connect(panner);
+            panner.connect(audioCtx.destination);
+            
+            source.start(now);
+          })
+          .catch(e => console.warn("音声再生エラー:", e));
         return;
       }
 
-      if (!audioCtx || audioCtx.state === 'suspended') return;
-      const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(panner);
+      panner.connect(audioCtx.destination);
 
       if (type === 'quiz') {
         osc.type = 'sine';
@@ -999,12 +1035,15 @@
       }
     }
 
-    // 【v2.2.22変更】描画バグ修正のため、cloneNodeを廃止しフラグ管理に変更
     const initWhiteboard = () => {
-      if (isWhiteboardInitialized) return; // 既に準備済みの場合はスキップして絵を消さない！
+      if (isWhiteboardInitialized) return; 
       
       let canvas = document.getElementById('whiteboard-canvas');
       if (!canvas) return;
+      
+      const newCanvas = canvas.cloneNode(true);
+      canvas.replaceWith(newCanvas);
+      canvas = newCanvas; 
       
       wbCtx = canvas.getContext('2d');
       wbCtx.lineCap = 'round';
@@ -1050,7 +1089,7 @@
       canvas.addEventListener('touchmove', draw, {passive: false});
       canvas.addEventListener('touchend', endDraw);
       
-      isWhiteboardInitialized = true; // 準備完了フラグを立てる
+      isWhiteboardInitialized = true; 
     };
 
     window.drawLine = function(x0, y0, x1, y1, color, emit) {
@@ -1531,6 +1570,8 @@
         rawAudioTrack.enabled = false;
 
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // 自分のマイク音量は空間オーディオに通さない
         const source = audioCtx.createMediaStreamSource(rawStream);
         gainNode = audioCtx.createGain();
         gainNode.gain.value = savedMicVolume;
@@ -1812,6 +1853,11 @@
               activeDataConns[data.senderId].close();
               delete activeDataConns[data.senderId];
             }
+            // 空間オーディオノードの削除
+            if (pannerNodes[data.senderId]) {
+               pannerNodes[data.senderId].disconnect();
+               delete pannerNodes[data.senderId];
+            }
             const audio = document.getElementById('audio-' + data.senderId);
             if (audio) audio.remove();
             removeParticipantUI(data.senderId);
@@ -1982,6 +2028,22 @@
       if (nameEl) nameEl.innerText = name;
     }
 
+    // 【v2.2.23変更】空間オーディオの方向に応じたPanner設定
+    function updateSpatialPosition(peerId, pos) {
+      if (!pannerNodes[peerId]) return;
+      const panner = pannerNodes[peerId];
+      // 基準を1として設定 (X: 左右, Y: 前後, Z: 上下)
+      switch(pos) {
+        case 'center': panner.positionX.value = 0; panner.positionY.value = 0; panner.positionZ.value = 0; break;
+        case 'left':   panner.positionX.value = -1.5; panner.positionY.value = 0; panner.positionZ.value = 0; break;
+        case 'right':  panner.positionX.value = 1.5; panner.positionY.value = 0; panner.positionZ.value = 0; break;
+        case 'top':    panner.positionX.value = 0; panner.positionY.value = 1; panner.positionZ.value = 2; break; // 前かつ上
+        case 'bottom': panner.positionX.value = 0; panner.positionY.value = -1; panner.positionZ.value = -2; break; // 後ろかつ下
+        case 'top-left':  panner.positionX.value = -1.5; panner.positionY.value = 1; panner.positionZ.value = 1.5; break;
+        case 'top-right': panner.positionX.value = 1.5; panner.positionY.value = 1; panner.positionZ.value = 1.5; break;
+      }
+    }
+
     function addParticipantUI(peerId) {
       if (document.getElementById('ui-' + peerId)) return;
 
@@ -1991,6 +2053,10 @@
       div.className = 'participant-item';
       div.id = 'ui-' + peerId;
       
+      // 【v2.2.23変更】UIを少しリッチに変更
+      const mainDiv = document.createElement('div');
+      mainDiv.className = 'participant-main';
+
       const nameEl = document.createElement('span');
       nameEl.className = 'p-name';
       nameEl.id = 'name-' + peerId;
@@ -2031,11 +2097,62 @@
         ctrlDiv.appendChild(kickBtn);
       }
 
-      div.appendChild(nameEl);
-      div.appendChild(ctrlDiv);
+      mainDiv.appendChild(nameEl);
+      mainDiv.appendChild(ctrlDiv);
+
+      // 【v2.2.23追加】3D配置セレクター
+      const spatialDiv = document.createElement('div');
+      spatialDiv.style.display = 'flex';
+      spatialDiv.style.justifyContent = 'space-between';
+      spatialDiv.style.alignItems = 'center';
+      spatialDiv.style.paddingTop = '6px';
+      spatialDiv.style.borderTop = '1px dashed #e0e0e0';
+
+      const spatialLabel = document.createElement('span');
+      spatialLabel.innerText = '🗺️ 3D配置:';
+      spatialLabel.style.fontSize = '11px';
+      spatialLabel.style.color = '#777';
+
+      const spatialSelect = document.createElement('select');
+      spatialSelect.className = 'spatial-select';
+      const options = [
+        {val: 'center', txt: '正面 (通常)'},
+        {val: 'left', txt: '左方向'},
+        {val: 'right', txt: '右方向'},
+        {val: 'top', txt: '上方向 (天の声)'},
+        {val: 'bottom', txt: '下方向 (足元)'},
+        {val: 'top-left', txt: '左上'},
+        {val: 'top-right', txt: '右上'}
+      ];
+      options.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt.val;
+        o.innerText = opt.txt;
+        spatialSelect.appendChild(o);
+      });
+
+      // 保存された配置があれば復元
+      const savedPos = spatialSettings[peerId] || 'center';
+      spatialSelect.value = savedPos;
+      
+      spatialSelect.addEventListener('change', (e) => {
+        const pos = e.target.value;
+        spatialSettings[peerId] = pos;
+        localStorage.setItem('my_naisen_spatial', JSON.stringify(spatialSettings));
+        updateSpatialPosition(peerId, pos);
+      });
+
+      spatialDiv.appendChild(spatialLabel);
+      spatialDiv.appendChild(spatialSelect);
+
+      div.appendChild(mainDiv);
+      div.appendChild(spatialDiv);
       
       participantsList.appendChild(div);
       participantsSection.style.display = 'block';
+
+      // 追加直後にPannerの状態を反映
+      if (pannerNodes[peerId]) updateSpatialPosition(peerId, savedPos);
     }
 
     function removeParticipantUI(peerId) {
@@ -2065,11 +2182,65 @@
           audio.volume = savedSpeakerVolume; 
           audioContainer.appendChild(audio);
         }
-        audio.srcObject = remoteStream;
+
+        // 【v2.2.23変更】相手の声を空間オーディオ(PannerNode)経由で再生する
+        if (audioCtx && audioCtx.state !== 'closed') {
+           // MediaStreamは直接Pannerに繋げないため、一度AudioのsrcObjectに入れ、そこからNodeを作る
+           audio.srcObject = remoteStream;
+           audio.muted = true; // 元の音は消して、WebAudioAPI側だけ鳴らす
+           
+           // 古いノードがあれば消す
+           if (pannerNodes[call.peer]) pannerNodes[call.peer].disconnect();
+
+           const sourceNode = audioCtx.createMediaStreamSource(remoteStream);
+           const panner = audioCtx.createPanner();
+           panner.panningModel = 'HRTF';
+           panner.distanceModel = 'inverse';
+           panner.refDistance = 1;
+           panner.maxDistance = 10000;
+           panner.rolloffFactor = 1;
+
+           // 音量調整用のGainNode（スライダーと連動）
+           const volGain = audioCtx.createGain();
+           volGain.gain.value = savedSpeakerVolume;
+
+           sourceNode.connect(panner);
+           panner.connect(volGain);
+           volGain.connect(audioCtx.destination);
+
+           pannerNodes[call.peer] = panner;
+
+           // スライダーのイベントリスナーを上書きして、WebAudio側の音量を変えるようにする
+           setTimeout(() => {
+             const slider = document.querySelector(`#ui-${call.peer} input[type=range]`);
+             const icon = document.querySelector(`#ui-${call.peer} span`);
+             if (slider) {
+                // 古いイベントを消すためにclone
+                const newSlider = slider.cloneNode(true);
+                slider.parentNode.replaceChild(newSlider, slider);
+                newSlider.addEventListener('input', (e) => {
+                  volGain.gain.value = e.target.value;
+                  icon.innerText = e.target.value == 0 ? '🔇' : '🔊';
+                });
+             }
+             // 配置の反映
+             const savedPos = spatialSettings[call.peer] || 'center';
+             updateSpatialPosition(call.peer, savedPos);
+           }, 200);
+
+        } else {
+           // Web Audio APIが使えない環境のフォールバック
+           audio.srcObject = remoteStream;
+        }
+
         addParticipantUI(call.peer);
       });
 
       call.on('close', () => {
+        if (pannerNodes[call.peer]) {
+           pannerNodes[call.peer].disconnect();
+           delete pannerNodes[call.peer];
+        }
         const audio = document.getElementById('audio-' + call.peer);
         if (audio) audio.remove();
         delete activeCalls[call.peer];
@@ -2156,6 +2327,10 @@
             activeCalls[conn.peer].close();
             delete activeCalls[conn.peer];
           }
+          if (pannerNodes[conn.peer]) {
+             pannerNodes[conn.peer].disconnect();
+             delete pannerNodes[conn.peer];
+          }
           const audio = document.getElementById('audio-' + conn.peer);
           if (audio) audio.remove();
           removeParticipantUI(conn.peer);
@@ -2195,6 +2370,10 @@
           });
         });
       }
+      
+      // 全Pannerノードのクリア
+      Object.values(pannerNodes).forEach(p => p.disconnect());
+      pannerNodes = {};
 
       activeCalls = {};
       activeDataConns = {};
