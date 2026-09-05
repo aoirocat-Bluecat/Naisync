@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.29</title>
+  <title>Naisync - 内線トランシーバー v2.2.30</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -385,9 +385,8 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.29</div>
+  <div class="version-tag">v2.2.30</div>
 
-  <!-- ログイン画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
       
@@ -847,8 +846,11 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.29追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.29 (最新) 🛠️接続安定性の向上</div>
+          <div class="changelog-version">v2.2.30 (最新) 🛠️システム復元＆修正</div>
+          <div>・前回のアップデート時に欠落してしまったコア機能（ログイン処理やメイン画面起動処理など）を完全に復元し、正常に動作するように修正しました。<br>・1対1モードの初期化プロセスを修正し、ネットワーク制限下でも即座に繋がるようにしました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.29 🛠️接続安定性の向上</div>
           <div>・一部のネットワーク環境で、通信サーバーが弾かれて「初期化中...」で止まってしまう問題を解決しました。<br>・1対1モードはサーバーを経由しないため、すぐに利用できるように改善しました。</div>
         </div>
         <div class="changelog-item">
@@ -892,18 +894,6 @@
           <div>・お絵かき機能で線が引けなくなる深刻な描画バグを修正しました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.2.18 🎨 お絵かき追加</div>
-          <div>・通話しながらみんなで描ける「リアルタイム・お絵かきボード」を遊びエリアに追加しました！（ゲストは閲覧のみ）</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.17 🛡️荒らし対策強化</div>
-          <div>・グループ作成時に「ゲスト（未ログイン）の参加を禁止する」オプションを追加しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.16</div>
-          <div>・ファイル読み込みのパス指定を改善し、特定のサーバー環境での動作安定性を向上させました。</div>
-        </div>
-        <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
           <div>・Naisync リリース</div>
         </div>
@@ -943,7 +933,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2229/';
+    const APP_PREFIX = 'Naisync/v2230/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -1030,6 +1020,7 @@
     
     let pendingGameType = null; 
 
+    // 【復活】NGワードリスト
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
     
     let pendingInvite = null;
@@ -1057,7 +1048,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2229', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2230', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -1065,9 +1056,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2229'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2230'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2228')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2229')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -2014,6 +2005,8 @@
       if (!id || !name || !pass) return showAuthError('すべての項目を入力してください。');
       if (!/^[a-zA-Z0-9-]+$/.test(id)) return showAuthError('IDは半角英数字とハイフン(-)のみ使用できます。');
       if (pass.length < 6) return showAuthError('パスワードは6文字以上で設定してください。');
+      
+      // 【復元】NGワードチェック
       if (containsNGWord(id) || containsNGWord(name)) return showAuthError('不適切な単語が含まれています。');
 
       document.getElementById('reg-btn').disabled = true;
@@ -2048,6 +2041,7 @@
         const userCredential = await signInWithEmailAndPassword(auth, email, pass);
         currentUser = userCredential.user;
         parseUserData(currentUser);
+        // 【復元】メインアプリの起動
         startMainApp();
       } catch (error) {
         showAuthError('ログイン失敗: IDまたはパスワードが違います。');
@@ -2062,6 +2056,7 @@
       savedMyName = 'ゲスト' + randomId;
       
       document.getElementById('auth-overlay').style.display = 'none';
+      // 【復元】メインアプリの起動
       startMainApp();
     }
 
@@ -2090,6 +2085,7 @@
       if (user) {
         currentUser = user;
         parseUserData(user);
+        // 【復元】メインアプリの起動
         startMainApp();
       } else {
         if (!isGuestMode) {
@@ -2147,7 +2143,254 @@
       };
     }
 
-    // 【v2.2.29修正】通信接続の初期化プロセス
+    // 【復元】欠落していたメインアプリ起動関数
+    function startMainApp() {
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('main-header').style.display = 'flex';
+      document.getElementById('main-card').style.display = 'block';
+
+      displayMyName.innerText = savedMyName + (isGuestMode ? ' (ゲスト)' : '');
+      settingMyNameInput.value = savedMyName;
+      if (isGuestMode) settingMyNameInput.disabled = true;
+
+      streamerModeCheckbox.checked = isStreamerMode;
+      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
+
+      loadAndMigrateGroups(currentUser.customId || (currentUser.email ? currentUser.email.split('@')[0] : 'guest'));
+      initMicrophoneAndNetwork();
+    }
+
+    // 【復元】欠落していた通知表示関数
+    function showNotification(message) {
+      if (!isNotificationOn) return; 
+      const container = document.getElementById('notification-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerText = message;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 3900);
+    }
+
+    // 【復元】欠落していたNGワード判定関数
+    function containsNGWord(text) {
+      if (!text) return false;
+      return NG_WORDS.some(word => text.includes(word));
+    }
+
+    // 【復元】欠落していたチャットUI更新関数
+    function updateChatUI() {
+      if (isGuestMode) {
+        chatInput.disabled = true;
+        chatSendBtn.disabled = true;
+        chatInput.placeholder = "ゲストはチャットを送信できません";
+      } else if (currentMode === 'group' && currentGroupId === 'test-noguest') {
+        chatInput.disabled = true;
+        chatSendBtn.disabled = true;
+        chatInput.placeholder = "このルームではチャットは使用できません";
+      } else {
+        chatInput.disabled = false;
+        chatSendBtn.disabled = false;
+        chatInput.placeholder = "メッセージを入力...";
+      }
+    }
+
+    // 【復元】欠落していたオーディオレジューム関数
+    function resumeAudioContext() {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    // 【復元】欠落していたマイク・ネットワーク初期化関数
+    async function initMicrophoneAndNetwork() {
+      try {
+        if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
+        
+        document.getElementById('trans-off').classList.remove('active');
+        document.getElementById('trans-self').classList.remove('active');
+        document.getElementById('trans-all').classList.remove('active');
+        document.getElementById('trans-' + transMode).classList.add('active');
+
+        ncCheckbox.checked = isNoiseCanceling;
+        ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
+        micVolumeSlider.value = savedMicVolume;
+        micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
+        spkVolumeSlider.value = savedSpeakerVolume;
+        spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
+        
+        notifCheckbox.checked = isNotificationOn;
+        notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
+        
+        transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
+        transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
+
+        if (transMode !== 'off') initSpeechRecognition();
+
+        const audioConstraints = {
+          audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
+        };
+
+        rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+        rawAudioTrack = rawStream.getAudioTracks()[0];
+        rawAudioTrack.enabled = false;
+
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        const source = audioCtx.createMediaStreamSource(rawStream);
+        gainNode = audioCtx.createGain();
+        gainNode.gain.value = savedMicVolume;
+
+        const destination = audioCtx.createMediaStreamDestination();
+        source.connect(gainNode);
+        gainNode.connect(destination);
+        processedStream = destination.stream;
+
+        renderTabs();
+        startNetworking();
+        updateChatUI();
+      } catch (err) {
+        statusEl.innerText = 'マイクの使用を許可してください';
+      }
+    }
+
+    window.openSettings = function() {
+      window.switchSettingsTab('general');
+      document.getElementById('settings-modal').style.display = 'flex'; 
+    }
+    window.closeSettings = function() { document.getElementById('settings-modal').style.display = 'none'; }
+
+    window.saveMyName = async function() {
+      if (isGuestMode) return alert('ゲストは名前を変更できません。');
+      const newName = settingMyNameInput.value.trim();
+      if (!newName) return alert('名前を入力してください。');
+      if (containsNGWord(newName)) return alert('名前に不適切な単語が含まれています。');
+      
+      savedMyName = newName;
+      displayMyName.innerText = newName;
+      
+      await updateProfile(auth.currentUser, {
+        displayName: JSON.stringify({ name: newName, customId: currentUser.customId })
+      });
+      alert('名前を保存しました！');
+    }
+
+    window.setTransMode = function(mode) {
+      if (isGuestMode && mode === 'all') return alert('ゲストは字幕を相手に共有できません（自分のみ表示は可能です）。');
+      transMode = mode;
+      localStorage.setItem('my_naisen_trans_mode', mode);
+      document.getElementById('trans-off').classList.remove('active');
+      document.getElementById('trans-self').classList.remove('active');
+      document.getElementById('trans-all').classList.remove('active');
+      document.getElementById('trans-' + mode).classList.add('active');
+      
+      if (mode !== 'off' && !speechRecognition) initSpeechRecognition();
+    }
+
+    ncCheckbox.addEventListener('change', async (e) => {
+      isNoiseCanceling = e.target.checked;
+      ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_nc', isNoiseCanceling);
+      if (rawAudioTrack) {
+        try {
+          await rawAudioTrack.applyConstraints({
+            echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling
+          });
+        } catch (err) { console.error(err); }
+      }
+    });
+
+    micVolumeSlider.addEventListener('input', (e) => {
+      resumeAudioContext();
+      const val = parseFloat(e.target.value);
+      if (gainNode) gainNode.gain.value = val;
+      savedMicVolume = val;
+      localStorage.setItem('my_naisen_mic_vol', val);
+      micVolumeDisplay.innerText = Math.round(val * 100) + '%';
+    });
+
+    spkVolumeSlider.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      savedSpeakerVolume = val;
+      localStorage.setItem('my_naisen_spk_vol', val);
+      spkVolumeDisplay.innerText = Math.round(val * 100) + '%';
+      
+      document.querySelectorAll('.participant-item input[type=range]').forEach(slider => {
+        slider.value = val;
+        slider.dispatchEvent(new Event('input')); 
+      });
+    });
+
+    notifCheckbox.addEventListener('change', (e) => {
+      isNotificationOn = e.target.checked;
+      notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_notif', isNotificationOn);
+    });
+
+    transcriptionNotifCheckbox.addEventListener('change', (e) => {
+      isTranscriptionNotifOn = e.target.checked;
+      transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_transcription_notif', isTranscriptionNotifOn);
+    });
+
+    streamerModeCheckbox.addEventListener('change', (e) => {
+      isStreamerMode = e.target.checked;
+      streamerModeStatusText.innerText = isStreamerMode ? 'ON' : 'OFF';
+      localStorage.setItem('my_naisen_streamer', isStreamerMode);
+      applyStreamerModeToUI();
+    });
+
+    function renderTabs() {
+      tabsWrapper.innerHTML = '';
+
+      if (!isGuestMode) {
+        const directTab = document.createElement('button');
+        directTab.className = `tab ${currentMode === 'direct' ? 'active' : ''}`;
+        directTab.innerText = '1対1通話';
+        directTab.onclick = () => switchToDirect();
+        tabsWrapper.appendChild(directTab);
+      }
+
+      customGroups.forEach(g => {
+        const tab = document.createElement('button');
+        tab.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
+        
+        const isHost = (g.hostId === myPeerId);
+        let prefix = '';
+        if (g.isRadio) prefix = isHost ? '📻 ' : '🎧 ';
+        else prefix = isHost ? '👑 ' : '';
+
+        const label = document.createElement('span');
+        label.innerText = prefix + g.name;
+        tab.appendChild(label);
+
+        const delBtn = document.createElement('span');
+        delBtn.className = 'btn-del';
+        delBtn.innerText = '✕';
+        delBtn.onclick = (e) => deleteGroup(g.id, g.name, e);
+        tab.appendChild(delBtn);
+
+        tab.onclick = () => joinGroup(g);
+        tabsWrapper.appendChild(tab);
+      });
+
+      const addBtn = document.createElement('button');
+      addBtn.className = 'tab tab-add';
+      if (isGuestMode) {
+        addBtn.innerText = '＋ 参加';
+        addBtn.onclick = () => {
+          window.switchGroupModalTab('join');
+          document.getElementById('tab-btn-create').style.display = 'none';
+          document.getElementById('group-modal').style.display = 'flex';
+        };
+      } else {
+        addBtn.innerText = '＋ 作成';
+        addBtn.onclick = () => {
+          document.getElementById('modal-create-allow-se').checked = false;
+          document.getElementById('modal-create-no-guests').checked = false; 
+          window.openGroupModal();
+        };
+      }
+      tabsWrapper.appendChild(addBtn);
+    }
+
     function startNetworking() {
       const customId = currentUser.customId;
       peer = new Peer(customId);
@@ -2164,7 +2407,6 @@
           statusEl.innerText = 'グループ招待を確認中...';
         }
 
-        // 裏でグループ用のMQTT接続（フォールバック機能付き）を行う
         let isMqttConnected = false;
         const brokers = [
           'wss://broker.hivemq.com:8884/mqtt',
@@ -2198,7 +2440,8 @@
             if (isMqttConnected) return;
             isMqttConnected = true;
             clearTimeout(fallbackTimer);
-
+            
+            // サーバー接続が成功した段階で、招待があれば参加処理を進める
             if (pendingInvite) {
               const listIdx = customGroups.findIndex(g => g.id === pendingInvite.id);
               if (listIdx >= 0) {
@@ -2211,16 +2454,16 @@
                 if (pendingInvite.isRadio) {
                   customGroups[listIdx].isRadio = true;
                 }
-                if (pendingInvite.noGuests) {
+                if (pendingInvite.noGuests) { 
                   customGroups[listIdx].noGuests = true;
                 }
               } else {
                 customGroups.push(pendingInvite);
               }
               saveGroups();
-
+              
               const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
-              pendingInvite = null;
+              pendingInvite = null; 
               joinGroup(targetGroup);
             }
           });
@@ -2429,6 +2672,7 @@
           });
         };
 
+        // 最初のサーバーへ接続開始
         tryConnectMQTT(0);
       });
 
@@ -2495,57 +2739,6 @@
         }
         setupDataConn(conn);
       });
-    }
-
-    async function initMicrophoneAndNetwork() {
-      try {
-        if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
-        
-        document.getElementById('trans-off').classList.remove('active');
-        document.getElementById('trans-self').classList.remove('active');
-        document.getElementById('trans-all').classList.remove('active');
-        document.getElementById('trans-' + transMode).classList.add('active');
-
-        ncCheckbox.checked = isNoiseCanceling;
-        ncStatusText.innerText = isNoiseCanceling ? 'ON' : 'OFF';
-        micVolumeSlider.value = savedMicVolume;
-        micVolumeDisplay.innerText = Math.round(savedMicVolume * 100) + '%';
-        spkVolumeSlider.value = savedSpeakerVolume;
-        spkVolumeDisplay.innerText = Math.round(savedSpeakerVolume * 100) + '%';
-        
-        notifCheckbox.checked = isNotificationOn;
-        notifStatusText.innerText = isNotificationOn ? 'ON' : 'OFF';
-        
-        transcriptionNotifCheckbox.checked = isTranscriptionNotifOn;
-        transcriptionNotifStatusText.innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
-
-        if (transMode !== 'off') initSpeechRecognition();
-
-        const audioConstraints = {
-          audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false
-        };
-
-        rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
-        rawAudioTrack = rawStream.getAudioTracks()[0];
-        rawAudioTrack.enabled = false;
-
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        const source = audioCtx.createMediaStreamSource(rawStream);
-        gainNode = audioCtx.createGain();
-        gainNode.gain.value = savedMicVolume;
-
-        const destination = audioCtx.createMediaStreamDestination();
-        source.connect(gainNode);
-        gainNode.connect(destination);
-        processedStream = destination.stream;
-
-        renderTabs();
-        startNetworking();
-        updateChatUI();
-      } catch (err) {
-        statusEl.innerText = 'マイクの使用を許可してください';
-      }
     }
 
     function updateStatus() {
