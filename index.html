@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.28</title>
+  <title>Naisync - 内線トランシーバー v2.2.29</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -341,7 +341,6 @@
       color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;
     }
 
-    /* 【v2.2.28追加】ゲームメニューリストのスタイル */
     .game-list {
       display: flex;
       flex-direction: column;
@@ -386,7 +385,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.28</div>
+  <div class="version-tag">v2.2.29</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -499,7 +498,6 @@
       <video id="screen-share-video" class="screen-share-video" autoplay playsinline></video>
     </div>
 
-    <!-- 【v2.2.28変更】遊びエリアをスッキリさせ、メニューを開くボタンに変更 -->
     <div id="play-section" style="margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
       <div class="chat-title">🎮 遊び・ゲーム</div>
       <button class="btn-action btn-outline" onclick="window.openGameMenuModal()" style="padding: 12px; font-weight: bold; font-size: 14px;">
@@ -513,7 +511,6 @@
         <span style="font-size: 14px;">⚡ 早撃ちスマッシュ</span>
         <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitSmash()">対戦終了</button>
       </div>
-      <!-- 【v2.2.28追加】早撃ちスマッシュのルール説明を配置 -->
       <div style="font-size: 11px; color: #888; margin-bottom: 8px;">ルール: <span style="color:#ff4655; font-weight:bold;">赤(本物)</span>を撃て！ <span style="color:#00e5ff; font-weight:bold;">青(ダミー)</span>を撃つと負け！</div>
       
       <div id="smash-score-board" style="font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #007bff;">
@@ -803,7 +800,6 @@
     </div>
   </div>
 
-  <!-- 【v2.2.28追加】ゲーム・遊びメニューのモーダル -->
   <div class="modal-overlay top-layer" id="game-menu-modal">
     <div class="modal-box" style="max-width: 400px;">
       <h3 style="margin-top:0;">🕹️ ゲーム・遊びメニュー</h3>
@@ -851,8 +847,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.28追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.28 (最新) 🕹️UI整理</div>
+          <!-- 【v2.2.29追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.29 (最新) 🛠️接続安定性の向上</div>
+          <div>・一部のネットワーク（学校や会社のWi-Fiなど）で、通信サーバーが弾かれて「初期化中...」で止まってしまう問題を解決するため、自動でサーバーを切り替える「フォールバック機能」を追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.28 🕹️UI整理</div>
           <div>・遊びやゲームのメニューをリスト形式に整理し、分かりやすい説明文を追加しました。</div>
         </div>
         <div class="changelog-item">
@@ -920,10 +920,6 @@
           <div>・【早押しボタン】全員で遊べるクイズボタンを実装！<br>・【SEボード】番組を盛り上げる効果音ボタンを追加！</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v2.2.10</div>
-          <div>・タブを切り替えた際、部屋のメンバーと正常に再接続されない不具合を修正しました。</div>
-        </div>
-        <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
           <div>・Naisync リリース</div>
         </div>
@@ -963,7 +959,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2228/';
+    const APP_PREFIX = 'Naisync/v2229/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -1077,7 +1073,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2228', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2229', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -1085,9 +1081,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2228'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2229'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2227')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2228')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -1274,7 +1270,6 @@
       });
     }
 
-    // 【v2.2.28追加】ゲームメニューの開閉関数
     window.openGameMenuModal = function() {
       document.getElementById('game-menu-modal').style.display = 'flex';
     };
@@ -2008,6 +2003,7 @@
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
     }
 
+    // 【v2.2.29追加】サーバー自動切り替え・通信復帰ロジックの実装
     async function initMicrophoneAndNetwork() {
       try {
         if ('wakeLock' in navigator) await navigator.wakeLock.request('screen');
@@ -2208,238 +2204,274 @@
         myIdEl.innerText = id;
         applyStreamerModeToUI();
 
-        mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-        mqttClient.on('connect', () => {
-          if (pendingInvite) {
-            const index = customGroups.findIndex(g => g.id === pendingInvite.id);
-            if (index >= 0) {
-              customGroups[index].pass = pendingInvite.pass;
-              customGroups[index].name = pendingInvite.name;
-              customGroups[index].requireName = pendingInvite.requireName;
-              if (pendingInvite.hostId && !customGroups[index].hostId) {
-                customGroups[index].hostId = pendingInvite.hostId;
-              }
-              if (pendingInvite.isRadio) {
-                customGroups[index].isRadio = true;
-              }
-              if (pendingInvite.noGuests) { 
-                customGroups[index].noGuests = true;
-              }
-            } else {
-              customGroups.push(pendingInvite);
-            }
-            saveGroups();
-            
-            const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
-            pendingInvite = null; 
-            joinGroup(targetGroup);
-          } else {
-            switchToDirect();
-          }
-        });
+        // 【v2.2.29変更】通信サーバーの自動フォールバック機能
+        let isMqttConnected = false;
+        const brokers = [
+          'wss://broker.hivemq.com:8884/mqtt', // より安定しているサーバーを1番目に
+          'wss://broker.emqx.io:8084/mqtt',
+          'wss://test.mosquitto.org:8081/mqtt'
+        ];
 
-        mqttClient.on('message', (topic, message) => {
-          if (checkingGroupId && topic.startsWith(`${APP_PREFIX}${checkingGroupId}/`)) {
-            isGroupIdTaken = true;
+        const tryConnectMQTT = (bIndex) => {
+          if (bIndex >= brokers.length) {
+            statusEl.innerText = '⚠️ 通信サーバーへの接続がブロックされています。別のWi-Fiなどをお試しください。';
+            return;
           }
 
-          if (joiningGroupId && topic.startsWith(`${APP_PREFIX}${joiningGroupId}/`)) {
-            isJoinRoomFound = true;
-            if (topic === `${APP_PREFIX}${joiningGroupId}/${joiningGroupPass}`) {
-              isJoinPassCorrect = true;
-              try {
-                const data = JSON.parse(message.toString());
-                if (data.type === 'radio_close') isJoinRoomClosed = true;
-                if (data.isRadio !== undefined) joiningFoundRadio = data.isRadio;
-                if (data.allowMemberSE !== undefined) joiningFoundAllowMemberSE = data.allowMemberSE; 
-                if (data.noGuests !== undefined) joiningFoundNoGuests = data.noGuests; 
-              } catch(e) {}
-            }
-          }
-
-          if (currentMode !== 'group') return;
-          const data = JSON.parse(message.toString());
+          statusEl.innerText = `通信経路を構築中... (${bIndex + 1}/${brokers.length})`;
           
-          const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
-
-          if (data.type === 'poll_start') {
-            startPollUI(data);
-            showNotification(`📊 ${data.senderId === myPeerId ? 'あなた' : 'リーダー'}がアンケートを開始しました`);
+          if (mqttClient) {
+             try { mqttClient.end(true); } catch(e){}
           }
-          if (data.type === 'poll_vote') {
-            handlePollVote(data);
-          }
-
-          if (data.type === 'draw_batch' && data.senderId !== myPeerId) {
-            if (document.getElementById('whiteboard-section').style.display !== 'block') {
-               document.getElementById('whiteboard-section').style.display = 'block';
-               setTimeout(initWhiteboard, 100);
+          
+          mqttClient = mqtt.connect(brokers[bIndex], { connectTimeout: 3000 });
+          
+          let fallbackTimer = setTimeout(() => {
+            if (!isMqttConnected) {
+              console.warn('MQTT connection timeout for broker:', brokers[bIndex]);
+              tryConnectMQTT(bIndex + 1);
             }
-            setTimeout(() => {
-              if (!wbCtx) return;
-              data.lines.forEach(l => {
-                window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false);
-              });
-            }, wbCtx ? 0 : 150);
-          }
+          }, 3000);
 
-          if (data.type === 'wb_open' && data.senderId !== myPeerId) {
-            document.getElementById('whiteboard-section').style.display = 'block';
-            setTimeout(initWhiteboard, 100);
-            showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`);
-          }
-          if (data.type === 'wb_close' && data.senderId !== myPeerId) {
-            document.getElementById('whiteboard-section').style.display = 'none';
-          }
-          if (data.type === 'draw' && data.senderId !== myPeerId) {
-            if (document.getElementById('whiteboard-section').style.display !== 'block') {
-               document.getElementById('whiteboard-section').style.display = 'block';
-               setTimeout(initWhiteboard, 100);
-            }
-            setTimeout(() => {
-              window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
-            }, wbCtx ? 0 : 150);
-          }
-          if (data.type === 'draw_clear' && data.senderId !== myPeerId) {
-            window.clearWhiteboard(false);
-          }
-
-          if (data.type === 'se' && data.senderId !== myPeerId) {
-            playAudioEffect(data.sound);
-          }
-          if (data.type === 'quiz_push' && data.senderId !== myPeerId) {
-            handleQuizPush(data.senderName);
-          }
-
-          if (data.type === 'radio_close' && data.senderId !== myPeerId) {
-            if (currentGroupObj && currentGroupObj.isRadio && data.senderId === currentGroupObj.hostId) {
-              alert('📻 放送局のオーナーが番組を終了しました。退出します。');
-              customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              saveGroups();
-              switchToDirect();
-              return;
-            }
-          }
-
-          if (data.type === 'leave' && data.senderId !== myPeerId) {
-            if (activeCalls[data.senderId]) {
-              if (activeCalls[data.senderId].peerConnection) activeCalls[data.senderId].peerConnection.close();
-              activeCalls[data.senderId].close();
-              delete activeCalls[data.senderId];
-            }
-            if (activeDataConns[data.senderId]) {
-              activeDataConns[data.senderId].close();
-              delete activeDataConns[data.senderId];
-            }
-            if (pannerNodes[data.senderId]) {
-               pannerNodes[data.senderId].disconnect();
-               delete pannerNodes[data.senderId];
-            }
-            const audio = document.getElementById('audio-' + data.senderId);
-            if (audio) audio.remove();
-            removeParticipantUI(data.senderId);
-            updateStatus();
-            if (isReversiActive) endReversi();
-          }
-
-          if ((data.type === 'room_meta' || data.type === 'host_sync' || data.type === 'join') && data.hostId && currentGroupObj) {
-            const remoteTime = data.createdAt || 9999999999999;
-            const localTime = currentGroupObj.createdAt || 9999999999999;
-
-            const isRemoteDominant = remoteTime < localTime || (remoteTime === localTime && data.hostId < currentGroupObj.hostId);
-
-            if (currentGroupObj.hostId !== data.hostId) {
-              if (isRemoteDominant) {
-                currentGroupObj.hostId = data.hostId;
-                currentGroupObj.createdAt = remoteTime;
-                if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
-                if (data.allowMemberSE !== undefined) currentGroupObj.allowMemberSE = data.allowMemberSE; 
-                if (data.noGuests !== undefined) currentGroupObj.noGuests = data.noGuests; 
-                saveGroups();
-                renderTabs();
-                document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId && !currentGroupObj.isRadio) ? 'block' : 'none';
-                updateStatus();
-              } else if (currentGroupObj.hostId === myPeerId) {
-                mqttClient.publish(currentGroupTopic, JSON.stringify({
-                  type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, 
-                  isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE,
-                  noGuests: currentGroupObj.noGuests 
-                }), { retain: true });
+          mqttClient.on('connect', () => {
+            if (isMqttConnected) return;
+            isMqttConnected = true;
+            clearTimeout(fallbackTimer);
+            
+            if (pendingInvite) {
+              const listIdx = customGroups.findIndex(g => g.id === pendingInvite.id);
+              if (listIdx >= 0) {
+                customGroups[listIdx].pass = pendingInvite.pass;
+                customGroups[listIdx].name = pendingInvite.name;
+                customGroups[listIdx].requireName = pendingInvite.requireName;
+                if (pendingInvite.hostId && !customGroups[listIdx].hostId) {
+                  customGroups[listIdx].hostId = pendingInvite.hostId;
+                }
+                if (pendingInvite.isRadio) {
+                  customGroups[listIdx].isRadio = true;
+                }
+                if (pendingInvite.noGuests) { 
+                  customGroups[listIdx].noGuests = true;
+                }
+              } else {
+                customGroups.push(pendingInvite);
               }
-            } else if (currentGroupObj.hostId === data.hostId) {
-               let updated = false;
-               if (remoteTime < localTime) {
-                 currentGroupObj.createdAt = remoteTime;
-                 updated = true;
-               }
-               if (data.isRadio !== undefined && currentGroupObj.isRadio !== data.isRadio) {
-                 currentGroupObj.isRadio = data.isRadio;
-                 updated = true;
-               }
-               if (data.allowMemberSE !== undefined && currentGroupObj.allowMemberSE !== data.allowMemberSE) { 
-                 currentGroupObj.allowMemberSE = data.allowMemberSE;
-                 updated = true;
-               }
-               if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { 
-                 currentGroupObj.noGuests = data.noGuests;
-                 updated = true;
-               }
-               if (updated) {
-                 saveGroups();
-                 updateStatus();
-               }
-            }
-            
-            if (isGuestMode && currentGroupObj.noGuests) {
-              alert('🚨 このグループはゲストの参加が許可されていません。\n強制退出します。');
-              customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
               saveGroups();
+              
+              const targetGroup = customGroups.find(g => g.id === pendingInvite.id);
+              pendingInvite = null; 
+              joinGroup(targetGroup);
+            } else {
               switchToDirect();
-              return;
             }
-          }
+          });
 
-          if (data.type === 'kick' && data.targetId === myPeerId) {
-            if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
-              alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
-              customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
-              saveGroups();
-              switchToDirect();
-              return;
+          mqttClient.on('message', (topic, message) => {
+            if (checkingGroupId && topic.startsWith(`${APP_PREFIX}${checkingGroupId}/`)) {
+              isGroupIdTaken = true;
             }
-          }
 
-          if (data.type === 'change_pass') {
-            if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
-              alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
-              currentGroupObj.pass = data.newPass;
-              saveGroups();
-              joinGroup(currentGroupObj);
-              return;
+            if (joiningGroupId && topic.startsWith(`${APP_PREFIX}${joiningGroupId}/`)) {
+              isJoinRoomFound = true;
+              if (topic === `${APP_PREFIX}${joiningGroupId}/${joiningGroupPass}`) {
+                isJoinPassCorrect = true;
+                try {
+                  const data = JSON.parse(message.toString());
+                  if (data.type === 'radio_close') isJoinRoomClosed = true;
+                  if (data.isRadio !== undefined) joiningFoundRadio = data.isRadio;
+                  if (data.allowMemberSE !== undefined) joiningFoundAllowMemberSE = data.allowMemberSE; 
+                  if (data.noGuests !== undefined) joiningFoundNoGuests = data.noGuests; 
+                } catch(e) {}
+              }
             }
-          }
 
-          if (data.type === 'join' && data.peerId !== myPeerId) {
-            if (data.senderName) updateParticipantName(data.peerId, data.senderName);
+            if (currentMode !== 'group') return;
+            const data = JSON.parse(message.toString());
             
-            if (currentGroupObj && currentGroupObj.noGuests && data.isGuest) return;
+            const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
 
-            resumeAudioContext();
-            const call = peer.call(data.peerId, processedStream, { 
-              metadata: { senderName: savedMyName, mode: 'group', groupId: currentGroupId, isGuest: isGuestMode, isScreen: isScreenSharing } 
-            });
-            setupCall(call);
-          } else if (data.type === 'chat' && data.senderId !== myPeerId) {
-            if (data.senderName) updateParticipantName(data.senderId, data.senderName);
-            if (currentGroupId === 'test-noguest') return;
-            
-            showNotification(`💬 ${data.senderName}: ${data.text}`);
-            
-            addChatLog(data.senderName, data.text, false);
-          } else if (data.type === 'subtitle' && data.senderId !== myPeerId) {
-            window.showSubtitle(data.senderName, data.text);
-          }
-        });
+            if (data.type === 'poll_start') {
+              startPollUI(data);
+              showNotification(`📊 ${data.senderId === myPeerId ? 'あなた' : 'リーダー'}がアンケートを開始しました`);
+            }
+            if (data.type === 'poll_vote') {
+              handlePollVote(data);
+            }
+
+            if (data.type === 'draw_batch' && data.senderId !== myPeerId) {
+              if (document.getElementById('whiteboard-section').style.display !== 'block') {
+                 document.getElementById('whiteboard-section').style.display = 'block';
+                 setTimeout(initWhiteboard, 100);
+              }
+              setTimeout(() => {
+                if (!wbCtx) return;
+                data.lines.forEach(l => {
+                  window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false);
+                });
+              }, wbCtx ? 0 : 150);
+            }
+
+            if (data.type === 'wb_open' && data.senderId !== myPeerId) {
+              document.getElementById('whiteboard-section').style.display = 'block';
+              setTimeout(initWhiteboard, 100);
+              showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`);
+            }
+            if (data.type === 'wb_close' && data.senderId !== myPeerId) {
+              document.getElementById('whiteboard-section').style.display = 'none';
+            }
+            if (data.type === 'draw' && data.senderId !== myPeerId) {
+              if (document.getElementById('whiteboard-section').style.display !== 'block') {
+                 document.getElementById('whiteboard-section').style.display = 'block';
+                 setTimeout(initWhiteboard, 100);
+              }
+              setTimeout(() => {
+                window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false);
+              }, wbCtx ? 0 : 150);
+            }
+            if (data.type === 'draw_clear' && data.senderId !== myPeerId) {
+              window.clearWhiteboard(false);
+            }
+
+            if (data.type === 'se' && data.senderId !== myPeerId) {
+              playAudioEffect(data.sound);
+            }
+            if (data.type === 'quiz_push' && data.senderId !== myPeerId) {
+              handleQuizPush(data.senderName);
+            }
+
+            if (data.type === 'radio_close' && data.senderId !== myPeerId) {
+              if (currentGroupObj && currentGroupObj.isRadio && data.senderId === currentGroupObj.hostId) {
+                alert('📻 放送局のオーナーが番組を終了しました。退出します。');
+                customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
+                saveGroups();
+                switchToDirect();
+                return;
+              }
+            }
+
+            if (data.type === 'leave' && data.senderId !== myPeerId) {
+              if (activeCalls[data.senderId]) {
+                if (activeCalls[data.senderId].peerConnection) activeCalls[data.senderId].peerConnection.close();
+                activeCalls[data.senderId].close();
+                delete activeCalls[data.senderId];
+              }
+              if (activeDataConns[data.senderId]) {
+                activeDataConns[data.senderId].close();
+                delete activeDataConns[data.senderId];
+              }
+              if (pannerNodes[data.senderId]) {
+                 pannerNodes[data.senderId].disconnect();
+                 delete pannerNodes[data.senderId];
+              }
+              const audio = document.getElementById('audio-' + data.senderId);
+              if (audio) audio.remove();
+              removeParticipantUI(data.senderId);
+              updateStatus();
+              if (isReversiActive) endReversi();
+            }
+
+            if ((data.type === 'room_meta' || data.type === 'host_sync' || data.type === 'join') && data.hostId && currentGroupObj) {
+              const remoteTime = data.createdAt || 9999999999999;
+              const localTime = currentGroupObj.createdAt || 9999999999999;
+
+              const isRemoteDominant = remoteTime < localTime || (remoteTime === localTime && data.hostId < currentGroupObj.hostId);
+
+              if (currentGroupObj.hostId !== data.hostId) {
+                if (isRemoteDominant) {
+                  currentGroupObj.hostId = data.hostId;
+                  currentGroupObj.createdAt = remoteTime;
+                  if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
+                  if (data.allowMemberSE !== undefined) currentGroupObj.allowMemberSE = data.allowMemberSE; 
+                  if (data.noGuests !== undefined) currentGroupObj.noGuests = data.noGuests; 
+                  saveGroups();
+                  renderTabs();
+                  document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId && !currentGroupObj.isRadio) ? 'block' : 'none';
+                  updateStatus();
+                } else if (currentGroupObj.hostId === myPeerId) {
+                  mqttClient.publish(currentGroupTopic, JSON.stringify({
+                    type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, 
+                    isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE,
+                    noGuests: currentGroupObj.noGuests 
+                  }), { retain: true });
+                }
+              } else if (currentGroupObj.hostId === data.hostId) {
+                 let updated = false;
+                 if (remoteTime < localTime) {
+                   currentGroupObj.createdAt = remoteTime;
+                   updated = true;
+                 }
+                 if (data.isRadio !== undefined && currentGroupObj.isRadio !== data.isRadio) {
+                   currentGroupObj.isRadio = data.isRadio;
+                   updated = true;
+                 }
+                 if (data.allowMemberSE !== undefined && currentGroupObj.allowMemberSE !== data.allowMemberSE) { 
+                   currentGroupObj.allowMemberSE = data.allowMemberSE;
+                   updated = true;
+                 }
+                 if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { 
+                   currentGroupObj.noGuests = data.noGuests;
+                   updated = true;
+                 }
+                 if (updated) {
+                   saveGroups();
+                   updateStatus();
+                 }
+              }
+              
+              if (isGuestMode && currentGroupObj.noGuests) {
+                alert('🚨 このグループはゲストの参加が許可されていません。\n強制退出します。');
+                customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
+                saveGroups();
+                switchToDirect();
+                return;
+              }
+            }
+
+            if (data.type === 'kick' && data.targetId === myPeerId) {
+              if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
+                alert('👑 リーダーから強制退出させられました。\n(グループ一覧から自動的に削除されました)');
+                customGroups = customGroups.filter(g => g.id !== currentGroupObj.id);
+                saveGroups();
+                switchToDirect();
+                return;
+              }
+            }
+
+            if (data.type === 'change_pass') {
+              if (currentGroupObj && data.senderId === currentGroupObj.hostId) {
+                alert('👑 リーダーがパスワードを変更しました。新しい設定で自動再接続します。');
+                currentGroupObj.pass = data.newPass;
+                saveGroups();
+                joinGroup(currentGroupObj);
+                return;
+              }
+            }
+
+            if (data.type === 'join' && data.peerId !== myPeerId) {
+              if (data.senderName) updateParticipantName(data.peerId, data.senderName);
+              
+              if (currentGroupObj && currentGroupObj.noGuests && data.isGuest) return;
+
+              resumeAudioContext();
+              const call = peer.call(data.peerId, processedStream, { 
+                metadata: { senderName: savedMyName, mode: 'group', groupId: currentGroupId, isGuest: isGuestMode, isScreen: isScreenSharing } 
+              });
+              setupCall(call);
+            } else if (data.type === 'chat' && data.senderId !== myPeerId) {
+              if (data.senderName) updateParticipantName(data.senderId, data.senderName);
+              if (currentGroupId === 'test-noguest') return;
+              
+              showNotification(`💬 ${data.senderName}: ${data.text}`);
+              
+              addChatLog(data.senderName, data.text, false);
+            } else if (data.type === 'subtitle' && data.senderId !== myPeerId) {
+              window.showSubtitle(data.senderName, data.text);
+            }
+          });
+        };
+
+        // 最初のサーバーへ接続開始
+        tryConnectMQTT(0);
       });
 
       peer.on('error', (err) => {
@@ -3104,7 +3136,8 @@
 
     window.executeCreateGroup = function() {
       if (isGuestMode) return alert('ゲストは新しくグループを作成できません。');
-      if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
+      // 自動フォールバック対応により、一時的な未接続を許容（代わりに警告を減らす）
+      if (!mqttClient) return alert('通信サーバーの準備中です。数秒待ってから再度お試しください。');
 
       const name = document.getElementById('modal-create-name').value.trim();
       const id = document.getElementById('modal-create-id').value.trim();
@@ -3155,7 +3188,7 @@
     }
 
     window.executeJoinGroup = function() {
-      if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
+      if (!mqttClient) return alert('通信サーバーの準備中です。数秒待ってから再度お試しください。');
 
       const name = document.getElementById('modal-join-name').value.trim();
       const id = document.getElementById('modal-join-id').value.trim();
