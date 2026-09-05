@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.11</title>
+  <title>Naisync - 内線トランシーバー v2.2.12</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -316,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.11</div>
+  <div class="version-tag">v2.2.12</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -408,13 +408,14 @@
       
       <div id="host-controls" style="display: none; margin-top: 8px;">
         <button class="btn-action btn-danger" onclick="window.changeRoomPassword()" style="padding: 8px; font-size: 12px;">👑 グループのパスワードを変更する</button>
-        <!-- 【v2.2.11追加】番組SEボード -->
-        <div id="host-se-board" style="margin-top: 12px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 8px; border: 1px solid #ddd;">
-          <div style="font-size: 11px; color: #777; margin-bottom: 6px; font-weight: bold;">🎛️ 番組SEボード</div>
-          <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('pingpong')" title="正解">⭕</button>
-          <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('buzzer')" title="不正解">❌</button>
-          <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('applause')" title="拍手">👏</button>
-        </div>
+      </div>
+      
+      <!-- 【v2.2.12変更】SEボードを独立させ、メンバーでも表示可能に -->
+      <div id="se-board" style="display: none; margin-top: 12px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 8px; border: 1px solid #ddd;">
+        <div style="font-size: 11px; color: #777; margin-bottom: 6px; font-weight: bold;">🎛️ 効果音(SE)ボード</div>
+        <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('pingpong')" title="正解">⭕</button>
+        <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('buzzer')" title="不正解">❌</button>
+        <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('applause')" title="拍手">👏</button>
       </div>
     </div>
 
@@ -425,7 +426,6 @@
       <button id="toggle-btn" disabled>常時通話に切り替え (OFF)</button>
     </div>
 
-    <!-- 【v2.2.11追加】早押しボタンエリア -->
     <div id="play-section" style="margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
       <div class="chat-title">🎮 遊び・ゲーム</div>
       <button id="quiz-btn" onclick="window.pushQuizBtn()" style="width: 80px; height: 80px; border-radius: 50%; background: #dc3545; color: white; font-weight: bold; font-size: 14px; border: 4px solid #b02a37; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2); transition: 0.1s;">早押し</button>
@@ -498,7 +498,6 @@
         <span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span>
       </label>
 
-      <!-- 【v2.2.11追加】トランシーバー終了音の設定 -->
       <label style="margin-top: 20px;">📻 トランシーバー終了音（ロジャービープ）</label>
       <label class="toggle-switch">
         <input type="checkbox" id="roger-checkbox" checked>
@@ -564,6 +563,12 @@
         <label class="checkbox-label">
           <input type="checkbox" id="modal-create-require-name">
           参加者に「名前設定」を必須にする
+        </label>
+        
+        <!-- 【v2.2.12追加】メンバー全員のSE許可チェックボックス -->
+        <label class="checkbox-label">
+          <input type="checkbox" id="modal-create-allow-se">
+          メンバー全員も効果音(SE)を使えるようにする
         </label>
 
         <div class="modal-buttons">
@@ -643,9 +648,13 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.11変更】メガエンタメアップデート履歴 -->
-          <div class="changelog-version">v2.2.11 (最新) 🎉メガエンタメUP🎉</div>
-          <div>・【早押しボタン】全員で遊べるラグなしのクイズボタンを実装！<br>・【SEボード】ホストの画面に番組を盛り上げる効果音ボタンを追加！<br>・【ロジャービープ】発言終了時にトランシーバー特有の終了音「ピッ」が鳴るようになりました！</div>
+          <!-- 【v2.2.12変更】履歴を追加 -->
+          <div class="changelog-version">v2.2.12 (最新)</div>
+          <div>・グループの設定で「メンバー全員が効果音(SE)を使える」ようにする許可機能を追加しました。（ラジオ局の場合はホスト専用に制限されます）</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.11 🎉メガエンタメUP🎉</div>
+          <div>・【早押しボタン】全員で遊べるラグなしのクイズボタンを実装！<br>・【SEボード】番組を盛り上げる効果音ボタンを追加！<br>・【ロジャービープ】発言終了時にトランシーバー特有の終了音「ピッ」が鳴るようになりました！</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.10</div>
@@ -670,6 +679,10 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.2.4</div>
           <div>・字幕の共有設定と、動画のような「数秒で消える字幕エリア」を新設しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.1.8</div>
+          <div>・1対1通話中に遊べる「リアルタイム・リバーシ」対戦機能を追加しました！</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -711,7 +724,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2211/';
+    const APP_PREFIX = 'Naisync/v2212/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -744,6 +757,7 @@
     let isJoinPassCorrect = false;
     let isJoinRoomClosed = false;
     let joiningFoundRadio = false;
+    let joiningFoundAllowMemberSE = false; // 【v2.2.12追加】
 
     let transMode = localStorage.getItem('my_naisen_trans_mode') || 'off';
     let speechRecognition = null;
@@ -753,8 +767,6 @@
     let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
     let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
     let isTranscriptionNotifOn = localStorage.getItem('my_naisen_transcription_notif') !== 'false';
-    
-    // 【v2.2.11追加】ロジャービープ（トランシーバー音）のフラグ
     let isRogerBeepOn = localStorage.getItem('my_naisen_roger') !== 'false';
 
     let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
@@ -766,8 +778,6 @@
     let reversiCurrentTurn = 1;
 
     let pendingReversiConn = null;
-
-    // 【v2.2.11追加】早押しクイズロック用変数
     let isQuizLocked = false;
 
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
@@ -796,7 +806,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2211', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2212', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -804,12 +814,13 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2211'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2212'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2210')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2211')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
+           if (g.allowMemberSE === undefined) g.allowMemberSE = false; // 【v2.2.12追加】
            return g;
          });
          saveGroups();
@@ -840,11 +851,8 @@
     const transcriptionStatusText = document.getElementById('transcription-status-text');
     const ncCheckbox = document.getElementById('nc-checkbox');
     const ncStatusText = document.getElementById('nc-status-text');
-    
-    // 【v2.2.11追加】ロジャービープ設定UI
     const rogerCheckbox = document.getElementById('roger-checkbox');
     const rogerStatusText = document.getElementById('roger-status-text');
-
     const micVolumeSlider = document.getElementById('mic-volume-slider');
     const micVolumeDisplay = document.getElementById('mic-volume-display');
     const spkVolumeSlider = document.getElementById('spk-volume-slider');
@@ -860,9 +868,6 @@
     const darkModeStatusText = document.getElementById('dark-mode-status-text');
     const authError = document.getElementById('auth-error');
 
-    // ==========================================
-    // 【v2.2.11追加】Web Audio API を使った効果音（軽量）
-    // ==========================================
     const playAudioEffect = (type) => {
       if (!audioCtx || audioCtx.state === 'suspended') return;
       const now = audioCtx.currentTime;
@@ -909,8 +914,8 @@
         osc.stop(now + 0.1);
       } else if (type === 'pingpong') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(783.99, now); // G5
-        osc.frequency.setValueAtTime(659.25, now + 0.3); // E5
+        osc.frequency.setValueAtTime(783.99, now); 
+        osc.frequency.setValueAtTime(659.25, now + 0.3); 
         gain.gain.setValueAtTime(0.1, now);
         gain.gain.setValueAtTime(0.1, now + 0.3);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
@@ -980,8 +985,6 @@
         }, 4000);
       }
     }
-
-    // ==========================================
 
     window.openAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'flex'; }
     window.closeAuthHelp = function() { document.getElementById('auth-help-modal').style.display = 'none'; }
@@ -1524,7 +1527,10 @@
         };
       } else {
         addBtn.innerText = '＋ 作成';
-        addBtn.onclick = window.openGroupModal;
+        addBtn.onclick = () => {
+          document.getElementById('modal-create-allow-se').checked = false; // 【v2.2.12追加】初期化
+          window.openGroupModal();
+        };
       }
       tabsWrapper.appendChild(addBtn);
     }
@@ -1578,6 +1584,7 @@
                 const data = JSON.parse(message.toString());
                 if (data.type === 'radio_close') isJoinRoomClosed = true;
                 if (data.isRadio !== undefined) joiningFoundRadio = data.isRadio;
+                if (data.allowMemberSE !== undefined) joiningFoundAllowMemberSE = data.allowMemberSE; // 【v2.2.12追加】
               } catch(e) {}
             }
           }
@@ -1588,7 +1595,6 @@
           const currentGroupObj = customGroups.find(g => g.id === currentGroupId);
           const isNameRequired = currentGroupObj ? currentGroupObj.requireName : false;
 
-          // 【v2.2.11追加】MQTT経由の音ギミック受信処理
           if (data.type === 'roger' && data.senderId !== myPeerId && isRogerBeepOn) {
             playAudioEffect('roger');
           }
@@ -1637,13 +1643,15 @@
                 currentGroupObj.hostId = data.hostId;
                 currentGroupObj.createdAt = remoteTime;
                 if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; 
+                if (data.allowMemberSE !== undefined) currentGroupObj.allowMemberSE = data.allowMemberSE; // 【v2.2.12追加】
                 saveGroups();
                 renderTabs();
                 document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId && !currentGroupObj.isRadio) ? 'block' : 'none';
                 updateStatus();
               } else if (currentGroupObj.hostId === myPeerId) {
                 mqttClient.publish(currentGroupTopic, JSON.stringify({
-                  type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, isRadio: currentGroupObj.isRadio
+                  type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, 
+                  isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE
                 }), { retain: true });
               }
             } else if (currentGroupObj.hostId === data.hostId) {
@@ -1654,6 +1662,10 @@
                }
                if (data.isRadio !== undefined && currentGroupObj.isRadio !== data.isRadio) {
                  currentGroupObj.isRadio = data.isRadio;
+                 updated = true;
+               }
+               if (data.allowMemberSE !== undefined && currentGroupObj.allowMemberSE !== data.allowMemberSE) { // 【v2.2.12追加】
+                 currentGroupObj.allowMemberSE = data.allowMemberSE;
                  updated = true;
                }
                if (updated) {
@@ -1874,7 +1886,6 @@
       activeDataConns[conn.peer] = conn;
 
       conn.on('data', (data) => {
-        // 【v2.2.11追加】DataConn経由の音ギミック受信処理
         if (data && data.type === 'roger' && isRogerBeepOn) {
           playAudioEffect('roger');
         } else if (data && data.type === 'se') {
@@ -2030,12 +2041,6 @@
 
       const isHost = (groupObj.hostId === myPeerId);
       document.getElementById('host-controls').style.display = isHost && !groupObj.isRadio ? 'block' : 'none';
-      
-      // 【v2.2.11変更】SEボードはラジオのホストでも通常グループのホストでも表示
-      const seBoard = document.getElementById('host-se-board');
-      if (seBoard) {
-        seBoard.style.display = isHost ? 'block' : 'none';
-      }
 
       currentGroupTopic = `${APP_PREFIX}${groupObj.id}/${groupObj.pass}`;
 
@@ -2048,7 +2053,8 @@
           senderName: savedMyName,
           hostId: groupObj.hostId,
           createdAt: groupObj.createdAt,
-          isRadio: groupObj.isRadio 
+          isRadio: groupObj.isRadio,
+          allowMemberSE: groupObj.allowMemberSE // 【v2.2.12追加】
         }), { retain: true });
       }
       
@@ -2083,7 +2089,8 @@
           
           const pass = '';
 
-          const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true };
+          // 【v2.2.12追加】ラジオ局はallowMemberSEを強制falseにする
+          const newGroup = { id, name, pass, requireName: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true, allowMemberSE: false };
           customGroups.push(newGroup);
           saveGroups();
           joinGroup(newGroup);
@@ -2140,6 +2147,7 @@
       document.getElementById('modal-create-id').value = '';
       document.getElementById('modal-create-pass').value = '';
       document.getElementById('modal-create-require-name').checked = false; 
+      document.getElementById('modal-create-allow-se').checked = false; // 【v2.2.12追加】
 
       document.getElementById('modal-join-name').value = '';
       document.getElementById('modal-join-id').value = '';
@@ -2157,6 +2165,7 @@
       const id = document.getElementById('modal-create-id').value.trim();
       const pass = document.getElementById('modal-create-pass').value.trim();
       const requireName = document.getElementById('modal-create-require-name').checked;
+      const allowMemberSE = document.getElementById('modal-create-allow-se').checked; // 【v2.2.12追加】
 
       if (!name || !id || pass === '') return alert('全項目を入力してください（グループ作成にはパスワードが必須です）');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
@@ -2188,7 +2197,8 @@
           checkingGroupId = null;
         } else {
           checkingGroupId = null;
-          const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false };
+          // 【v2.2.12追加】allowMemberSEを保存
+          const newGroup = { id, name, pass, requireName, hostId: myPeerId, createdAt: Date.now(), isRadio: false, allowMemberSE: allowMemberSE };
           customGroups.push(newGroup);
 
           saveGroups();
@@ -2220,6 +2230,7 @@
       isJoinPassCorrect = false;
       isJoinRoomClosed = false;
       joiningFoundRadio = false;
+      joiningFoundAllowMemberSE = false; // 【v2.2.12追加】
 
       const checkTopic = `${APP_PREFIX}${id}/#`;
       mqttClient.subscribe(checkTopic);
@@ -2258,13 +2269,15 @@
         const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : null;
         const createdAt = (existingGroup && existingGroup.createdAt) ? existingGroup.createdAt : 9999999999999;
         const isRadio = joiningFoundRadio;
+        const allowMemberSE = joiningFoundAllowMemberSE; // 【v2.2.12追加】
 
-        const newGroup = { id, name, pass, requireName: false, hostId, createdAt, isRadio };
+        const newGroup = { id, name, pass, requireName: false, hostId, createdAt, isRadio, allowMemberSE };
         const index = customGroups.findIndex(g => g.id === id);
         if (index >= 0) {
           customGroups[index].pass = pass;
           customGroups[index].name = name;
           customGroups[index].isRadio = isRadio;
+          customGroups[index].allowMemberSE = allowMemberSE; // 【v2.2.12追加】
         } else {
           customGroups.push(newGroup);
         }
@@ -2284,9 +2297,9 @@
     window.addTestGroup = function(type) {
       let testGroup;
       if (type === 'public') {
-        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', requireName: false, hostId: null, createdAt: 9999999999999, isRadio: false };
+        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', requireName: false, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
       } else {
-        testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true, hostId: null, createdAt: 9999999999999, isRadio: false };
+        testGroup = { id: 'test-nameroom', name: '名前必須テスト', pass: '0000', requireName: true, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
       }
       
       const index = customGroups.findIndex(g => g.id === testGroup.id);
@@ -2326,6 +2339,17 @@
           talkBtn.disabled = false;
           toggleBtn.disabled = false;
           talkBtn.innerText = '長押しで話す';
+        }
+        
+        // 【v2.2.12変更】SEボードの表示判定を更新
+        const seBoard = document.getElementById('se-board');
+        if (seBoard && g) {
+          const isHost = (g.hostId === myPeerId);
+          if (g.isRadio) {
+            seBoard.style.display = isHost ? 'block' : 'none'; // ラジオはホスト専用
+          } else {
+            seBoard.style.display = (isHost || (g.allowMemberSE && !isGuestMode)) ? 'block' : 'none'; // 許可されていればゲスト以外に表示
+          }
         }
       } else if (currentMode === 'direct') {
         if (isGuestMode) {
@@ -2564,7 +2588,6 @@
           try { speechRecognition.stop(); } catch(err){}
         }
         
-        // 【v2.2.11追加】発言終了時にロジャービープを鳴らして送信
         if (isRogerBeepOn) {
           playAudioEffect('roger');
           if (currentMode === 'group' && currentGroupTopic) {
@@ -2622,7 +2645,6 @@
           try { speechRecognition.stop(); } catch(err){}
         }
         
-        // 【v2.2.11追加】常時通話を切った際もロジャービープを鳴らす
         if (isRogerBeepOn) {
           playAudioEffect('roger');
           if (currentMode === 'group' && currentGroupTopic) {
