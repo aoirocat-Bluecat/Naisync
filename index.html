@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.25</title>
+  <title>Naisync - 内線トランシーバー v2.2.26</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -331,7 +331,6 @@
     body.dark-mode .poll-option-btn { background: #2a2d32; border-color: #555; color: #e0e0e0; }
     body.dark-mode .poll-option-btn:hover { background: #333; }
 
-    /* 【v2.2.25追加】画面共有用のビデオプレイヤースタイル */
     .screen-share-container {
       width: 100%; margin-top: 16px; border-radius: 8px; overflow: hidden;
       background: #000; display: none; position: relative;
@@ -345,7 +344,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.25</div>
+  <div class="version-tag">v2.2.26</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -449,18 +448,18 @@
 
     <div id="status">初期化中...</div>
 
-    <!-- 【v2.2.25追加】画面共有ボタンと常時通話ボタンを並べる -->
+    <!-- 【v2.2.26変更】画面共有ボタンの名称を「Field Share」に変更 -->
     <div class="controls">
       <button id="talk-btn" disabled>準備中...</button>
       <div style="display: flex; gap: 8px; width: 100%;">
         <button id="toggle-btn" disabled style="flex: 1;">常時通話 (OFF)</button>
-        <button id="share-screen-btn" class="btn-action btn-secondary" onclick="window.startScreenShare()" disabled style="flex: 1; padding: 12px; margin: 0; font-size: 13px;">🖥️ 画面共有</button>
+        <button id="share-screen-btn" class="btn-action btn-secondary" onclick="window.startScreenShare()" disabled style="flex: 1; padding: 12px; margin: 0; font-size: 13px;">🖥️ Field Share</button>
       </div>
     </div>
 
-    <!-- 【v2.2.25追加】画面共有の表示エリア -->
+    <!-- 【v2.2.26変更】プレビューラベルの名称変更 -->
     <div id="screen-share-container" class="screen-share-container">
-      <div id="screen-share-label" class="screen-share-label">誰かの画面</div>
+      <div id="screen-share-label" class="screen-share-label">誰かのField</div>
       <video id="screen-share-video" class="screen-share-video" autoplay playsinline></video>
     </div>
 
@@ -764,8 +763,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.25追加】履歴の更新 -->
-          <div class="changelog-version">v2.2.25 (最新) 🖥️画面共有追加</div>
+          <!-- 【v2.2.26追加】履歴の更新 -->
+          <div class="changelog-version">v2.2.26 (最新) 🖥️Field Share</div>
+          <div>・PCやスマートフォンの画面を相手に見せながら通話できる画面共有機能を「Field Share」として追加・名称変更しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.25 🖥️画面共有追加</div>
           <div>・PCやスマートフォンの画面を相手に見せながら通話できる「画面共有（がめきょ）」機能を追加しました。</div>
         </div>
         <div class="changelog-item">
@@ -864,7 +867,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v2225/';
+    const APP_PREFIX = 'Naisync/v2226/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -882,7 +885,6 @@
     let rawStream = null;
     let rawAudioTrack = null;
     
-    // 【v2.2.25追加】画面共有用ストリーム
     let screenStream = null;
     let isScreenSharing = false;
 
@@ -969,7 +971,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v2225', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2226', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -977,9 +979,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2225'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2226'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2224')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v2225')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -1011,7 +1013,6 @@
     const participantsList = document.getElementById('participants-list');
     const participantsSection = document.getElementById('participants-section');
     
-    // 【v2.2.25追加】画面共有UIエレメント
     const screenShareBtn = document.getElementById('share-screen-btn');
     const screenShareContainer = document.getElementById('screen-share-container');
     const screenShareVideo = document.getElementById('screen-share-video');
@@ -1104,15 +1105,14 @@
     };
 
     // ==========================================
-    // 【v2.2.25追加】画面共有（がめきょ）機能
+    // 【v2.2.26変更】画面共有（Field Share）機能
     // ==========================================
     window.startScreenShare = async function() {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-        return alert('お使いのブラウザは画面共有に対応していません。（PCのChrome等を推奨します）');
+        return alert('お使いのブラウザはField Share（画面共有）に対応していません。（PCのChrome等を推奨します）');
       }
 
       if (isScreenSharing) {
-        // すでに共有中の場合は停止する
         stopScreenShare();
         return;
       }
@@ -1121,24 +1121,23 @@
         screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
         isScreenSharing = true;
         
-        screenShareBtn.innerText = '⏹️ 共有を停止';
+        // 【v2.2.26変更】ボタンテキスト変更
+        screenShareBtn.innerText = '⏹️ Field Share停止';
         screenShareBtn.classList.remove('btn-secondary');
         screenShareBtn.classList.add('btn-danger');
 
-        // 自分の画面をローカルでプレビュー表示
         screenShareVideo.srcObject = screenStream;
-        screenShareLabel.innerText = 'あなたの共有画面';
+        // 【v2.2.26変更】プレビューラベル変更
+        screenShareLabel.innerText = 'あなたのField';
         screenShareContainer.style.display = 'block';
 
-        // 相手に画面共有のストリーム（ビデオ）を送信するために再発信
         reconnectAllWithScreen();
 
-        // ブラウザのUIから「共有停止」が押された場合の処理
         screenStream.getVideoTracks()[0].onended = () => {
           stopScreenShare();
         };
       } catch (err) {
-        console.error("画面共有エラー:", err);
+        console.error("Field Shareエラー:", err);
       }
     };
 
@@ -1148,19 +1147,18 @@
         screenStream = null;
       }
       isScreenSharing = false;
-      screenShareBtn.innerText = '🖥️ 画面共有';
+      // 【v2.2.26変更】ボタンテキスト変更
+      screenShareBtn.innerText = '🖥️ Field Share';
       screenShareBtn.classList.remove('btn-danger');
       screenShareBtn.classList.add('btn-secondary');
       
       screenShareVideo.srcObject = null;
       screenShareContainer.style.display = 'none';
 
-      // 画面映像を抜いた元の音声ストリームで再発信
       reconnectAllWithScreen();
     }
 
     function reconnectAllWithScreen() {
-      // 画面映像ストリームと音声ストリームを合成する
       const combinedStream = new MediaStream();
       processedStream.getAudioTracks().forEach(track => combinedStream.addTrack(track));
       
@@ -1168,7 +1166,6 @@
          screenStream.getVideoTracks().forEach(track => combinedStream.addTrack(track));
       }
 
-      // 現在繋がっている全員に、新しいストリームでCallし直す
       Object.keys(activeCalls).forEach(peerId => {
          const call = peer.call(peerId, combinedStream, { 
            metadata: { senderName: savedMyName, mode: currentMode, groupId: currentGroupId, isGuest: isGuestMode, isScreen: isScreenSharing } 
@@ -2183,7 +2180,7 @@
           if (data.type === 'wb_open' && data.senderId !== myPeerId) {
             document.getElementById('whiteboard-section').style.display = 'block';
             setTimeout(initWhiteboard, 100);
-            showNotification(`🎨 ${data.senderName}さんがお絵かきボードを開きました`);
+            showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`);
           }
           if (data.type === 'wb_close' && data.senderId !== myPeerId) {
             document.getElementById('whiteboard-section').style.display = 'none';
@@ -2354,6 +2351,7 @@
         const callMode = call.metadata ? call.metadata.mode : 'direct';
         const callGroupId = call.metadata ? call.metadata.groupId : null;
         const callerIsGuest = call.metadata ? call.metadata.isGuest : false; 
+        const callerIsScreen = call.metadata ? call.metadata.isScreen : false; // 【v2.2.26変更】
 
         if (isGuestMode && callMode === 'direct') {
           call.close();
@@ -2383,7 +2381,6 @@
           }
         }
 
-        // 【v2.2.25追加】受信したCallが画面共有映像を含んでいるかチェック
         let combinedStream = processedStream;
         if (isScreenSharing && screenStream) {
            combinedStream = new MediaStream();
@@ -2559,15 +2556,14 @@
           audioContainer.appendChild(audio);
         }
 
-        // 【v2.2.25追加】受信したストリームに「映像」が含まれているかチェック
         const hasVideo = remoteStream.getVideoTracks().length > 0;
         if (hasVideo) {
           screenShareVideo.srcObject = remoteStream;
           const sName = call.metadata ? call.metadata.senderName : '誰か';
-          screenShareLabel.innerText = `${sName} の共有画面`;
+          // 【v2.2.26変更】ラベル名称変更
+          screenShareLabel.innerText = `${sName} のField`;
           screenShareContainer.style.display = 'block';
         } else {
-          // 映像がなくなった場合（共有を停止したなど）
           if (screenShareVideo.srcObject && screenShareVideo.srcObject.id === remoteStream.id) {
              screenShareVideo.srcObject = null;
              screenShareContainer.style.display = 'none';
@@ -2580,7 +2576,6 @@
            
            if (pannerNodes[call.peer]) pannerNodes[call.peer].disconnect();
 
-           // 映像入りのStreamをそのままAudioContextに入れるとエラーになるブラウザ対策として、音声トラックだけ抜き出す
            const audioStream = new MediaStream(remoteStream.getAudioTracks());
            const sourceNode = audioCtx.createMediaStreamSource(audioStream);
            
@@ -2631,7 +2626,6 @@
         if (audio) audio.remove();
         delete activeCalls[call.peer];
         
-        // 切断した人が画面共有主だったら映像を消す
         if (screenShareVideo.srcObject) {
            screenShareVideo.srcObject = null;
            screenShareContainer.style.display = 'none';
@@ -2673,7 +2667,7 @@
         else if (data && data.type === 'wb_open') {
           document.getElementById('whiteboard-section').style.display = 'block';
           setTimeout(initWhiteboard, 100);
-          showNotification(`🎨 ${data.senderName}さんがお絵かきボードを開きました`);
+          showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`);
         } else if (data && data.type === 'wb_close') {
           document.getElementById('whiteboard-section').style.display = 'none';
         } else if (data && data.type === 'draw') {
@@ -2747,7 +2741,6 @@
         mqttClient.unsubscribe(currentGroupTopic);
       }
       
-      // 画面共有を強制停止
       stopScreenShare();
       
       Object.values(activeDataConns).forEach(conn => {
@@ -2810,12 +2803,14 @@
         connectBtn.disabled = true;
         peerIdInput.disabled = true;
         document.getElementById('direct-connected-actions').style.display = 'none';
+        screenShareBtn.disabled = true;
       } else {
         statusEl.innerText = '1対1モード: 相手のIDを入力してください';
         talkBtn.disabled = true;
         toggleBtn.disabled = true;
         talkBtn.innerText = '接続待ち';
         document.getElementById('direct-connected-actions').style.display = 'none';
+        screenShareBtn.disabled = true;
       }
     }
 
@@ -3156,7 +3151,7 @@
             talkBtn.disabled = false;
             toggleBtn.disabled = false;
             talkBtn.innerText = '長押しで放送';
-            screenShareBtn.disabled = false; // ホストは画面共有可能
+            screenShareBtn.disabled = false; 
           } else {
             statusEl.innerText = `【🎧 ${g.name}】を受信中`;
             countEl.innerText = count > 0 ? `接続中: ほかリスナー ${count} 人` : '接続中: リスナー (あなただけです)';
@@ -3165,7 +3160,7 @@
             talkBtn.innerText = '🎧 聞き専モード';
             talkBtn.classList.remove('active');
             if (rawAudioTrack) rawAudioTrack.enabled = false;
-            screenShareBtn.disabled = true; // ラジオのリスナーは共有不可
+            screenShareBtn.disabled = true; 
           }
         } else {
           statusEl.innerText = `【${g ? g.name : ''}】に参加中`;
@@ -3173,7 +3168,7 @@
           talkBtn.disabled = false;
           toggleBtn.disabled = false;
           talkBtn.innerText = '長押しで話す';
-          screenShareBtn.disabled = false; // 通常グループは全員画面共有可能
+          screenShareBtn.disabled = false; 
         }
         
         const isRadioListener = (g && g.isRadio && g.hostId !== myPeerId);
