@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.7</title>
+  <title>Naisync - 内線トランシーバー v2.2.9</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -316,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.7</div>
+  <div class="version-tag">v2.2.9</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -325,7 +325,6 @@
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
 
-      <!-- 【v2.2.7追加】招待リンク連動のお知らせUI -->
       <div id="invite-alert" style="display: none; background: #eef2f5; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: bold; color: #007bff; border: 1px solid #007bff;">
         ✉️ 「<span id="invite-group-name"></span>」への招待が届いています！<br>
         <span style="font-size: 11px; color: #555; font-weight: normal;">ログインするか、一時的なゲストとして参加してください。</span>
@@ -350,7 +349,6 @@
       
       <div id="auth-error" style="color: #dc3545; font-size: 13px; margin-top: 12px; font-weight: bold; min-height: 20px;"></div>
 
-      <!-- 【v2.2.7追加】ゲスト参加ボタン -->
       <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 16px;">
         <p style="font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold;">アカウントを作らずに一時的に参加</p>
         <button class="btn-action btn-secondary" onclick="window.doGuestLogin()">👤 ゲストとして参加 (機能制限あり)</button>
@@ -563,7 +561,7 @@
 
         <div class="modal-buttons">
           <button class="btn-action btn-secondary" onclick="closeGroupModal()">キャンセル</button>
-          <button class="btn-action" onclick="window.executeJoinGroup()">参加する</button>
+          <button class="btn-action" id="btn-join-submit" onclick="window.executeJoinGroup()">参加する</button>
         </div>
         <p style="font-size: 11px; color: #888; margin-top: 16px;">※参加タブから入った場合、ホスト権限は一切取得せず、安全にメンバーとして参加します。</p>
       </div>
@@ -623,8 +621,16 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.7変更】履歴を追加 -->
-          <div class="changelog-version">v2.2.7 (最新)</div>
+          <!-- 【v2.2.9変更】履歴を追加 -->
+          <div class="changelog-version">v2.2.9 (最新)</div>
+          <div>・ゲストモード中に他者から1対1通話やリバーシの招待を直接受信できてしまう裏道を封鎖しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.8</div>
+          <div>・グループ参加時に、存在しないIDやパスワードを入力した場合にエラーとして弾く検証機能（バリデーション）を追加しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.7</div>
           <div>・招待リンクから「ゲストとして参加（アカウント不要）」できる機能を追加しました。気軽に友達を誘って通話を楽しめます。</div>
         </div>
         <div class="changelog-item">
@@ -633,19 +639,11 @@
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.4</div>
-          <div>・字幕の共有設定（自分のみ/相手に共有）を選択できるようになりました。<br>・文字起こしがチャット欄を埋めないよう、動画のような「数秒で消える字幕エリア」を新設しました。</div>
+          <div>・字幕の共有設定（自分のみ/相手に共有）を選択できるようになりました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.2</div>
           <div>・招待リンク（URL）にホストの内線IDが含まれないようにプライバシーを強化しました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.2.1</div>
-          <div>・軽微な機能追加と内部システムの安定性を向上させました。</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.1.9</div>
-          <div>・リバーシの対戦申し込み画面をアプリ内のカスタム通知に変更し、操作性を向上させました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.1.8</div>
@@ -695,7 +693,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v227/';
+    const APP_PREFIX = 'Naisync/v229/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -717,11 +715,17 @@
     let currentUser = null;
     let savedMyName = '';
     
-    // 【v2.2.7追加】ゲストモードフラグ
     let isGuestMode = false;
 
     let checkingGroupId = null;
     let isGroupIdTaken = false;
+
+    let joiningGroupId = null;
+    let joiningGroupPass = null;
+    let isJoinRoomFound = false;
+    let isJoinPassCorrect = false;
+    let isJoinRoomClosed = false;
+    let joiningFoundRadio = false;
 
     let transMode = localStorage.getItem('my_naisen_trans_mode') || 'off';
     let speechRecognition = null;
@@ -759,7 +763,6 @@
         };
         window.history.replaceState(null, '', window.location.pathname);
         
-        // 【v2.2.7追加】招待リンクがある場合はお知らせを表示
         document.getElementById('invite-alert').style.display = 'block';
         document.getElementById('invite-group-name').innerText = pendingInvite.name;
       }
@@ -767,10 +770,9 @@
 
     let customGroups = [];
 
-    // 【v2.2.7追加】ゲストユーザーのグループ保存を防ぐヘルパー
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v227', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v229', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -778,9 +780,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v227'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v229'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v226')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v228')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -1040,7 +1042,6 @@
       }
     }
 
-    // 【v2.2.7追加】ゲストモードログイン処理
     window.doGuestLogin = function() {
       isGuestMode = true;
       const randomId = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
@@ -1164,7 +1165,6 @@
       return NG_WORDS.some(word => text.includes(word));
     }
 
-    // 【v2.2.7変更】ゲストはチャットを利用不可に
     function updateChatUI() {
       if (isGuestMode) {
         chatInput.disabled = true;
@@ -1318,7 +1318,6 @@
       applyStreamerModeToUI();
     });
 
-    // 【v2.2.7変更】ゲストモード時は1対1通話タブと作成ボタンを隠す
     function renderTabs() {
       tabsWrapper.innerHTML = '';
 
@@ -1408,6 +1407,18 @@
         mqttClient.on('message', (topic, message) => {
           if (checkingGroupId && topic.startsWith(`${APP_PREFIX}${checkingGroupId}/`)) {
             isGroupIdTaken = true;
+          }
+
+          if (joiningGroupId && topic.startsWith(`${APP_PREFIX}${joiningGroupId}/`)) {
+            isJoinRoomFound = true;
+            if (topic === `${APP_PREFIX}${joiningGroupId}/${joiningGroupPass}`) {
+              isJoinPassCorrect = true;
+              try {
+                const data = JSON.parse(message.toString());
+                if (data.type === 'radio_close') isJoinRoomClosed = true;
+                if (data.isRadio !== undefined) joiningFoundRadio = data.isRadio;
+              } catch(e) {}
+            }
           }
 
           if (currentMode !== 'group') return;
@@ -1520,6 +1531,12 @@
         const callMode = call.metadata ? call.metadata.mode : 'direct';
         const callGroupId = call.metadata ? call.metadata.groupId : null;
 
+        // 【v2.2.9追加】ゲストは1対1通話の着信を強制拒否
+        if (isGuestMode && callMode === 'direct') {
+          call.close();
+          return;
+        }
+
         if (currentMode === 'group') {
           if (callMode !== 'group' || callGroupId !== currentGroupId) {
             call.close();
@@ -1548,7 +1565,14 @@
         setupCall(call);
       });
 
-      peer.on('connection', (conn) => setupDataConn(conn));
+      // 【v2.2.9変更】ゲストは1対1のデータ通信（チャット・ゲーム）接続を即座に破棄
+      peer.on('connection', (conn) => {
+        if (isGuestMode) {
+          conn.on('open', () => conn.close());
+          return;
+        }
+        setupDataConn(conn);
+      });
     }
 
     function updateParticipantName(peerId, name) {
@@ -1650,6 +1674,8 @@
     }
 
     function setupDataConn(conn) {
+      if (isGuestMode) return; // 【v2.2.9念押し】ゲストモードでのデータ受信を完全に無視
+
       activeDataConns[conn.peer] = conn;
       conn.on('data', (data) => {
         if (data && data.type === 'chat') {
@@ -1742,7 +1768,6 @@
       directPanel.style.display = 'block';
       groupPanel.style.display = 'none';
 
-      // 【v2.2.7変更】ゲストは1対1通信に切り替え不可のUIに変更
       if (isGuestMode) {
         statusEl.innerText = 'ゲストモード中は1対1通話を利用できません';
         talkBtn.disabled = true;
@@ -1958,6 +1983,8 @@
     }
 
     window.executeJoinGroup = function() {
+      if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
+
       const name = document.getElementById('modal-join-name').value.trim();
       const id = document.getElementById('modal-join-id').value.trim();
       const pass = document.getElementById('modal-join-pass').value.trim();
@@ -1965,23 +1992,72 @@
       if (!name || !id) return alert('表示名とグループIDを入力してください');
       if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
 
-      const existingGroup = customGroups.find(g => g.id === id);
-      const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : null;
-      const createdAt = (existingGroup && existingGroup.createdAt) ? existingGroup.createdAt : 9999999999999;
-      const isRadio = (existingGroup && existingGroup.isRadio) ? existingGroup.isRadio : false;
+      const btn = document.getElementById('btn-join-submit');
+      btn.disabled = true;
+      btn.innerText = 'グループを検索中...';
 
-      const newGroup = { id, name, pass, requireName: false, hostId, createdAt, isRadio };
-      const index = customGroups.findIndex(g => g.id === id);
-      if (index >= 0) {
-        customGroups[index].pass = pass;
-        customGroups[index].name = name;
-      } else {
-        customGroups.push(newGroup);
-      }
+      joiningGroupId = id;
+      joiningGroupPass = pass;
+      isJoinRoomFound = false;
+      isJoinPassCorrect = false;
+      isJoinRoomClosed = false;
+      joiningFoundRadio = false;
 
-      saveGroups();
-      window.closeGroupModal();
-      joinGroup(customGroups.find(g => g.id === id));
+      const checkTopic = `${APP_PREFIX}${id}/#`;
+      mqttClient.subscribe(checkTopic);
+
+      setTimeout(() => {
+        mqttClient.unsubscribe(checkTopic);
+
+        if (!isJoinRoomFound) {
+          alert(`🚨 グループID「${id}」が見つかりません。\nIDが間違っているか、まだ作成されていません。`);
+          btn.disabled = false;
+          btn.innerText = '参加する';
+          joiningGroupId = null;
+          return;
+        }
+
+        if (!isJoinPassCorrect) {
+          alert(`🚨 パスワードが間違っています！`);
+          btn.disabled = false;
+          btn.innerText = '参加する';
+          joiningGroupId = null;
+          return;
+        }
+
+        if (isJoinRoomClosed) {
+          alert(`🚨 このラジオ局（またはグループ）はすでに放送終了・解散されています。`);
+          btn.disabled = false;
+          btn.innerText = '参加する';
+          joiningGroupId = null;
+          return;
+        }
+
+        joiningGroupId = null;
+        joiningGroupPass = null;
+
+        const existingGroup = customGroups.find(g => g.id === id);
+        const hostId = (existingGroup && existingGroup.hostId) ? existingGroup.hostId : null;
+        const createdAt = (existingGroup && existingGroup.createdAt) ? existingGroup.createdAt : 9999999999999;
+        const isRadio = joiningFoundRadio;
+
+        const newGroup = { id, name, pass, requireName: false, hostId, createdAt, isRadio };
+        const index = customGroups.findIndex(g => g.id === id);
+        if (index >= 0) {
+          customGroups[index].pass = pass;
+          customGroups[index].name = name;
+          customGroups[index].isRadio = isRadio;
+        } else {
+          customGroups.push(newGroup);
+        }
+
+        saveGroups();
+        window.closeGroupModal();
+        btn.disabled = false;
+        btn.innerText = '参加する';
+        joinGroup(customGroups.find(g => g.id === id));
+
+      }, 1000);
     }
 
     window.openHelp = function() { document.getElementById('help-modal').style.display = 'flex'; }
