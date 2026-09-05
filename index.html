@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 内線トランシーバー v2.2.9</title>
+  <title>Naisync - 内線トランシーバー v2.2.10</title>
   <style>
     body {
       display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
@@ -316,7 +316,7 @@
 </head>
 <body>
 
-  <div class="version-tag">v2.2.9</div>
+  <div class="version-tag">v2.2.10</div>
 
   <!-- ログイン画面 -->
   <div id="auth-overlay">
@@ -621,8 +621,12 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <!-- 【v2.2.9変更】履歴を追加 -->
-          <div class="changelog-version">v2.2.9 (最新)</div>
+          <!-- 【v2.2.10変更】通信デシンクの修正と履歴の更新 -->
+          <div class="changelog-version">v2.2.10 (最新)</div>
+          <div>・タブを切り替えた際、部屋のメンバーと正常に再接続されない（声が聞こえなくなる）深刻な通信のデシンク不具合を修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.9</div>
           <div>・ゲストモード中に他者から1対1通話やリバーシの招待を直接受信できてしまう裏道を封鎖しました。</div>
         </div>
         <div class="changelog-item">
@@ -639,7 +643,7 @@
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.4</div>
-          <div>・字幕の共有設定（自分のみ/相手に共有）を選択できるようになりました。</div>
+          <div>・字幕の共有設定（自分のみ/相手に共有）を選択できるようになりました。<br>・文字起こしがチャット欄を埋めないよう、動画のような「数秒で消える字幕エリア」を新設しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v2.2.2</div>
@@ -648,10 +652,6 @@
         <div class="changelog-item">
           <div class="changelog-version">v2.1.8</div>
           <div>・1対1通話中に遊べる「リアルタイム・リバーシ」対戦機能を追加しました！</div>
-        </div>
-        <div class="changelog-item">
-          <div class="changelog-version">v2.1.6</div>
-          <div>・Web Speech APIを利用した「自動文字起こし（チャット連動）」機能を実装しました。</div>
         </div>
         <div class="changelog-item">
           <div class="changelog-version">v1.0.0</div>
@@ -693,7 +693,7 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    const APP_PREFIX = 'Naisync/v229/';
+    const APP_PREFIX = 'Naisync/v2210/';
     let myPeerId = null;
     let peer = null;
     let mqttClient = null;
@@ -772,7 +772,7 @@
 
     function saveGroups() {
       if (isGuestMode) return;
-      localStorage.setItem('my_naisen_groups_v229', JSON.stringify(customGroups));
+      localStorage.setItem('my_naisen_groups_v2210', JSON.stringify(customGroups));
     }
 
     function loadAndMigrateGroups(myId) {
@@ -780,9 +780,9 @@
         customGroups = [];
         return;
       }
-      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v229'));
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v2210'));
       if (!groups) {
-         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v228')) || [];
+         const oldGroups = JSON.parse(localStorage.getItem('my_naisen_groups_v229')) || [];
          groups = oldGroups.map(g => {
            if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
            if (g.isRadio === undefined) g.isRadio = false; 
@@ -1437,6 +1437,24 @@
             }
           }
 
+          // 【v2.2.10変更】MQTTからLeaveシグナルを受け取った際の強制クリーンアップ処理
+          if (data.type === 'leave' && data.senderId !== myPeerId) {
+            if (activeCalls[data.senderId]) {
+              if (activeCalls[data.senderId].peerConnection) activeCalls[data.senderId].peerConnection.close();
+              activeCalls[data.senderId].close();
+              delete activeCalls[data.senderId];
+            }
+            if (activeDataConns[data.senderId]) {
+              activeDataConns[data.senderId].close();
+              delete activeDataConns[data.senderId];
+            }
+            const audio = document.getElementById('audio-' + data.senderId);
+            if (audio) audio.remove();
+            removeParticipantUI(data.senderId);
+            updateStatus();
+            if (isReversiActive) endReversi();
+          }
+
           if ((data.type === 'room_meta' || data.type === 'host_sync' || data.type === 'join') && data.hostId && currentGroupObj) {
             const remoteTime = data.createdAt || 9999999999999;
             const localTime = currentGroupObj.createdAt || 9999999999999;
@@ -1531,7 +1549,6 @@
         const callMode = call.metadata ? call.metadata.mode : 'direct';
         const callGroupId = call.metadata ? call.metadata.groupId : null;
 
-        // 【v2.2.9追加】ゲストは1対1通話の着信を強制拒否
         if (isGuestMode && callMode === 'direct') {
           call.close();
           return;
@@ -1565,7 +1582,6 @@
         setupCall(call);
       });
 
-      // 【v2.2.9変更】ゲストは1対1のデータ通信（チャット・ゲーム）接続を即座に破棄
       peer.on('connection', (conn) => {
         if (isGuestMode) {
           conn.on('open', () => conn.close());
@@ -1646,22 +1662,27 @@
     }
 
     function setupCall(call) {
-      if (activeCalls[call.peer]) return;
+      // 【v2.2.10変更】古い通話オブジェクトが残っていた場合は強制的に破棄して新しい通話を受け入れる
+      if (activeCalls[call.peer]) {
+        if (activeCalls[call.peer].peerConnection) activeCalls[call.peer].peerConnection.close();
+        activeCalls[call.peer].close();
+        delete activeCalls[call.peer];
+      }
       activeCalls[call.peer] = call;
       updateStatus();
 
       call.on('stream', (remoteStream) => {
-        if (!document.getElementById('audio-' + call.peer)) {
-          const audio = document.createElement('audio');
+        let audio = document.getElementById('audio-' + call.peer);
+        if (!audio) {
+          audio = document.createElement('audio');
           audio.id = 'audio-' + call.peer;
-          audio.srcObject = remoteStream;
           audio.autoplay = true;
           audio.playsinline = true;
           audio.volume = savedSpeakerVolume; 
           audioContainer.appendChild(audio);
-          
-          addParticipantUI(call.peer);
         }
+        audio.srcObject = remoteStream;
+        addParticipantUI(call.peer);
       });
 
       call.on('close', () => {
@@ -1674,9 +1695,15 @@
     }
 
     function setupDataConn(conn) {
-      if (isGuestMode) return; // 【v2.2.9念押し】ゲストモードでのデータ受信を完全に無視
+      if (isGuestMode) return; 
 
+      // 【v2.2.10変更】古いデータ接続があれば破棄して上書き
+      if (activeDataConns[conn.peer]) {
+        activeDataConns[conn.peer].close();
+        delete activeDataConns[conn.peer];
+      }
       activeDataConns[conn.peer] = conn;
+
       conn.on('data', (data) => {
         if (data && data.type === 'chat') {
           updateParticipantName(conn.peer, data.senderName);
@@ -1723,11 +1750,22 @@
     }
 
     function closeAllCalls() {
-      if (currentGroupTopic && mqttClient) mqttClient.unsubscribe(currentGroupTopic);
+      // 【v2.2.10変更】MQTTでも確実にLeave（退出）シグナルを送信する
+      if (currentGroupTopic && mqttClient) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify({
+          type: 'leave', senderId: myPeerId
+        }));
+        mqttClient.unsubscribe(currentGroupTopic);
+      }
       
       Object.values(activeDataConns).forEach(conn => {
-        if (conn.open) conn.send({ type: 'leave', senderId: myPeerId });
-        conn.close();
+        if (conn.open) {
+           conn.send({ type: 'leave', senderId: myPeerId });
+           // すぐにcloseすると送信が間に合わない場合があるため猶予を持たせる
+           setTimeout(() => { if (conn.close) conn.close(); }, 200);
+        } else {
+           if (conn.close) conn.close();
+        }
       });
 
       Object.values(activeCalls).forEach(call => {
@@ -1738,7 +1776,6 @@
       if (peer && peer.connections) {
         Object.keys(peer.connections).forEach(peerId => {
           peer.connections[peerId].forEach(conn => {
-            if (conn.peerConnection) conn.peerConnection.close();
             if (conn.close) conn.close();
           });
         });
@@ -1832,15 +1869,16 @@
           createdAt: groupObj.createdAt,
           isRadio: groupObj.isRadio 
         }), { retain: true });
-      } else {
-        mqttClient.publish(currentGroupTopic, JSON.stringify({ 
-          type: 'join', 
-          peerId: myPeerId,
-          senderName: savedMyName,
-          hostId: groupObj.hostId,
-          createdAt: groupObj.createdAt
-        }));
       }
+      
+      // 【v2.2.10変更】ホストであっても必ずJoinを送信し、既存メンバーとの通信を構築する
+      mqttClient.publish(currentGroupTopic, JSON.stringify({ 
+        type: 'join', 
+        peerId: myPeerId,
+        senderName: savedMyName,
+        hostId: groupObj.hostId,
+        createdAt: groupObj.createdAt
+      }));
 
       updateStatus(); 
     }
