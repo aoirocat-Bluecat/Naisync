@@ -327,7 +327,7 @@
     let spatialSettings = JSON.parse(localStorage.getItem('my_naisen_spatial') || '{}');
     let rawStream = null, rawAudioTrack = null, screenStream = null, processedStream = null;
     let isScreenSharing = false, audioCtx = null, gainNode = null;
-    let isLocked = false, currentUser = null, savedMyName = '', isGuestMode = false;
+    let isLocked = false, currentUser = null, savedMyName = '', isGuestMode = false, isAppStarted = false;
     let checkingGroupId = null, isGroupIdTaken = false, joiningGroupId = null, joiningGroupPass = null;
     let isJoinRoomFound = false, isJoinPassCorrect = false, isJoinRoomClosed = false, joiningFoundRadio = false, joiningFoundAllowMemberSE = false, joiningFoundNoGuests = false;
 
@@ -387,6 +387,8 @@
     onAuthStateChanged(auth, user => { if (user) { currentUser = user; parseUserData(user); startMainApp(); } else if (!isGuestMode) $('auth-overlay').style.display = 'flex'; });
 
     function startMainApp() {
+      if (isAppStarted) return;
+      isAppStarted = true;
       $('auth-overlay').style.display = 'none'; $('main-header').style.display = 'flex'; $('main-card').style.display = 'block';
       $('display-my-name').innerText = savedMyName + (isGuestMode ? ' (ゲスト)' : ''); $('setting-my-name').value = savedMyName; if (isGuestMode) $('setting-my-name').disabled = true;
       $('streamer-mode-checkbox').checked = isStreamerMode; $('streamer-mode-status-text').innerText = isStreamerMode ? 'ON' : 'OFF';
