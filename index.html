@@ -319,6 +319,7 @@
     const APP_PREFIX = 'Naisync/v2245/';
     const $ = id => document.getElementById(id);
     const bcast = msg => Object.values(activeDataConns).forEach(c => c.send(msg));
+    const SE_FILES = { 'applause': './applause.mp3', 'pingpong': './correct.mp3', 'buzzer': './wrong.mp3' };
 
     let myPeerId = null, peer = null, mqttClient = null;
     let currentMode = 'direct', currentGroupId = null, currentGroupTopic = null;
@@ -326,7 +327,7 @@
     let spatialSettings = JSON.parse(localStorage.getItem('my_naisen_spatial') || '{}');
     let rawStream = null, rawAudioTrack = null, screenStream = null, processedStream = null;
     let isScreenSharing = false, audioCtx = null, gainNode = null;
-    let isLocked = false, currentUser = null, savedMyName = '', isGuestMode = false;
+    let isLocked = false, currentUser = null, savedMyName = '', isGuestMode = false, isAppStarted = false;
     let checkingGroupId = null, isGroupIdTaken = false, joiningGroupId = null, joiningGroupPass = null;
     let isJoinRoomFound = false, isJoinPassCorrect = false, isJoinRoomClosed = false, joiningFoundRadio = false, joiningFoundAllowMemberSE = false, joiningFoundNoGuests = false;
 
@@ -386,6 +387,8 @@
     onAuthStateChanged(auth, user => { if (user) { currentUser = user; parseUserData(user); startMainApp(); } else if (!isGuestMode) $('auth-overlay').style.display = 'flex'; });
 
     function startMainApp() {
+      if (isAppStarted) return;
+      isAppStarted = true;
       $('auth-overlay').style.display = 'none'; $('main-header').style.display = 'flex'; $('main-card').style.display = 'block';
       $('display-my-name').innerText = savedMyName + (isGuestMode ? ' (ゲスト)' : ''); $('setting-my-name').value = savedMyName; if (isGuestMode) $('setting-my-name').disabled = true;
       $('streamer-mode-checkbox').checked = isStreamerMode; $('streamer-mode-status-text').innerText = isStreamerMode ? 'ON' : 'OFF';
@@ -613,6 +616,220 @@
       saveGroups(); window.closeHelp(); joinGroup(tG);
     }
 
+    function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function containsNGWord(str) { const s = String(str).toLowerCase(); return NG_WORDS.some(w => s.includes(w.toLowerCase())); }
+    function addChatLog(sender, text, isMe) {
+      const m = document.createElement('div'); m.className = `chat-msg ${isMe ? 'me' : ''}`;
+      m.innerHTML = `<span class="sender">${escapeHtml(sender)}:</span>${escapeHtml(text)}`;
+      $('chat-logs').appendChild(m); $('chat-logs').scrollTop = $('chat-logs').scrollHeight;
+    }
+
+    window.openSettings = () => { window.switchSettingsTab('general'); $('settings-modal').style.display = 'flex'; };
+    window.closeSettings = () => $('settings-modal').style.display = 'none';
+    window.saveMyName = async () => {
+      if (isGuestMode) return alert('ゲストは名前を変更できません。');
+      const newName = $('setting-my-name').value.trim();
+      if (!newName) return alert('名前を入力してください。');
+      if (containsNGWord(newName)) return alert('名前に不適切な単語が含まれています。');
+      savedMyName = newName; $('display-my-name').innerText = newName;
+      await updateProfile(auth.currentUser, { displayName: JSON.stringify({ name: newName, customId: currentUser.customId }) });
+      alert('名前を保存しました！');
+    };
+    window.setTransMode = mode => {
+      if (isGuestMode && mode === 'all') return alert('ゲストは字幕を相手に共有できません（自分のみ表示は可能です）。');
+      transMode = mode; localStorage.setItem('my_naisen_trans_mode', mode);
+      ['off', 'self', 'all'].forEach(m => $('trans-' + m).classList.remove('active')); $('trans-' + mode).classList.add('active');
+      if (mode !== 'off' && !speechRecognition) initSpeechRecognition();
+    };
+
+    $('nc-checkbox').addEventListener('change', async e => {
+      isNoiseCanceling = e.target.checked; $('nc-status-text').innerText = isNoiseCanceling ? 'ON' : 'OFF'; localStorage.setItem('my_naisen_nc', isNoiseCanceling);
+      if (rawAudioTrack) { try { await rawAudioTrack.applyConstraints({ echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }); } catch (err) { console.error(err); } }
+    });
+    $('mic-volume-slider').addEventListener('input', e => {
+      resumeAudioContext(); const v = parseFloat(e.target.value); if (gainNode) gainNode.gain.value = v;
+      savedMicVolume = v; localStorage.setItem('my_naisen_mic_vol', v); $('mic-volume-display').innerText = Math.round(v * 100) + '%';
+    });
+    $('spk-volume-slider').addEventListener('input', e => {
+      const v = parseFloat(e.target.value); savedSpeakerVolume = v; localStorage.setItem('my_naisen_spk_vol', v); $('spk-volume-display').innerText = Math.round(v * 100) + '%';
+      document.querySelectorAll('.participant-item input[type=range]').forEach(s => { s.value = v; s.dispatchEvent(new Event('input')); });
+    });
+    $('notif-checkbox').addEventListener('change', e => { isNotificationOn = e.target.checked; $('notif-status-text').innerText = isNotificationOn ? 'ON' : 'OFF'; localStorage.setItem('my_naisen_notif', isNotificationOn); });
+    $('transcription-notif-checkbox').addEventListener('change', e => { isTranscriptionNotifOn = e.target.checked; $('transcription-notif-status-text').innerText = isTranscriptionNotifOn ? 'ON' : 'OFF'; localStorage.setItem('my_naisen_transcription_notif', isTranscriptionNotifOn); });
+    $('streamer-mode-checkbox').addEventListener('change', e => { isStreamerMode = e.target.checked; $('streamer-mode-status-text').innerText = isStreamerMode ? 'ON' : 'OFF'; localStorage.setItem('my_naisen_streamer', isStreamerMode); applyStreamerModeToUI(); });
+
+    function renderTabs() {
+      const wrap = $('tabs-wrapper'); wrap.innerHTML = '';
+      if (!isGuestMode) {
+        const d = document.createElement('button'); d.className = `tab ${currentMode === 'direct' ? 'active' : ''}`; d.innerText = '1対1通話';
+        d.onclick = () => window.switchToDirect(); wrap.appendChild(d);
+      }
+      customGroups.forEach(g => {
+        const tab = document.createElement('button'); tab.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
+        const isHost = (g.hostId === myPeerId); const prefix = g.isRadio ? (isHost ? '📻 ' : '🎧 ') : (isHost ? '👑 ' : '');
+        const label = document.createElement('span'); label.innerText = prefix + g.name; tab.appendChild(label);
+        const del = document.createElement('span'); del.className = 'btn-del'; del.innerText = '✕'; del.onclick = e => window.deleteGroup(g.id, g.name, e); tab.appendChild(del);
+        tab.onclick = () => window.joinGroup(g); wrap.appendChild(tab);
+      });
+      const add = document.createElement('button'); add.className = 'tab tab-add';
+      if (isGuestMode) { add.innerText = '＋ 参加'; add.onclick = () => { window.switchGroupModalTab('join'); $('tab-btn-create').style.display = 'none'; $('group-modal').style.display = 'flex'; }; }
+      else { add.innerText = '＋ 作成'; add.onclick = () => window.openGroupModal(); }
+      wrap.appendChild(add);
+    }
+
+    window.openGroupModal = () => {
+      if (isGuestMode) { window.switchGroupModalTab('join'); $('tab-btn-create').style.display = 'none'; }
+      else { window.switchGroupModalTab('create'); $('tab-btn-create').style.display = 'block'; }
+      $('modal-create-name').value = ''; $('modal-create-id').value = ''; $('modal-create-pass').value = '';
+      $('modal-create-no-guests').checked = false; $('modal-create-allow-se').checked = false;
+      $('modal-join-name').value = ''; $('modal-join-id').value = ''; $('modal-join-pass').value = '';
+      $('group-modal').style.display = 'flex';
+    };
+    window.closeGroupModal = () => $('group-modal').style.display = 'none';
+
+    window.executeCreateGroup = () => {
+      if (isGuestMode) return alert('ゲストは新しくグループを作成できません。');
+      if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
+      const name = $('modal-create-name').value.trim(), id = $('modal-create-id').value.trim(), pass = $('modal-create-pass').value.trim();
+      const noGuests = $('modal-create-no-guests').checked, allowMemberSE = $('modal-create-allow-se').checked;
+      if (!name || !id || pass === '') return alert('全項目を入力してください（グループ作成にはパスワードが必須です）');
+      if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
+      if (customGroups.find(g => g.id === id)) return alert(`グループID「${id}」はすでにあなたのリストに存在します。\n「参加」タブからご参加ください。`);
+      const btn = $('btn-create-submit'); btn.disabled = true; btn.innerText = 'IDの空き状況を確認中...';
+      checkingGroupId = id; isGroupIdTaken = false;
+      const checkTopic = `${APP_PREFIX}${id}/#`; mqttClient.subscribe(checkTopic);
+      setTimeout(() => {
+        mqttClient.unsubscribe(checkTopic); btn.disabled = false; btn.innerText = '作成して参加'; checkingGroupId = null;
+        if (isGroupIdTaken) return alert(`🚨 グループID「${id}」はすでに世界中の誰かが使用しています！\n別のグループIDを指定するか、パスワードを知っている場合は「参加」タブからご参加ください。`);
+        const newGroup = { id, name, pass, noGuests, hostId: myPeerId, createdAt: Date.now(), isRadio: false, allowMemberSE };
+        customGroups.push(newGroup); saveGroups(); window.closeGroupModal(); window.joinGroup(newGroup);
+      }, 1000);
+    };
+
+    window.executeJoinGroup = () => {
+      if (!mqttClient || !mqttClient.connected) return alert('サーバーに接続中です。数秒待ってから再度お試しください。');
+      const name = $('modal-join-name').value.trim(), id = $('modal-join-id').value.trim(), pass = $('modal-join-pass').value.trim();
+      if (!name || !id) return alert('表示名とグループIDを入力してください');
+      if (containsNGWord(name) || containsNGWord(id)) return alert('グループ名やIDに不適切な単語が含まれています。');
+      const btn = $('btn-join-submit'); btn.disabled = true; btn.innerText = 'グループを検索中...';
+      joiningGroupId = id; joiningGroupPass = pass;
+      isJoinRoomFound = false; isJoinPassCorrect = false; isJoinRoomClosed = false; joiningFoundRadio = false; joiningFoundAllowMemberSE = false; joiningFoundNoGuests = false;
+      const checkTopic = `${APP_PREFIX}${id}/#`; mqttClient.subscribe(checkTopic);
+      setTimeout(() => {
+        mqttClient.unsubscribe(checkTopic); btn.disabled = false; btn.innerText = '参加する';
+        const fail = msg => { alert(msg); joiningGroupId = null; joiningGroupPass = null; };
+        if (!isJoinRoomFound) return fail(`🚨 グループID「${id}」が見つかりません。\nIDが間違っているか、まだ作成されていません。`);
+        if (!isJoinPassCorrect) return fail('🚨 パスワードが間違っています！');
+        if (isJoinRoomClosed) return fail('🚨 このラジオ局（またはグループ）はすでに放送終了・解散されています。');
+        if (isGuestMode && joiningFoundNoGuests) return fail('🚨 このグループはゲストの参加が許可されていません。\nログインしてから再度お試しください。');
+        joiningGroupId = null; joiningGroupPass = null;
+        const idx = customGroups.findIndex(g => g.id === id);
+        if (idx >= 0) Object.assign(customGroups[idx], { pass, name, isRadio: joiningFoundRadio, allowMemberSE: joiningFoundAllowMemberSE, noGuests: joiningFoundNoGuests });
+        else customGroups.push({ id, name, pass, noGuests: joiningFoundNoGuests, hostId: null, createdAt: 9999999999999, isRadio: joiningFoundRadio, allowMemberSE: joiningFoundAllowMemberSE });
+        saveGroups(); window.closeGroupModal(); window.joinGroup(customGroups.find(g => g.id === id));
+      }, 1000);
+    };
+
+    function updateParticipantName(peerId, name) { peerNames[peerId] = name; const el = $('name-' + peerId); if (el) el.innerText = name; }
+    function updateSpatialPosition(peerId, pos) {
+      const p = pannerNodes[peerId]; if (!p) return;
+      const POS = { center: [0, 0, 0], left: [-1.5, 0, 0], right: [1.5, 0, 0], top: [0, 1, 2], bottom: [0, -1, -2], 'top-left': [-1.5, 1, 1.5], 'top-right': [1.5, 1, 1.5] };
+      const [x, y, z] = POS[pos] || POS.center; p.positionX.value = x; p.positionY.value = y; p.positionZ.value = z;
+    }
+    function addParticipantUI(peerId) {
+      if ($('ui-' + peerId)) return;
+      const name = peerNames[peerId] || peerId.substring(0, 5) + ' (不明)';
+      const div = document.createElement('div'); div.className = 'participant-item'; div.id = 'ui-' + peerId;
+      const main = document.createElement('div'); main.className = 'participant-main';
+      const nameEl = document.createElement('span'); nameEl.className = 'p-name'; nameEl.id = 'name-' + peerId; nameEl.innerText = name;
+      const ctrl = document.createElement('div'); ctrl.className = 'p-ctrl';
+      const icon = document.createElement('span'); icon.innerText = '🔊'; icon.style.fontSize = '14px';
+      const slider = document.createElement('input'); slider.type = 'range'; slider.min = '0'; slider.max = '1'; slider.step = '0.05'; slider.value = savedSpeakerVolume;
+      slider.addEventListener('input', e => { const a = $('audio-' + peerId); if (a) { a.volume = e.target.value; icon.innerText = e.target.value == 0 ? '🔇' : '🔊'; } });
+      ctrl.appendChild(icon); ctrl.appendChild(slider);
+      const g = customGroups.find(x => x.id === currentGroupId);
+      if (g && g.hostId === myPeerId && peerId !== myPeerId) {
+        const kick = document.createElement('button'); kick.innerText = '✕ 退出'; kick.className = 'btn-kick'; kick.onclick = () => window.kickUser(peerId, name); ctrl.appendChild(kick);
+      }
+      main.appendChild(nameEl); main.appendChild(ctrl);
+      const sp = document.createElement('div'); sp.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding-top:6px; border-top:1px dashed #e0e0e0;';
+      const spLabel = document.createElement('span'); spLabel.innerText = '🗺️ 3D配置:'; spLabel.style.cssText = 'font-size:11px; color:#777;';
+      const select = document.createElement('select'); select.className = 'spatial-select';
+      [['center', '正面 (通常)'], ['left', '左方向'], ['right', '右方向'], ['top', '上方向 (天の声)'], ['bottom', '下方向 (足元)'], ['top-left', '左上'], ['top-right', '右上']].forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.innerText = t; select.appendChild(o); });
+      const savedPos = spatialSettings[peerId] || 'center'; select.value = savedPos;
+      select.addEventListener('change', e => { spatialSettings[peerId] = e.target.value; localStorage.setItem('my_naisen_spatial', JSON.stringify(spatialSettings)); updateSpatialPosition(peerId, e.target.value); });
+      sp.appendChild(spLabel); sp.appendChild(select); div.appendChild(main); div.appendChild(sp);
+      $('participants-list').appendChild(div); $('participants-section').style.display = 'block';
+      if (pannerNodes[peerId]) updateSpatialPosition(peerId, savedPos);
+    }
+    function removeParticipantUI(peerId) { const el = $('ui-' + peerId); if (el) el.remove(); if ($('participants-list').children.length === 0) $('participants-section').style.display = 'none'; }
+
+    window.inviteReversi = () => {
+      if (currentMode !== 'direct' || Object.keys(activeDataConns).length === 0) return alert('「リバーシ」は1対1通話（Directモード）専用のゲームです。相手と接続してからお試しください。');
+      bcast({ type: 'reversi_req', senderName: savedMyName || myPeerId.substring(0, 5) });
+      showNotification('相手にリバーシの対戦申し込みを送りました。返答待ちです...');
+    };
+    function startReversi(color) {
+      isReversiActive = true; reversiMyColor = color; reversiCurrentTurn = 1; $('reversi-section').style.display = 'block';
+      reversiBoard = Array(8).fill().map(() => Array(8).fill(0));
+      reversiBoard[3][3] = 2; reversiBoard[3][4] = 1; reversiBoard[4][3] = 1; reversiBoard[4][4] = 2;
+      updateReversiUI();
+    }
+    function renderReversiBoard() {
+      const boardEl = $('reversi-board'); boardEl.innerHTML = ''; let bCount = 0, wCount = 0;
+      for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+        const val = reversiBoard[r][c]; if (val === 1) bCount++; if (val === 2) wCount++;
+        const cell = document.createElement('div'); cell.className = 'reversi-cell'; cell.onclick = () => handleReversiClick(r, c);
+        if (val !== 0) { const p = document.createElement('div'); p.className = 'reversi-piece ' + (val === 1 ? 'black' : 'white'); cell.appendChild(p); }
+        else if (isReversiActive && reversiCurrentTurn === reversiMyColor && getFlippablePieces(r, c, reversiMyColor).length > 0) { const h = document.createElement('div'); h.className = 'reversi-hint'; cell.appendChild(h); }
+        boardEl.appendChild(cell);
+      }
+      return { bCount, wCount };
+    }
+    function updateReversiUI() {
+      const { bCount, wCount } = renderReversiBoard();
+      const turn = reversiCurrentTurn === reversiMyColor ? '🔵 あなたの番です' : '⏳ 相手の番です';
+      $('reversi-info').innerText = `${turn} (あなたは${reversiMyColor === 1 ? '黒' : '白'}) | 黒: ${bCount} 白: ${wCount}`;
+    }
+    function getFlippablePieces(r, c, color) {
+      if (reversiBoard[r][c] !== 0) return [];
+      const opp = color === 1 ? 2 : 1; let flippable = [];
+      [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr, dc]) => {
+        let nr = r + dr, nc = c + dc, temp = [];
+        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === opp) { temp.push([nr, nc]); nr += dr; nc += dc; }
+        if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === color && temp.length > 0) flippable.push(...temp);
+      });
+      return flippable;
+    }
+    function handleReversiClick(r, c) {
+      if (!isReversiActive || reversiCurrentTurn !== reversiMyColor) return;
+      const flips = getFlippablePieces(r, c, reversiMyColor); if (flips.length === 0) return;
+      applyReversiMove(r, c, reversiMyColor, flips); bcast({ type: 'reversi_move', r, c, color: reversiMyColor });
+    }
+    function applyReversiMove(r, c, color, preCalcFlips = null) {
+      const flips = preCalcFlips || getFlippablePieces(r, c, color);
+      reversiBoard[r][c] = color; flips.forEach(([fr, fc]) => { reversiBoard[fr][fc] = color; });
+      reversiCurrentTurn = color === 1 ? 2 : 1; updateReversiUI(); checkReversiPassOrEnd();
+    }
+    function hasReversiMove(color) { for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) if (getFlippablePieces(r, c, color).length > 0) return true; return false; }
+    function checkReversiPassOrEnd() {
+      if (hasReversiMove(reversiCurrentTurn)) return;
+      const nextTurn = reversiCurrentTurn === 1 ? 2 : 1;
+      if (!hasReversiMove(nextTurn)) {
+        setTimeout(() => {
+          const { bCount, wCount } = renderReversiBoard();
+          alert(`🏁 ゲーム終了！ 黒:${bCount} 白:${wCount}\n` + (bCount > wCount ? '黒の勝ち！' : wCount > bCount ? '白の勝ち！' : '引き分け！'));
+          endReversi();
+        }, 500);
+      } else if (reversiCurrentTurn === reversiMyColor) {
+        showNotification('置ける場所がないためパスになります。');
+        reversiCurrentTurn = nextTurn; updateReversiUI(); bcast({ type: 'reversi_pass' });
+      }
+    }
+    window.quitReversi = () => { if (!confirm('リバーシを終了しますか？')) return; bcast({ type: 'reversi_quit' }); endReversi(); };
+    function endReversi() { isReversiActive = false; $('reversi-section').style.display = 'none'; }
+    window.startReversi = startReversi; window.applyReversiMove = applyReversiMove; window.updateReversiUI = updateReversiUI; window.checkReversiPassOrEnd = checkReversiPassOrEnd;
+
     function updateStatus() {
       const c = Object.keys(activeCalls).length;
       if (currentMode === 'group') {
@@ -635,7 +852,7 @@
         if (isGuestMode) { $('status').innerText = 'ゲストは1対1不可'; $('share-screen-btn').disabled = true; } 
         else { $('status').innerText = c > 0 ? '1対1通話中！' : '1対1: 相手のIDを入力して発信'; $('share-screen-btn').disabled = c === 0; }
         $('talk-btn').disabled = c === 0; $('toggle-btn').disabled = c === 0;
-        if (c > 0) { $('talk-btn').innerText = '長押しで話す'; $('direct-connected-actions').style.display = 'block'; } else $('direct-connected-actions').style.display = 'none';
+        if (c > 0) $('talk-btn').innerText = '長押しで話す';
       }
     }
 
@@ -657,7 +874,7 @@
         const brokers = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
         
         const tryConnectMQTT = bIdx => {
-          if (bIndex >= brokers.length) { if (currentMode === 'group' || pendingInvite) $('status').innerText = '⚠️ グループサーバーへの接続失敗'; return; }
+          if (bIdx >= brokers.length) { if (currentMode === 'group' || pendingInvite) $('status').innerText = '⚠️ グループサーバーへの接続失敗'; return; }
           if (mqttClient) { try { mqttClient.end(true); } catch(e){} }
           mqttClient = mqtt.connect(brokers[bIdx], { connectTimeout: 4000 });
           let fbTimer = setTimeout(() => { if (!isMqttConnected) tryConnectMQTT(bIdx + 1); }, 4000);
@@ -739,7 +956,7 @@
         tryConnectMQTT(0);
       });
 
-      peer.on('error', err => { if (err.type === 'unavailable-id') alert(`ID「${customId}」は使用中です。`); else console.error(err); });
+      peer.on('error', err => { if (err.type === 'unavailable-id') alert(`ID「${currentUser.customId}」は使用中です。`); else console.error(err); });
 
       peer.on('call', call => {
         resumeAudioContext();
@@ -860,8 +1077,8 @@
     window.switchToDirect = function() {
       closeAllCalls(); currentMode = 'direct'; currentGroupId = null; endReversi(); endSmash(); renderTabs(); updateChatUI();
       $('direct-panel').style.display = 'block'; $('group-panel').style.display = 'none';
-      if (isGuestMode) { $('status').innerText = 'ゲストは1対1不可'; $('talk-btn').disabled = true; $('toggle-btn').disabled = true; $('connect-btn').disabled = true; $('peer-id-input').disabled = true; $('direct-connected-actions').style.display = 'none'; $('share-screen-btn').disabled = true; } 
-      else { $('status').innerText = '1対1: 相手のIDを入力して発信'; $('talk-btn').disabled = true; $('toggle-btn').disabled = true; $('talk-btn').innerText = '接続待ち'; $('direct-connected-actions').style.display = 'none'; $('share-screen-btn').disabled = true; }
+      if (isGuestMode) { $('status').innerText = 'ゲストは1対1不可'; $('talk-btn').disabled = true; $('toggle-btn').disabled = true; $('connect-btn').disabled = true; $('peer-id-input').disabled = true; $('share-screen-btn').disabled = true; } 
+      else { $('status').innerText = '1対1: 相手のIDを入力して発信'; $('talk-btn').disabled = true; $('toggle-btn').disabled = true; $('talk-btn').innerText = '接続待ち'; $('share-screen-btn').disabled = true; }
     }
 
     window.joinGroup = function(gObj) {
