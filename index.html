@@ -3,31 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 超安定版 v3.0.0</title>
+  <title>Naisync - 安定グループ通話版 v3.1.0</title>
   <style>
     body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-    .card { background: white; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 360px; border-radius: 12px; text-align: center; }
-    .title { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 20px; }
+    .card { background: white; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+    .title { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 10px; }
     input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+    button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
     button:disabled { background: #aaa; cursor: not-allowed; }
     .btn-danger { background: #dc3545; }
+    .btn-success { background: #28a745; }
     .btn-secondary { background: #6c757d; }
     .info-box { background: #eef2f5; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; word-break: break-all; font-size: 14px; }
-    #talk-btn { width: 120px; height: 120px; border-radius: 50%; font-size: 16px; margin: 20px auto; display: block; background: #ccc; }
-    #talk-btn.active { background: #ff4444; }
+    #talk-btn { width: 140px; height: 140px; border-radius: 50%; font-size: 18px; margin: 20px auto; display: block; background: #ccc; box-shadow: 0 6px 12px rgba(0,0,0,0.2); user-select: none; }
+    #talk-btn.active { background: #ff4444; transform: scale(0.96); }
     .error-text { color: red; font-size: 12px; font-weight: bold; min-height: 15px; margin-bottom: 10px;}
+    .section-title { text-align: left; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 8px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+    .panel { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
   </style>
 </head>
 <body>
 
+  <!-- =============================== -->
   <!-- ログイン画面 -->
+  <!-- =============================== -->
   <div id="auth-view" class="card">
     <div class="title">Naisync</div>
-    <div style="font-size: 12px; color: #666; margin-bottom: 15px;">※超安定版（機能縮小モデル）</div>
+    <div style="font-size: 12px; color: #666; margin-bottom: 15px;">※グループ対応・安定モデル (v3.1.0)</div>
     
     <div id="login-form">
-      <input type="text" id="login-id" placeholder="内線ID">
+      <input type="text" id="login-id" placeholder="内線ID (半角英数字)">
       <input type="password" id="login-pass" placeholder="パスワード">
       <div id="auth-error" class="error-text"></div>
       <button onclick="doLogin()" id="btn-login">ログイン</button>
@@ -35,35 +40,60 @@
     </div>
 
     <div id="register-form" style="display: none;">
-      <input type="text" id="reg-id" placeholder="希望する内線ID">
-      <input type="text" id="reg-name" placeholder="表示名">
+      <input type="text" id="reg-id" placeholder="希望する内線ID (半角英数字)">
+      <input type="text" id="reg-name" placeholder="あなたの名前 (表示名)">
       <input type="password" id="reg-pass" placeholder="パスワード(6文字以上)">
       <div id="reg-error" class="error-text"></div>
       <button onclick="doRegister()" id="btn-reg">登録して開始</button>
       <button onclick="toggleForm()" class="btn-secondary">ログインへ戻る</button>
     </div>
+
+    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+      <button onclick="doGuestLogin()" class="btn-secondary">👤 ゲストとして参加</button>
+    </div>
   </div>
 
+  <!-- =============================== -->
   <!-- メイン画面 -->
+  <!-- =============================== -->
   <div id="main-view" class="card" style="display: none;">
     <div class="title">Naisync</div>
     
-    <div style="text-align: left; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 5px;">あなたの情報</div>
+    <div class="section-title">👤 プロフィール</div>
     <div class="info-box">
       名前: <span id="my-name-display" style="color: #007bff;">-</span><br>
       ID: <span id="my-id-display">-</span>
     </div>
 
-    <div id="status-display" style="color: red; font-size: 12px; font-weight: bold; margin-bottom: 15px;">通信サーバーに接続中...</div>
+    <div id="status-display" style="color: #dc3545; font-size: 13px; font-weight: bold; margin-bottom: 15px;">システム初期化中...</div>
 
-    <div style="text-align: left; font-size: 12px; font-weight: bold; color: #555; margin-bottom: 5px;">発信先</div>
-    <input type="text" id="target-id" placeholder="相手のIDを入力">
-    <button onclick="callPeer()" id="btn-call" disabled>発信する</button>
-    <button onclick="endCall()" id="btn-end" class="btn-danger" style="display: none;">通話を切る</button>
+    <!-- 1対1通話パネル -->
+    <div id="direct-panel" class="panel">
+      <div class="section-title">📞 1対1通話</div>
+      <div id="direct-inputs">
+        <input type="text" id="target-id" placeholder="相手の内線IDを入力">
+        <button onclick="callPeer()" id="btn-call">発信する</button>
+      </div>
+      <button onclick="endCall()" id="btn-end-direct" class="btn-danger" style="display: none;">通話を切る</button>
+    </div>
 
-    <div id="call-status" style="margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
+    <!-- グループ通話パネル -->
+    <div id="group-panel" class="panel">
+      <div class="section-title">👥 グループ通話</div>
+      <div id="group-inputs">
+        <input type="text" id="room-id" placeholder="合言葉（ルームID）を入力">
+        <button onclick="joinGroup()" id="btn-join" class="btn-success">グループに参加</button>
+      </div>
+      <div id="group-active-ui" style="display: none;">
+        <div id="group-member-count" style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #28a745;">接続中: 1人</div>
+        <button onclick="leaveGroup()" id="btn-leave-group" class="btn-danger">グループを退出</button>
+      </div>
+    </div>
 
-    <button id="talk-btn" disabled>長押しで発言</button>
+    <div id="call-status" style="margin-top: 10px; font-size: 14px; font-weight: bold;"></div>
+
+    <!-- 発言ボタン -->
+    <button id="talk-btn" disabled>準備中...</button>
 
     <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px;">
       <button onclick="logout()" class="btn-secondary">ログアウト</button>
@@ -72,44 +102,47 @@
 
   <div id="audio-container" style="display: none;"></div>
 
+  <!-- スクリプト群 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.1/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.3.5/mqtt.min.js"></script>
+  
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // Firebase設定 (既存のまま)
     const firebaseConfig = {
       apiKey: "AIzaSyDQT3tMY_btI--ZTeMlkb7I7EeVUCJZH80",
       authDomain: "naisync-b94a2.firebaseapp.com",
       projectId: "naisync-b94a2",
       storageBucket: "naisync-b94a2.firebasestorage.app",
       messagingSenderId: "816585211801",
-      appId: "1:816585211801:web:0e5f27745d5c6979309d08",
-      measurementId: "G-Q62SGVS646"
+      appId: "1:816585211801:web:0e5f27745d5c6979309d08"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const APP_PREFIX = 'Naisync/v310/';
+    const $ = id => document.getElementById(id);
 
     // グローバル変数
     let peer = null;
-    let currentCall = null;
+    let mqttClient = null;
     let localStream = null;
     let audioTrack = null;
+    let activeCalls = {}; // { peerId: callObject }
     let myName = '';
     let myCustomId = '';
+    let currentMode = 'idle'; // 'idle', 'direct', 'group'
+    let activeRoomId = null;
 
     // ==========================================
-    // UI制御ヘルパー
+    // UI 制御
     // ==========================================
-    const $ = id => document.getElementById(id);
-
     window.toggleForm = () => {
       const isLogin = $('login-form').style.display !== 'none';
       $('login-form').style.display = isLogin ? 'none' : 'block';
       $('register-form').style.display = isLogin ? 'block' : 'none';
-      $('auth-error').innerText = '';
-      $('reg-error').innerText = '';
+      $('auth-error').innerText = ''; $('reg-error').innerText = '';
     };
 
     // ==========================================
@@ -119,18 +152,13 @@
       const id = $('reg-id').value.trim().toLowerCase();
       const name = $('reg-name').value.trim();
       const pass = $('reg-pass').value.trim();
-
       if (!id || !name || !pass) return $('reg-error').innerText = '全て入力してください。';
-      if (pass.length < 6) return $('reg-error').innerText = 'パスワードは6文字以上。';
-
-      $('btn-reg').disabled = true;
+      $('btn-reg').disabled = true; $('reg-error').innerText = '登録中...';
       try {
         const userC = await createUserWithEmailAndPassword(auth, `${id}@naisy.nc`, pass);
         await updateProfile(userC.user, { displayName: JSON.stringify({ name, customId: id }) });
         alert('登録完了！');
-      } catch (e) {
-        $('reg-error').innerText = '登録失敗（ID重複など）。';
-      }
+      } catch (e) { $('reg-error').innerText = '登録失敗（ID重複など）。'; }
       $('btn-reg').disabled = false;
     };
 
@@ -138,180 +166,287 @@
       const id = $('login-id').value.trim().toLowerCase();
       const pass = $('login-pass').value.trim();
       if (!id || !pass) return $('auth-error').innerText = '入力してください。';
-
       $('btn-login').disabled = true;
-      try {
-        await signInWithEmailAndPassword(auth, `${id}@naisy.nc`, pass);
-      } catch (e) {
-        $('auth-error').innerText = 'IDかパスワードが違います。';
-      }
-      $('btn-login').disabled = false;
+      try { await signInWithEmailAndPassword(auth, `${id}@naisy.nc`, pass); } 
+      catch (e) { $('auth-error').innerText = 'IDかパスワードが違います。'; $('btn-login').disabled = false; }
+    };
+
+    window.doGuestLogin = () => {
+      const r = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+      myName = 'ゲスト' + r; myCustomId = 'guest-' + r;
+      startMainApp();
     };
 
     window.logout = async () => {
-      if (confirm('ログアウトしますか？')) {
-        await signOut(auth);
-        location.reload();
-      }
+      if (!confirm('ログアウトしますか？')) return;
+      if (myCustomId.startsWith('guest-')) location.reload();
+      else { await signOut(auth); location.reload(); }
     };
 
-    // ログイン状態の監視
     onAuthStateChanged(auth, user => {
       if (user) {
         try {
           const info = JSON.parse(user.displayName);
-          myName = info.name;
-          myCustomId = info.customId;
+          myName = info.name; myCustomId = info.customId;
         } catch(e) {
-          myCustomId = user.email.split('@')[0];
-          myName = myCustomId;
+          myCustomId = user.email.split('@')[0]; myName = myCustomId;
         }
-        initMainApp();
+        startMainApp();
       } else {
-        $('auth-view').style.display = 'block';
-        $('main-view').style.display = 'none';
+        $('auth-view').style.display = 'block'; $('main-view').style.display = 'none';
       }
     });
 
     // ==========================================
-    // メインシステム起動 (マイクとPeerJS)
+    // メインシステム起動
     // ==========================================
-    async function initMainApp() {
+    async function startMainApp() {
       $('auth-view').style.display = 'none';
       $('main-view').style.display = 'block';
       $('my-name-display').innerText = myName;
       $('my-id-display').innerText = myCustomId;
 
-      // 1. マイクの取得
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         audioTrack = localStream.getAudioTracks()[0];
-        audioTrack.enabled = false; // 初期状態はミュート
-        $('status-display').innerText = 'マイクOK。通信サーバーに接続中...';
+        audioTrack.enabled = false;
+        $('status-display').innerText = 'マイク接続OK。通信サーバーに接続中...';
       } catch (e) {
         alert('マイクが許可されませんでした。相手の声を聞くことはできますが、発言はできません。');
-        localStream = new MediaStream(); // ダミー
-        $('status-display').innerText = 'マイクなし。通信サーバーに接続中...';
+        localStream = new MediaStream();
+        $('status-display').innerText = '⚠️マイクなし。通信サーバーに接続中...';
       }
 
-      // 2. PeerJSの起動
-      peer = new Peer(myCustomId);
+      initPeerJS();
+    }
 
+    function initPeerJS() {
+      peer = new Peer(myCustomId);
       peer.on('open', (id) => {
         $('status-display').innerText = '通信準備完了！';
-        $('status-display').style.color = 'green';
-        $('btn-call').disabled = false;
+        $('status-display').style.color = '#28a745';
+        $('talk-btn').innerText = '長押しで発言';
       });
 
       peer.on('error', (err) => {
-        if (err.type === 'unavailable-id') {
-          alert('このIDは現在別の端末で使用されています。');
-        } else {
-          $('status-display').innerText = '通信エラー: ' + err.type;
-        }
+        if (err.type === 'unavailable-id') alert('このIDは現在別の端末で使用されています。');
+        else $('status-display').innerText = '通信エラー: ' + err.type;
       });
 
-      // 着信処理
       peer.on('call', (call) => {
-        if (currentCall) {
-          // 通話中なら拒否
-          call.close();
-          return;
-        }
-        if (confirm(`${call.peer} から着信です。応答しますか？`)) {
+        // グループモード時は自動応答、1対1モード時は確認ダイアログ
+        if (currentMode === 'group') {
           setupCall(call);
           call.answer(localStream);
         } else {
-          call.close();
+          if (confirm(`${call.peer} から着信です。応答しますか？`)) {
+            currentMode = 'direct';
+            uiDirectConnected(call.peer);
+            setupCall(call);
+            call.answer(localStream);
+          } else {
+            call.close();
+          }
         }
       });
     }
 
     // ==========================================
-    // 通話の制御
+    // 1対1通話の制御
     // ==========================================
     window.callPeer = () => {
       const target = $('target-id').value.trim();
       if (!target) return alert('相手のIDを入力してください。');
       if (target === myCustomId) return alert('自分には発信できません。');
       
-      $('call-status').innerText = '発信中...';
+      currentMode = 'direct';
+      uiDirectConnected(target);
       const call = peer.call(target, localStream);
       setupCall(call);
     };
 
     window.endCall = () => {
-      if (currentCall) {
-        currentCall.close();
-      }
-      resetCallUI();
+      endAllCalls();
+      currentMode = 'idle';
+      uiIdle();
     };
 
+    // ==========================================
+    // グループ通話の制御 (MQTT利用)
+    // ==========================================
+    window.joinGroup = () => {
+      const roomId = $('room-id').value.trim();
+      if (!roomId) return alert('合言葉(ルームID)を入力してください。');
+      
+      currentMode = 'group';
+      activeRoomId = roomId;
+      currentGroupTopic = `${APP_PREFIX}${roomId}`;
+      
+      uiGroupConnected();
+
+      if (mqttClient) { try { mqttClient.end(true); } catch(e){} }
+      mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+
+      mqttClient.on('connect', () => {
+        mqttClient.subscribe(currentGroupTopic);
+        // 入室したことを部屋の全員に通知
+        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'join', peerId: myCustomId }));
+      });
+
+      mqttClient.on('message', (topic, msg) => {
+        const data = JSON.parse(msg.toString());
+        
+        // 誰かが入室してきたら、その人にPeerJSで電話をかける
+        if (data.type === 'join' && data.peerId !== myCustomId) {
+          const call = peer.call(data.peerId, localStream);
+          setupCall(call);
+        }
+        
+        // 誰かが退出したら、その人との通話を切る
+        if (data.type === 'leave' && data.peerId !== myCustomId) {
+          if (activeCalls[data.peerId]) {
+            activeCalls[data.peerId].close();
+            removeAudio(data.peerId);
+            delete activeCalls[data.peerId];
+            updateGroupMemberCount();
+          }
+        }
+      });
+    };
+
+    window.leaveGroup = () => {
+      if (mqttClient && currentGroupTopic) {
+        // 退室することを全員に通知
+        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', peerId: myCustomId }));
+        mqttClient.end(true);
+      }
+      mqttClient = null;
+      activeRoomId = null;
+      currentGroupTopic = null;
+      
+      endAllCalls();
+      currentMode = 'idle';
+      uiIdle();
+    };
+
+    // ==========================================
+    // 通話共通ロジック (Audio生成・破棄)
+    // ==========================================
     function setupCall(call) {
-      currentCall = call;
-      $('btn-call').style.display = 'none';
-      $('target-id').style.display = 'none';
-      $('btn-end').style.display = 'block';
-      $('talk-btn').disabled = false;
-      $('call-status').innerText = `${call.peer} と通話中`;
+      activeCalls[call.peer] = call;
 
       call.on('stream', (remoteStream) => {
-        let audio = $('remote-audio');
+        let audio = $(`audio-${call.peer}`);
         if (!audio) {
           audio = document.createElement('audio');
-          audio.id = 'remote-audio';
+          audio.id = `audio-${call.peer}`;
           audio.autoplay = true;
           $('audio-container').appendChild(audio);
         }
         audio.srcObject = remoteStream;
+        updateGroupMemberCount();
       });
 
       call.on('close', () => {
-        alert('通話が終了しました。');
-        resetCallUI();
+        removeAudio(call.peer);
+        delete activeCalls[call.peer];
+        updateGroupMemberCount();
+        
+        // 1対1モードで相手が切った場合はUIを戻す
+        if (currentMode === 'direct') {
+          alert('通話が終了しました。');
+          endCall();
+        }
       });
     }
 
-    function resetCallUI() {
-      currentCall = null;
-      $('btn-call').style.display = 'block';
-      $('target-id').style.display = 'block';
-      $('btn-end').style.display = 'none';
-      $('talk-btn').disabled = true;
-      $('call-status').innerText = '';
+    function endAllCalls() {
+      Object.values(activeCalls).forEach(call => {
+        call.close();
+      });
+      activeCalls = {};
       $('audio-container').innerHTML = '';
-      if (audioTrack) audioTrack.enabled = false;
+    }
+
+    function removeAudio(peerId) {
+      const audio = $(`audio-${peerId}`);
+      if (audio) audio.remove();
+    }
+
+    function updateGroupMemberCount() {
+      if (currentMode === 'group') {
+        const count = Object.keys(activeCalls).length + 1; // 自分 + 通話相手
+        $('group-member-count').innerText = `接続中: ${count}人`;
+      }
+    }
+
+    // ==========================================
+    // UI表示切り替え
+    // ==========================================
+    function uiDirectConnected(targetId) {
+      $('direct-inputs').style.display = 'none';
+      $('btn-end-direct').style.display = 'block';
+      $('group-panel').style.opacity = '0.3'; // グループ操作を無効化っぽく見せる
+      $('btn-join').disabled = true;
+      $('call-status').innerText = `${targetId} と通話中`;
+      $('talk-btn').disabled = false;
+    }
+
+    function uiGroupConnected() {
+      $('group-inputs').style.display = 'none';
+      $('group-active-ui').style.display = 'block';
+      $('direct-panel').style.opacity = '0.3'; // 1対1操作を無効化っぽく見せる
+      $('btn-call').disabled = true;
+      $('call-status').innerText = `グループ「${activeRoomId}」に通話参加中`;
+      $('talk-btn').disabled = false;
+      updateGroupMemberCount();
+    }
+
+    function uiIdle() {
+      $('direct-inputs').style.display = 'block';
+      $('btn-end-direct').style.display = 'none';
+      $('group-inputs').style.display = 'block';
+      $('group-active-ui').style.display = 'none';
+      
+      $('direct-panel').style.opacity = '1';
+      $('group-panel').style.opacity = '1';
+      $('btn-call').disabled = false;
+      $('btn-join').disabled = false;
+      
+      $('call-status').innerText = '';
+      $('talk-btn').disabled = true;
       $('talk-btn').classList.remove('active');
-      $('talk-btn').innerText = '長押しで発言';
+      if (audioTrack) audioTrack.enabled = false;
     }
 
     // ==========================================
     // PTTボタン (長押しで発言) の制御
     // ==========================================
-    const btn = $('talk-btn');
+    const btnTalk = $('talk-btn');
     
     const startTalk = (e) => {
       e.preventDefault();
-      if (!currentCall || !audioTrack) return;
+      if (currentMode === 'idle' || !audioTrack) return;
       audioTrack.enabled = true;
-      btn.classList.add('active');
-      btn.innerText = '発言中...';
+      btnTalk.classList.add('active');
+      btnTalk.innerText = '発言中...';
     };
 
     const stopTalk = (e) => {
       e.preventDefault();
-      if (!currentCall || !audioTrack) return;
+      if (currentMode === 'idle' || !audioTrack) return;
       audioTrack.enabled = false;
-      btn.classList.remove('active');
-      btn.innerText = '長押しで発言';
+      btnTalk.classList.remove('active');
+      btnTalk.innerText = '長押しで発言';
     };
 
-    btn.addEventListener('mousedown', startTalk);
-    btn.addEventListener('touchstart', startTalk, { passive: false });
-    btn.addEventListener('mouseup', stopTalk);
-    btn.addEventListener('touchend', stopTalk);
-    btn.addEventListener('mouseleave', stopTalk);
+    btnTalk.addEventListener('mousedown', startTalk);
+    btnTalk.addEventListener('touchstart', startTalk, { passive: false });
+    btnTalk.addEventListener('mouseup', stopTalk);
+    btnTalk.addEventListener('touchend', stopTalk);
+    btnTalk.addEventListener('mouseleave', stopTalk);
 
   </script>
 </body>
 </html>
+
