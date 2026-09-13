@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - Classic UI & Robust Engine v4.1.0</title>
+  <title>Naisync - Classic UI & Robust Engine v4.2.0</title>
   <style>
     body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; font-family: sans-serif; background-color: #f4f6f9; margin: 0; transition: background-color 0.3s, color 0.3s; }
     body.dark-mode { background-color: #121212; color: #e0e0e0; }
@@ -226,7 +226,7 @@
   <div id="game-invite-container">
     <div id="game-invite-msg"></div>
     <div style="display: flex; justify-content: center; gap: 10px;">
-      <button class="btn-action btn-success" id="btn-accept-invite" style="width: auto; padding: 8px 16px; margin: 0; font-size: 12px;" onclick="window.acceptGameInvite()">対戦する</button>
+      <button class="btn-action btn-success" id="btn-accept-invite" onclick="window.acceptGameInvite()" style="width: auto; padding: 8px 16px; margin: 0; font-size: 12px;">対戦する</button>
       <button class="btn-action btn-secondary" style="width: auto; padding: 8px 16px; margin: 0; font-size: 12px;" onclick="window.declineGameInvite()">断る</button>
     </div>
   </div>
@@ -255,14 +255,20 @@
       <div><span style="font-size:11px; opacity:0.7;">ID:</span> <span id="my-id" style="font-size: 14px; font-weight:bold;">-</span></div>
     </div>
 
+    <!-- 1対1パネル -->
     <div id="direct-panel" style="display: none;">
-      <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
-      <button class="btn-action" id="connect-btn">1対1で発信</button>
+      <div id="direct-inputs">
+        <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
+        <button class="btn-action" id="connect-btn" onclick="window.callPeer()">1対1で発信</button>
+      </div>
+      <button class="btn-action btn-danger" id="btn-end-direct" onclick="window.endCall()" style="display: none; margin-top: 10px;">通話を切る</button>
     </div>
 
+    <!-- グループパネル -->
     <div id="group-panel" style="display: none;">
       <div id="member-count">接続中: 0人 (あなただけです)</div>
       <button class="btn-action btn-outline" onclick="window.copyGroupInvite()" style="padding: 8px; font-size: 12px; margin-top: 12px;">🔗 このグループの招待リンクをコピー</button>
+      <button class="btn-action btn-danger" id="btn-leave-group" onclick="window.leaveGroup()" style="display: none; margin-top: 12px;">🚪 グループを退出</button>
       <div id="host-controls" style="display: none; margin-top: 8px;">
         <button class="btn-action btn-danger" onclick="window.changeRoomPassword()" style="padding: 8px; font-size: 12px;">👑 グループのパスワードを変更する</button>
       </div>
@@ -279,7 +285,7 @@
     <div class="controls">
       <button id="talk-btn" disabled>準備中...</button>
       <div style="display: flex; gap: 8px; width: 100%;">
-        <button id="toggle-btn" disabled style="flex: 1;">常時通話 (OFF)</button>
+        <button id="toggle-btn" disabled style="flex: 1;" onclick="window.toggleConstantCall()">常時通話 (OFF)</button>
         <button id="share-screen-btn" class="btn-action btn-secondary" onclick="window.startScreenShare()" disabled style="flex: 1; padding: 12px; margin: 0; font-size: 13px;">🖥️ Field Share</button>
       </div>
     </div>
@@ -358,8 +364,8 @@
         <div style="color:#aaa; font-size:11px; text-align:center; margin-top:20px;">メッセージはここに表示されます</div>
       </div>
       <div class="chat-input-box">
-        <input type="text" id="chat-input" placeholder="メッセージを入力...">
-        <button class="btn-action" id="chat-send-btn">送信</button>
+        <input type="text" id="chat-input" placeholder="メッセージを入力..." onkeypress="if(event.key === 'Enter') window.sendChatMessage()">
+        <button class="btn-action" id="chat-send-btn" onclick="window.sendChatMessage()">送信</button>
       </div>
     </div>
   </div>
@@ -516,11 +522,15 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v4.1.0 (最新) 🛠️ログインフリーズ修正版</div>
-          <div>・ファイル書き出し時に欠落してしまっていたタブ描画・UI更新機能（renderTabs / updateChatUI）を復元し、ログイン直後に進行不能になるバグを修正しました。</div>
+          <div class="changelog-version">v4.2.0 (最新) 🛠️真・完全UI連携版</div>
+          <div>・クラシックUIのボタン（1対1発信、チャット送信、グループ退出など）が内部システムと正しく連携せず無反応になっていた問題を完全修正しました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v4.0.0 (最新) 🛠️真・完全動作版</div>
+          <div class="changelog-version">v4.2.0 🛠️ログインフリーズ修正版</div>
+          <div>・ファイル書き出し時に欠落してしまっていたタブ描画・UI更新機能を復元しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v4.0.0 🛠️真・完全動作版</div>
           <div>・AI出力システムの限界によりコードが欠落していた問題を完全解消しました。<br>・重複エラーをすべて削ぎ落とし、1つのクリーンなプログラムとして全機能が完璧に動作するようにしました。</div>
         </div>
         <div class="changelog-item">
@@ -554,7 +564,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const APP_PREFIX = 'Naisync/v410/';
+    const APP_PREFIX = 'Naisync/v420/';
 
     // Globals
     let myPeerId = null, peer = null, mqttClient = null;
@@ -616,73 +626,73 @@
       savedGroups = groups;
     }
 
-// UI Utilities
-window.renderTabs = function() {
-  const wrapper = document.getElementById('tabs-wrapper');
-  if (!wrapper) return;
-  wrapper.innerHTML = '';
-  const directTab = document.createElement('button');
-  directTab.className = `tab ${currentMode === 'direct' || currentMode === 'idle' ? 'active' : ''}`;
-  directTab.innerText = '📞 1対1通話';
-  directTab.onclick = () => window.switchToDirect();
-  wrapper.appendChild(directTab);
+    // UI Utilities
+    window.renderTabs = function() {
+      const wrapper = document.getElementById('tabs-wrapper');
+      if (!wrapper) return;
+      wrapper.innerHTML = '';
+      const directTab = document.createElement('button');
+      directTab.className = `tab ${currentMode === 'direct' || currentMode === 'idle' ? 'active' : ''}`;
+      directTab.innerText = '📞 1対1通話';
+      directTab.onclick = () => window.switchToDirect();
+      wrapper.appendChild(directTab);
 
-  savedGroups.forEach(g => {
-    const t = document.createElement('button');
-    t.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
-    t.innerText = `👥 ${g.name || g.id}`;
-    const del = document.createElement('span');
-    del.className = 'btn-del'; del.innerText = '✕';
-    del.onclick = (e) => {
-      e.stopPropagation();
-      if(confirm(`${g.name || g.id} を一覧から削除しますか？`)){
-        savedGroups = savedGroups.filter(x => x.id !== g.id);
-        saveGroupsToLocal();
-        if(currentMode === 'group' && currentGroupId === g.id) window.switchToDirect();
-        else window.renderTabs();
+      savedGroups.forEach(g => {
+        const t = document.createElement('button');
+        t.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
+        t.innerText = `👥 ${g.name || g.id}`;
+        const del = document.createElement('span');
+        del.className = 'btn-del'; del.innerText = '✕';
+        del.onclick = (e) => {
+          e.stopPropagation();
+          if(confirm(`${g.name || g.id} を一覧から削除しますか？`)){
+            savedGroups = savedGroups.filter(x => x.id !== g.id);
+            saveGroupsToLocal();
+            if(currentMode === 'group' && currentGroupId === g.id) window.switchToDirect();
+            else window.renderTabs();
+          }
+        };
+        t.appendChild(del);
+        t.onclick = () => window.joinGroup(g.id);
+        wrapper.appendChild(t);
+      });
+      
+      const addBtn = document.createElement('button');
+      addBtn.className = 'tab tab-add';
+      addBtn.innerText = isGuestMode ? '＋ 参加' : '＋ 作成';
+      addBtn.onclick = () => {
+        if(isGuestMode) {
+          window.switchGroupModalTab('join');
+          document.getElementById('tab-btn-create').style.display = 'none';
+        } else {
+          window.switchGroupModalTab('create');
+          document.getElementById('tab-btn-create').style.display = 'block';
+        }
+        if(document.getElementById('modal-create-name')) document.getElementById('modal-create-name').value = '';
+        if(document.getElementById('modal-create-id')) document.getElementById('modal-create-id').value = '';
+        if(document.getElementById('modal-create-pass')) document.getElementById('modal-create-pass').value = '';
+        if(document.getElementById('modal-create-no-guests')) document.getElementById('modal-create-no-guests').checked = false; 
+        if(document.getElementById('modal-create-allow-se')) document.getElementById('modal-create-allow-se').checked = false; 
+        if(document.getElementById('modal-join-name')) document.getElementById('modal-join-name').value = '';
+        if(document.getElementById('modal-join-id')) document.getElementById('modal-join-id').value = '';
+        if(document.getElementById('modal-join-pass')) document.getElementById('modal-join-pass').value = '';
+        document.getElementById('group-modal').style.display = 'flex';
+      };
+      wrapper.appendChild(addBtn);
+    };
+
+    window.updateChatUI = function() {
+      const chatInput = document.getElementById('chat-input');
+      const chatSendBtn = document.getElementById('chat-send-btn');
+      if (!chatInput || !chatSendBtn) return;
+      if (isGuestMode) {
+        chatInput.disabled = true; chatSendBtn.disabled = true; chatInput.placeholder = "ゲストはチャットを送信できません";
+      } else if (currentMode === 'group' && currentGroupId === 'test-noguest') {
+        chatInput.disabled = true; chatSendBtn.disabled = true; chatInput.placeholder = "このルームではチャットは使用できません";
+      } else {
+        chatInput.disabled = false; chatSendBtn.disabled = false; chatInput.placeholder = "メッセージを入力...";
       }
     };
-    t.appendChild(del);
-    t.onclick = () => window.joinGroup(g.id);
-    wrapper.appendChild(t);
-  });
-  
-  const addBtn = document.createElement('button');
-  addBtn.className = 'tab tab-add';
-  addBtn.innerText = isGuestMode ? '＋ 参加' : '＋ 作成';
-  addBtn.onclick = () => {
-    if(isGuestMode) {
-      window.switchGroupModalTab('join');
-      document.getElementById('tab-btn-create').style.display = 'none';
-    } else {
-      window.switchGroupModalTab('create');
-      document.getElementById('tab-btn-create').style.display = 'block';
-    }
-    if(document.getElementById('modal-create-name')) document.getElementById('modal-create-name').value = '';
-    if(document.getElementById('modal-create-id')) document.getElementById('modal-create-id').value = '';
-    if(document.getElementById('modal-create-pass')) document.getElementById('modal-create-pass').value = '';
-    if(document.getElementById('modal-create-no-guests')) document.getElementById('modal-create-no-guests').checked = false; 
-    if(document.getElementById('modal-create-allow-se')) document.getElementById('modal-create-allow-se').checked = false; 
-    if(document.getElementById('modal-join-name')) document.getElementById('modal-join-name').value = '';
-    if(document.getElementById('modal-join-id')) document.getElementById('modal-join-id').value = '';
-    if(document.getElementById('modal-join-pass')) document.getElementById('modal-join-pass').value = '';
-    document.getElementById('group-modal').style.display = 'flex';
-  };
-  wrapper.appendChild(addBtn);
-};
-
-window.updateChatUI = function() {
-  const chatInput = document.getElementById('chat-input');
-  const chatSendBtn = document.getElementById('chat-send-btn');
-  if (!chatInput || !chatSendBtn) return;
-  if (isGuestMode) {
-    chatInput.disabled = true; chatSendBtn.disabled = true; chatInput.placeholder = "ゲストはチャットを送信できません";
-  } else if (currentMode === 'group' && currentGroupId === 'test-noguest') {
-    chatInput.disabled = true; chatSendBtn.disabled = true; chatInput.placeholder = "このルームではチャットは使用できません";
-  } else {
-    chatInput.disabled = false; chatSendBtn.disabled = false; chatInput.placeholder = "メッセージを入力...";
-  }
-};
 
 
     window.showNotification = function(msg) {
@@ -954,6 +964,12 @@ window.updateChatUI = function() {
     window.switchToDirect = function() {
       window.endAllConnections(); currentMode = 'direct'; currentGroupId = null; window.endReversi(); window.endSmash(); window.renderTabs(); window.updateChatUI();
       document.getElementById('direct-panel').style.display = 'block'; document.getElementById('group-panel').style.display = 'none';
+      
+      document.getElementById('connect-btn').style.display = 'block';
+      document.getElementById('peer-id-input').style.display = 'block';
+      if(document.getElementById('btn-end-direct')) document.getElementById('btn-end-direct').style.display = 'none';
+      if(document.getElementById('btn-leave-group')) document.getElementById('btn-leave-group').style.display = 'none';
+      
       if (isGuestMode) {
         document.getElementById('status').innerText = 'ゲストモード中は1対1通話を利用できません';
         document.getElementById('talk-btn').disabled = true; document.getElementById('toggle-btn').disabled = true; document.getElementById('connect-btn').disabled = true; document.getElementById('peer-id-input').disabled = true; document.getElementById('share-screen-btn').disabled = true;
@@ -976,7 +992,11 @@ window.updateChatUI = function() {
       const call = peer.call(targetId, combinedStream, { metadata: { senderName: savedMyName, mode: 'direct', isScreen: isScreenSharing } });
       setupCall(call);
       const conn = peer.connect(targetId); setupDataConn(conn);
-      document.getElementById('direct-inputs').style.display = 'none'; document.getElementById('btn-end-direct').style.display = 'block'; document.getElementById('call-status').innerText = `${targetId} と通話中`; document.getElementById('talk-btn').disabled = false; document.getElementById('share-screen-btn').disabled = false;
+      
+      document.getElementById('connect-btn').style.display = 'none';
+      document.getElementById('peer-id-input').style.display = 'none';
+      document.getElementById('btn-end-direct').style.display = 'block';
+      document.getElementById('call-status').innerText = `${targetId} と通話中`; document.getElementById('talk-btn').disabled = false; document.getElementById('share-screen-btn').disabled = false;
     };
 
     window.endCall = function() { window.switchToDirect(); };
@@ -984,7 +1004,7 @@ window.updateChatUI = function() {
     window.joinGroup = function(roomId) {
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       window.endAllConnections(); currentMode = 'group'; currentGroupId = roomId; window.renderTabs(); window.updateChatUI();
-      document.getElementById('direct-panel').style.display = 'none'; document.getElementById('group-panel').style.display = 'block'; document.getElementById('group-inputs').style.display = 'none'; document.getElementById('group-active-ui').style.display = 'block';
+      document.getElementById('direct-panel').style.display = 'none'; document.getElementById('group-panel').style.display = 'block'; document.getElementById('btn-leave-group').style.display = 'block';
       const g = savedGroups.find(x => x.id === roomId);
       const isHost = (g && g.hostId === myPeerId); document.getElementById('host-controls').style.display = isHost && !g.isRadio ? 'block' : 'none';
       if (document.getElementById('se-board') && g) { document.getElementById('se-board').style.display = (isHost || (!g.isRadio && g.allowMemberSE && !isGuestMode)) ? 'block' : 'none'; }
@@ -1017,6 +1037,25 @@ window.updateChatUI = function() {
     window.leaveGroup = function() {
       if (mqttClient && currentGroupTopic) { mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', peerId: myPeerId })); }
       currentGroupTopic = null; window.switchToDirect();
+    };
+
+    window.toggleConstantCall = function() {
+      if (currentMode === 'group' && currentGroupId) { const g = savedGroups.find(x => x.id === currentGroupId); if (g && g.isRadio && g.hostId !== myPeerId) return; }
+      if (!rawAudioTrack || document.getElementById('toggle-btn').disabled) return;
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      isLocked = !isLocked; rawAudioTrack.enabled = isLocked;
+      const tBtn = document.getElementById('toggle-btn');
+      const talkBtnEl = document.getElementById('talk-btn');
+      if (isLocked) {
+        tBtn.classList.add('locked'); tBtn.innerText = '常時通話中 (ON) - タップでOFF'; talkBtnEl.classList.add('active'); talkBtnEl.innerText = '常時通話中'; talkBtnEl.style.opacity = '0.5';
+        if (transMode !== 'off' && speechRecognition) { try { speechRecognition.start(); } catch(err){} }
+      } else {
+        tBtn.classList.remove('locked'); tBtn.innerText = '常時通話に切り替え (OFF)'; talkBtnEl.classList.remove('active');
+        const g = savedGroups.find(x => x.id === currentGroupId);
+        if (currentMode === 'group' && g && g.isRadio && g.hostId === myPeerId) talkBtnEl.innerText = '長押しで放送'; else talkBtnEl.innerText = '長押しで話す';
+        talkBtnEl.style.opacity = '1';
+        if (transMode !== 'off' && speechRecognition) { try { speechRecognition.stop(); } catch(err){} }
+      }
     };
 
     function setupCall(call) {
@@ -1120,15 +1159,15 @@ window.updateChatUI = function() {
         const g = savedGroups.find(x => x.id === currentGroupId);
         if (g && g.isRadio) {
           if (g.hostId === myPeerId) {
-            document.getElementById('status').innerText = `【📻 ${g.name}】を放送中`; document.getElementById('group-member-count').innerText = count > 0 ? `接続中: リスナー ${count} 人` : '接続中: リスナー 0人 (あなただけです)';
+            document.getElementById('status').innerText = `【📻 ${g.name}】を放送中`; document.getElementById('member-count').innerText = count > 0 ? `接続中: リスナー ${count} 人` : '接続中: リスナー 0人 (あなただけです)';
             document.getElementById('talk-btn').disabled = false; document.getElementById('toggle-btn').disabled = false; document.getElementById('talk-btn').innerText = '長押しで放送'; document.getElementById('share-screen-btn').disabled = false; 
           } else {
-            document.getElementById('status').innerText = `【🎧 ${g.name}】を受信中`; document.getElementById('group-member-count').innerText = count > 0 ? `接続中: ほかリスナー ${count} 人` : '接続中: リスナー (あなただけです)';
+            document.getElementById('status').innerText = `【🎧 ${g.name}】を受信中`; document.getElementById('member-count').innerText = count > 0 ? `接続中: ほかリスナー ${count} 人` : '接続中: リスナー (あなただけです)';
             document.getElementById('talk-btn').disabled = true; document.getElementById('toggle-btn').disabled = true; document.getElementById('talk-btn').innerText = '🎧 聞き専モード'; document.getElementById('talk-btn').classList.remove('active');
             if (rawAudioTrack) rawAudioTrack.enabled = false; document.getElementById('share-screen-btn').disabled = true; 
           }
         } else {
-          document.getElementById('status').innerText = `【${g ? g.name : ''}】に参加中`; document.getElementById('group-member-count').innerText = count > 0 ? `接続中: ほか ${count} 人` : '接続中: 0人 (あなただけです)';
+          document.getElementById('status').innerText = `【${g ? g.name : ''}】に参加中`; document.getElementById('member-count').innerText = count > 0 ? `接続中: ほか ${count} 人` : '接続中: 0人 (あなただけです)';
           document.getElementById('talk-btn').disabled = false; document.getElementById('toggle-btn').disabled = false; document.getElementById('talk-btn').innerText = '長押しで話す'; document.getElementById('share-screen-btn').disabled = false; 
         }
         const seBoard = document.getElementById('se-board');
