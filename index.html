@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - Classic UI & Robust Engine v4.2.0</title>
+  <title>Naisync - Classic UI & Robust Engine v4.3.0</title>
   <style>
     body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; font-family: sans-serif; background-color: #f4f6f9; margin: 0; transition: background-color 0.3s, color 0.3s; }
     body.dark-mode { background-color: #121212; color: #e0e0e0; }
@@ -526,7 +526,7 @@
           <div>・クラシックUIのボタン（1対1発信、チャット送信、グループ退出など）が内部システムと正しく連携せず無反応になっていた問題を完全修正しました。</div>
         </div>
         <div class="changelog-item">
-          <div class="changelog-version">v4.2.0 🛠️ログインフリーズ修正版</div>
+          <div class="changelog-version">v4.1.0 🛠️ログインフリーズ修正版</div>
           <div>・ファイル書き出し時に欠落してしまっていたタブ描画・UI更新機能を復元しました。</div>
         </div>
         <div class="changelog-item">
@@ -564,7 +564,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const APP_PREFIX = 'Naisync/v420/';
+    const APP_PREFIX = 'Naisync/v430/';
 
     // Globals
     let myPeerId = null, peer = null, mqttClient = null;
@@ -626,7 +626,9 @@
       savedGroups = groups;
     }
 
-    // UI Utilities
+    // ==========================================
+    // UI Utilities & Global Attachment
+    // ==========================================
     window.renderTabs = function() {
       const wrapper = document.getElementById('tabs-wrapper');
       if (!wrapper) return;
@@ -694,12 +696,66 @@
       }
     };
 
-
     window.showNotification = function(msg) {
       if (!isNotificationOn) return; 
       const container = document.getElementById('notification-container');
       const toast = document.createElement('div'); toast.className = 'toast'; toast.innerText = msg;
       container.appendChild(toast); setTimeout(() => toast.remove(), 3900);
+    };
+
+    window.openSettings = function() {
+      window.switchSettingsTab('general');
+      document.getElementById('settings-modal').style.display = 'flex'; 
+    };
+    window.closeSettings = function() { document.getElementById('settings-modal').style.display = 'none'; };
+
+    window.openHelp = function() { document.getElementById('help-modal').style.display = 'flex'; };
+    window.closeHelp = function() { document.getElementById('help-modal').style.display = 'none'; };
+
+    window.closeGroupModal = function() { document.getElementById('group-modal').style.display = 'none'; };
+
+    window.addTestGroup = function(type) {
+      let testGroup;
+      if (type === 'public') {
+        testGroup = { id: 'public-lobby', name: '公式パブリックルーム', pass: 'naisync-public-2026', noGuests: false, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
+      } else {
+        testGroup = { id: 'test-noguest', name: 'ゲスト禁止テスト', pass: '0000', noGuests: true, hostId: null, createdAt: 9999999999999, isRadio: false, allowMemberSE: false };
+      }
+      
+      const index = savedGroups.findIndex(g => g.id === testGroup.id);
+      if (index >= 0) savedGroups[index] = testGroup;
+      else savedGroups.push(testGroup);
+      
+      saveGroupsToLocal();
+      window.closeHelp();
+      window.joinGroup(testGroup.id);
+    };
+
+    window.stopScreenShare = function() {
+      if (screenStream) { screenStream.getTracks().forEach(track => track.stop()); screenStream = null; }
+      isScreenSharing = false;
+      document.getElementById('share-screen-btn').innerHTML = '🖥️<br>画面共有';
+      document.getElementById('share-screen-btn').classList.remove('btn-danger');
+      document.getElementById('share-screen-btn').classList.add('btn-secondary');
+      if (document.getElementById('screen-share-video').srcObject) {
+         document.getElementById('screen-share-video').srcObject = null;
+         document.getElementById('screen-share-container').style.display = 'none';
+      }
+      window.reconnectAllWithScreen();
+    };
+
+    window.reconnectAllWithScreen = function() {
+      if (!processedStream) return;
+      const combinedStream = new MediaStream();
+      processedStream.getAudioTracks().forEach(t => combinedStream.addTrack(t));
+      if (isScreenSharing && screenStream) screenStream.getVideoTracks().forEach(t => combinedStream.addTrack(t));
+
+      Object.keys(activeCalls).forEach(peerId => {
+         const call = peer.call(peerId, combinedStream, { 
+           metadata: { senderName: savedMyName, mode: currentMode, groupId: currentGroupId, isGuest: isGuestMode, isScreen: isScreenSharing } 
+         });
+         setupCall(call);
+      });
     };
 
     function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -1004,7 +1060,7 @@
     window.joinGroup = function(roomId) {
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       window.endAllConnections(); currentMode = 'group'; currentGroupId = roomId; window.renderTabs(); window.updateChatUI();
-      document.getElementById('direct-panel').style.display = 'none'; document.getElementById('group-panel').style.display = 'block'; document.getElementById('btn-leave-group').style.display = 'block';
+      document.getElementById('direct-panel').style.display = 'none'; document.getElementById('group-panel').style.display = 'block'; document.getElementById('group-inputs').style.display = 'none'; document.getElementById('group-active-ui').style.display = 'block';
       const g = savedGroups.find(x => x.id === roomId);
       const isHost = (g && g.hostId === myPeerId); document.getElementById('host-controls').style.display = isHost && !g.isRadio ? 'block' : 'none';
       if (document.getElementById('se-board') && g) { document.getElementById('se-board').style.display = (isHost || (!g.isRadio && g.allowMemberSE && !isGuestMode)) ? 'block' : 'none'; }
@@ -1037,6 +1093,23 @@
     window.leaveGroup = function() {
       if (mqttClient && currentGroupTopic) { mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', peerId: myPeerId })); }
       currentGroupTopic = null; window.switchToDirect();
+    };
+
+    window.startScreenShare = async function() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) return alert('ブラウザが対応していません。');
+      if (isScreenSharing) { window.stopScreenShare(); return; }
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        isScreenSharing = true;
+        document.getElementById('share-screen-btn').innerHTML = '⏹️<br>Field Share停止';
+        document.getElementById('share-screen-btn').classList.remove('btn-secondary');
+        document.getElementById('share-screen-btn').classList.add('btn-danger');
+        document.getElementById('screen-share-video').srcObject = screenStream;
+        document.getElementById('screen-share-label').innerText = 'あなたのField';
+        document.getElementById('screen-share-container').style.display = 'block';
+        window.reconnectAllWithScreen();
+        screenStream.getVideoTracks()[0].onended = () => { window.stopScreenShare(); };
+      } catch (err) { console.error('Field Shareエラー:', err); }
     };
 
     window.toggleConstantCall = function() {
@@ -1142,16 +1215,6 @@
       conn.on('close', () => delete activeDataConns[conn.peer]);
     }
 
-    window.endAllConnections = function() {
-      if (currentGroupTopic && mqttClient) { mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', senderId: myPeerId })); mqttClient.unsubscribe(currentGroupTopic); }
-      window.stopScreenShare();
-      Object.values(activeDataConns).forEach(conn => { if (conn.open) { conn.send({ type: 'leave', senderId: myPeerId }); setTimeout(() => { if (conn.close) conn.close(); }, 200); } else { if (conn.close) conn.close(); } });
-      Object.values(activeCalls).forEach(call => { if (call.peerConnection) call.peerConnection.close(); call.close(); });
-      if (peer && peer.connections) { Object.keys(peer.connections).forEach(peerId => { peer.connections[peerId].forEach(conn => { if (conn.close) conn.close(); }); }); }
-      Object.values(pannerNodes).forEach(p => p.disconnect()); pannerNodes = {}; activeCalls = {}; activeDataConns = {}; document.getElementById('audio-container').innerHTML = ''; currentGroupTopic = null; document.getElementById('chat-logs').innerHTML = ''; document.getElementById('participants-list').innerHTML = ''; document.getElementById('participants-section').style.display = 'none'; peerNames = {}; 
-      document.getElementById('game-invite-container').style.display = 'none'; pendingReversiConn = null; pendingSmashConn = null; pendingGameType = null; document.getElementById('poll-result-section').style.display = 'none'; if (pollInterval) clearInterval(pollInterval); currentPollId = null;
-    }
-
     // UI Updates
     window.updateStatus = function() {
       const count = Object.keys(activeCalls).length;
@@ -1159,7 +1222,7 @@
         const g = savedGroups.find(x => x.id === currentGroupId);
         if (g && g.isRadio) {
           if (g.hostId === myPeerId) {
-            document.getElementById('status').innerText = `【📻 ${g.name}】を放送中`; document.getElementById('member-count').innerText = count > 0 ? `接続中: リスナー ${count} 人` : '接続中: リスナー 0人 (あなただけです)';
+            document.getElementById('status').innerText = `【📻 ${g.name}】を放送中`; document.getElementById('member-count').innerText = count > 0 ? `接続中: リリスナー ${count} 人` : '接続中: リスナー 0人 (あなただけです)';
             document.getElementById('talk-btn').disabled = false; document.getElementById('toggle-btn').disabled = false; document.getElementById('talk-btn').innerText = '長押しで放送'; document.getElementById('share-screen-btn').disabled = false; 
           } else {
             document.getElementById('status').innerText = `【🎧 ${g.name}】を受信中`; document.getElementById('member-count').innerText = count > 0 ? `接続中: ほかリスナー ${count} 人` : '接続中: リスナー (あなただけです)';
