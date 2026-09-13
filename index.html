@@ -3,318 +3,541 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 完全復活版 v3.4.0</title>
+  <title>Naisync - Classic UI & Robust Engine v4.0.0</title>
   <style>
-    body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s, color 0.3s; }
+    body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; font-family: sans-serif; background-color: #f4f6f9; margin: 0; transition: background-color 0.3s, color 0.3s; }
     body.dark-mode { background-color: #121212; color: #e0e0e0; }
-    .card { background: white; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; border-radius: 12px; text-align: center; margin-bottom: 20px; transition: 0.3s; }
-    body.dark-mode .card { background: #1e1e1e; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
-    .title { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 10px; }
-    input, select { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    body.dark-mode input, body.dark-mode select { background-color: #2a2d32; border-color: #444; color: #fff; }
-    button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
-    button:disabled { background: #aaa; cursor: not-allowed; }
-    .btn-danger { background: #dc3545; }
-    .btn-success { background: #28a745; }
-    .btn-secondary { background: #6c757d; }
-    .btn-outline { background: transparent; border: 1px solid #007bff; color: #007bff; }
-    .info-box { background: #eef2f5; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; word-break: break-all; font-size: 14px; text-align: left;}
-    body.dark-mode .info-box { background: #2a2d32; }
-    #talk-btn { width: 140px; height: 140px; border-radius: 50%; font-size: 18px; margin: 20px auto; display: block; background: #ccc; box-shadow: 0 6px 12px rgba(0,0,0,0.2); user-select: none; }
-    #talk-btn.active { background: #ff4444; transform: scale(0.96); }
-    .error-text { color: red; font-size: 12px; font-weight: bold; min-height: 15px; margin-bottom: 10px;}
-    .section-title { text-align: left; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 8px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
-    body.dark-mode .section-title { color: #ccc; border-color: #444; }
-    .panel { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
-    body.dark-mode .panel { background: #2a2d32; border-color: #444; }
-    
-    /* タブUI */
-    .tabs-wrapper { display: flex; align-items: center; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 2px solid #eee; }
+    .header-container { display: flex; width: 100%; max-width: 440px; background: #e0e0e0; align-items: flex-end; justify-content: space-between; transition: background 0.3s; }
+    body.dark-mode .header-container { background: #2c2c2c; }
+    .tabs-wrapper { display: flex; align-items: center; overflow-x: auto; padding: 8px 0 0 8px; box-sizing: border-box; -webkit-overflow-scrolling: touch; flex-grow: 1; }
     .tabs-wrapper::-webkit-scrollbar { display: none; }
-    .tab { padding: 8px 12px; font-weight: bold; font-size: 13px; background: #d0d0d0; color: #555; border: none; cursor: pointer; border-radius: 8px; margin-right: 6px; white-space: nowrap; width: auto; flex-shrink: 0; }
-    .tab.active { background: #007bff; color: white; }
-    .tab .btn-del { margin-left: 6px; color: #fff; background: rgba(0,0,0,0.2); border-radius: 50%; padding: 2px 6px; font-size: 10px; }
-    .tab .btn-del:hover { background: #ff4444; }
+    .tab { padding: 12px 14px; font-weight: bold; font-size: 14px; background: #d0d0d0; color: #555; border: none; cursor: pointer; border-radius: 10px 10px 0 0; margin-right: 4px; white-space: nowrap; transition: 0.2s; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; }
     body.dark-mode .tab { background: #333; color: #aaa; }
-    body.dark-mode .tab.active { background: #007bff; color: white; }
+    .tab.active { background: white; color: #007bff; }
+    body.dark-mode .tab.active { background: #1e1e1e; color: #4dabf7; }
+    .tab-add { background: #007bff; color: white; border-radius: 8px; margin-left: auto; padding: 8px 12px; margin-right: 8px;}
+    .tab .btn-del { background: rgba(0, 0, 0, 0.15); color: #444; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; font-weight: normal; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; margin-left: 2px; }
+    .tab .btn-del:hover { background: #ff4444; color: white; }
+    .header-btns { display: flex; align-items: center; padding-bottom: 6px; padding-right: 4px; }
+    .icon-btn { background: white; border: none; font-size: 18px; cursor: pointer; border-radius: 50%; width: 36px; height: 36px; margin-left: 6px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: 0.2s; flex-shrink: 0; }
+    .icon-btn:hover { background: #f0f0f0; }
+    body.dark-mode .icon-btn { background: #2a2d32; color: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+    body.dark-mode .icon-btn:hover { background: #444; }
+    
+    .card { background: white; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 440px; text-align: center; box-sizing: border-box; flex-grow: 1; border-radius: 0 0 16px 16px; transition: background-color 0.3s, color 0.3s, box-shadow 0.3s; }
+    body.dark-mode .card { background-color: #1e1e1e; color: #e0e0e0; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
+    .app-title { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 16px; letter-spacing: 1px; }
+    .id-box { background: #eef2f5; padding: 12px; border-radius: 8px; font-weight: bold; word-break: break-all; margin: 4px 0 10px; font-size: 13px; transition: background 0.3s, color 0.3s; }
+    body.dark-mode .id-box { background: #2a2d32; color: #fff; }
+    .streamer-mask { filter: blur(5px); transition: filter 0.2s; }
+    .streamer-mask:hover, .streamer-mask:focus { filter: blur(0px); }
 
-    /* チャット用スタイル */
-    .chat-logs { height: 150px; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 8px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 4px; text-align: left; margin-bottom: 10px; }
-    body.dark-mode .chat-logs { background: #1e1e1e; border-color: #444; }
+    input[type="text"], input[type="password"], input[type="number"], select, .btn-action { font-size: 14px; padding: 10px; margin: 4px 0; width: 100%; box-sizing: border-box; border-radius: 8px; transition: background 0.3s, color 0.3s, border-color 0.3s; }
+    input[type="text"], input[type="password"], input[type="number"] { border: 1px solid #ccc; text-align: left; }
+    body.dark-mode input[type="text"], body.dark-mode input[type="password"], body.dark-mode input[type="number"], body.dark-mode select { background-color: #2a2d32; border-color: #444; color: #fff; }
+    body.dark-mode input::placeholder { color: #888; }
+    
+    .btn-action { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .btn-action:active { opacity: 0.8; }
+    .btn-action:disabled { background-color: #a0cfff; cursor: not-allowed; opacity: 0.7; }
+    .btn-secondary { background-color: #6c757d; }
+    .btn-outline { background-color: white; color: #007bff; border: 1px solid #007bff; }
+    body.dark-mode .btn-outline { background-color: #2a2d32; color: #4dabf7; border-color: #4dabf7; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-success { background-color: #28a745; }
+    .btn-kick { background: #ff4444; color: white; border: none; border-radius: 4px; font-size: 10px; padding: 4px 8px; cursor: pointer; margin-left: 6px; font-weight: bold; }
+    .btn-kick:hover { background: #cc0000; }
+
+    .controls { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 16px; }
+    #talk-btn { width: 150px; height: 150px; border-radius: 50%; font-size: 18px; font-weight: bold; background-color: #cccccc; color: white; border: none; box-shadow: 0 6px 12px rgba(0,0,0,0.2); user-select: none; -webkit-user-select: none; touch-action: manipulation; transition: 0.1s; }
+    #talk-btn.active { background-color: #ff4444 !important; transform: scale(0.96); }
+    #toggle-btn { width: 100%; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 8px; border: 2px solid #cccccc; background-color: white; color: #666; cursor: pointer; transition: background 0.3s, color 0.3s, border-color 0.3s; }
+    body.dark-mode #toggle-btn { background-color: #2a2d32; border-color: #555; color: #ccc; }
+    #toggle-btn.locked { background-color: #ff4444; border-color: #ff4444; color: white; }
+
+    .participants-section { margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left; transition: border-color 0.3s; }
+    body.dark-mode .participants-section { border-color: #444; }
+    .participant-item { display: flex; flex-direction: column; gap: 8px; background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; transition: background 0.3s, border-color 0.3s; }
+    body.dark-mode .participant-item { background: #2a2d32; border-color: #444; color: #e0e0e0; }
+    .participant-main { display: flex; align-items: center; justify-content: space-between; }
+    .participant-item .p-name { font-size: 13px; font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+    body.dark-mode .participant-item .p-name { color: #e0e0e0; }
+    .participant-item .p-ctrl { display: flex; align-items: center; gap: 6px; }
+    .participant-item input[type=range] { width: 80px; margin: 0; }
+    .spatial-select { padding: 4px; font-size: 11px; border-radius: 4px; border: 1px solid #ccc; background: white; width: auto; }
+    
+    .color-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+    
+    #subtitle-container { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 12px; }
+    .subtitle-box { background: rgba(0, 0, 0, 0.75); color: white; padding: 10px 14px; border-radius: 8px; font-size: 14px; font-weight: bold; text-align: center; animation: toastFadeIn 0.3s ease-out; word-break: break-all; }
+    .subtitle-sender { font-size: 11px; color: #4dabf7; margin-bottom: 4px; }
+    body.dark-mode .subtitle-box { background: rgba(255, 255, 255, 0.15); }
+
+    .chat-section { margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left; transition: border-color 0.3s; }
+    body.dark-mode .chat-section { border-color: #444; }
+    .chat-title { font-size: 12px; font-weight: bold; color: #555; margin-bottom: 6px; }
+    body.dark-mode .chat-title { color: #ccc; }
+    .chat-logs { height: 100px; background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 4px; transition: background 0.3s, border-color 0.3s, color 0.3s; }
+    body.dark-mode .chat-logs { background: #2a2d32; border-color: #444; color: #e0e0e0; }
     .chat-msg { word-break: break-all; margin: 2px 0; }
     .chat-msg .sender { font-weight: bold; color: #007bff; font-size: 11px; margin-right: 4px; }
-    .chat-input-box { display: flex; gap: 6px; }
-    .chat-input-box input { margin: 0; padding: 8px; font-size: 13px; flex-grow: 1; }
+    .chat-msg.me .sender { color: #28a745; }
+    .chat-input-box { display: flex; gap: 6px; margin-top: 6px; }
+    .chat-input-box input { text-align: left; margin: 0; padding: 8px; font-size: 13px; flex-grow: 1; }
     .chat-input-box button { width: auto; padding: 8px 14px; margin: 0; font-size: 13px; white-space: nowrap; }
 
-    /* 画面共有用スタイル */
-    .screen-share-container { width: 100%; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; display: none; position: relative; }
+    #status { font-size: 13px; color: #333; margin-top: 8px; font-weight: bold; transition: color 0.3s; }
+    body.dark-mode #status { color: #ccc; }
+    #member-count { font-size: 11px; color: #888; margin-top: 2px; }
+    .section-title { font-size: 11px; color: #777; text-align: left; margin-top: 4px; transition: color 0.3s; }
+    body.dark-mode .section-title { color: #ccc; }
+
+    /* Modals */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-overlay.top-layer { z-index: 3000; }
+    .modal-box { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; max-height: 85vh; overflow-y: auto; transition: background 0.3s, color 0.3s; }
+    body.dark-mode .modal-box { background: #1e1e1e; color: #e0e0e0; }
+    .modal-box h3 { margin-top: 0; text-align: center; font-size: 18px; margin-bottom: 16px; }
+    .modal-box label { font-size: 12px; color: #555; font-weight: bold; margin-top: 12px; display: block; transition: color 0.3s; }
+    body.dark-mode .modal-box label { color: #ccc; }
+    .modal-buttons { display: flex; gap: 8px; margin-top: 24px; }
+
+    .modal-tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+    .modal-tab-btn { flex: 1; padding: 8px; background: #e0e0e0; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; cursor: pointer; color: #555; transition: 0.2s; }
+    .modal-tab-btn.active { background: #007bff; color: white; }
+    body.dark-mode .modal-tab-btn { background: #333; color: #aaa; }
+    body.dark-mode .modal-tab-btn.active { background: #007bff; color: white; }
+
+    .toggle-switch { display: inline-flex; align-items: center; cursor: pointer; margin-top: 8px; }
+    .toggle-switch input { display: none; }
+    .toggle-slider { position: relative; width: 40px; height: 22px; background-color: #ccc; border-radius: 20px; transition: 0.3s; margin-right: 10px; }
+    .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s; }
+    .toggle-switch input:checked + .toggle-slider { background-color: #28a745; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+    input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; margin-top: 8px; }
+    input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: #e0e0e0; border-radius: 3px; }
+    input[type=range]::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: #007bff; cursor: pointer; -webkit-appearance: none; margin-top: -6px; }
+
+    .faq-item { margin-bottom: 12px; font-size: 13px; }
+    .faq-item strong { display: block; color: #333; margin-bottom: 4px; transition: color 0.3s; }
+    body.dark-mode .faq-item strong { color: #ccc; }
+    .faq-item p { margin: 0; color: #666; line-height: 1.5; transition: color 0.3s; }
+    body.dark-mode .faq-item p { color: #ccc; }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; margin-top: 16px; cursor: pointer; font-size: 13px; font-weight: bold; color: #d9534f; }
+    .checkbox-label input { width: 16px; height: 16px; cursor: pointer; }
+
+    .changelog-list { max-height: 250px; overflow-y: auto; font-size: 12px; text-align: left; background: #fafafa; padding: 12px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 12px; }
+    body.dark-mode .changelog-list { background: #2a2d32; border-color: #444; color: #ccc; }
+    .changelog-item { margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+    body.dark-mode .changelog-item { border-color: #444; }
+    .changelog-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .changelog-version { font-weight: bold; color: #007bff; font-size: 13px; margin-bottom: 2px; }
+
+    #notification-container { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; width: 90%; max-width: 400px; }
+    .toast { background: rgba(40, 40, 40, 0.95); color: white; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: toastFadeIn 0.3s ease-out, toastFadeOut 0.4s ease-in 3.5s forwards; display: flex; align-items: center; gap: 8px; word-break: break-all; }
+    @keyframes toastFadeIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes toastFadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    #game-invite-container { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 10000; background: rgba(40, 40, 40, 0.95); color: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 90%; max-width: 320px; text-align: center; border: 1px solid #555; animation: toastFadeIn 0.3s ease-out; }
+    #game-invite-msg { margin-bottom: 12px; font-size: 13px; font-weight: bold; line-height: 1.4; word-break: break-all; }
+
+    #auth-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f6f9; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: background 0.3s; }
+    body.dark-mode .auth-overlay { background: #121212; }
+
+    /* ゲーム＆画面共有 */
+    .screen-share-container { width: 100%; margin-top: 16px; border-radius: 8px; overflow: hidden; background: #000; display: none; position: relative; }
     .screen-share-video { width: 100%; display: block; }
     .screen-share-label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
 
-    /* ゲーム・遊びエリア */
-    .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-    .game-grid button { margin: 0; padding: 10px; font-size: 12px; }
+    .game-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+    .game-list-item { display: flex; align-items: center; gap: 12px; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #eee; text-align: left; }
+    body.dark-mode .game-list-item { background: #2a2d32; border-color: #444; }
+    .game-btn { width: 110px; height: 40px; border-radius: 20px; font-weight: bold; font-size: 13px; border: none; cursor: pointer; box-shadow: 0 4px 0px rgba(0,0,0,0.2); transition: transform 0.1s, box-shadow 0.1s; flex-shrink: 0; }
+    .game-btn:active { transform: translateY(4px); box-shadow: 0 0px 0px rgba(0,0,0,0.2); }
+    .game-desc { font-size: 11px; color: #555; line-height: 1.4; }
+    body.dark-mode .game-desc { color: #ccc; }
 
-    /* リバーシボード */
-    .reversi-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; background: #222; padding: 4px; margin: 10px auto; max-width: 280px; aspect-ratio: 1; border-radius: 4px; }
+    .poll-bar-container { width: 100%; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin-top: 4px; height: 12px; }
+    .poll-bar { height: 100%; background: #0d6efd; width: 0%; transition: width 0.3s; }
+    .poll-option-btn { width: 100%; text-align: left; padding: 8px; margin-bottom: 4px; border: 1px solid #ccc; background: #fafafa; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+    .poll-option-btn:hover { background: #eef2f5; }
+    body.dark-mode .poll-bar-container { background: #444; }
+    body.dark-mode .poll-option-btn { background: #2a2d32; border-color: #555; color: #e0e0e0; }
+    body.dark-mode .poll-option-btn:hover { background: #333; }
+
+    .reversi-info { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 12px; transition: color 0.3s; }
+    body.dark-mode .reversi-info { color: #e0e0e0; }
+    .reversi-board { display: grid; grid-template-columns: repeat(8, 1fr); gap: 2px; background: #222; padding: 4px; margin: 0 auto; max-width: 280px; aspect-ratio: 1; border-radius: 4px; }
     .reversi-cell { background: #2E7D32; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     .reversi-piece { width: 80%; height: 80%; border-radius: 50%; transition: transform 0.3s; }
     .reversi-piece.black { background: #111; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
     .reversi-piece.white { background: #f8f8f8; box-shadow: 1px 1px 3px rgba(0,0,0,0.5); }
-
-    /* スマッシュボード */
-    #smash-board { width: 100%; aspect-ratio: 3/2; background-color: #2c2c2c; position: relative; overflow: hidden; border-radius: 8px; margin: 10px auto; max-width: 300px; touch-action: none; }
-    .smash-target { width: 40px; height: 40px; border-radius: 50%; position: absolute; display: none; cursor: pointer; transition: left 1.5s linear, top 1.5s linear; }
-    #smash-target-real { background-color: #ff4655; box-shadow: 0 0 10px #ff4655; z-index: 10; }
-    #smash-target-dummy { background-color: #00e5ff; box-shadow: 0 0 10px #00e5ff; z-index: 5; }
-
-    /* モーダル群 */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-box { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 360px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: left; max-height: 85vh; overflow-y: auto; transition: 0.3s; }
-    body.dark-mode .modal-box { background: #1e1e1e; color: #fff; }
-    
-    .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: rgba(40, 40, 40, 0.95); color: white; padding: 12px 16px; border-radius: 8px; font-size: 13px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 9999; animation: fadeout 3s forwards; pointer-events: none; }
-    @keyframes fadeout { 0% { opacity: 1; top: 16px; } 80% { opacity: 1; top: 16px;} 100% { opacity: 0; top: 0px; } }
+    .reversi-hint { width: 25%; height: 25%; border-radius: 50%; background: rgba(0,0,0,0.25); }
+    body.dark-mode .reversi-hint { background: rgba(255,255,255,0.25); }
   </style>
 </head>
 <body>
 
   <!-- =============================== -->
-  <!-- ログイン画面 -->
+  <!-- 認証画面 -->
   <!-- =============================== -->
-  <div id="auth-view" class="card">
-    <div class="title">Naisync</div>
-    <div style="font-size: 12px; color: #666; margin-bottom: 15px;">v3.4.0 (完全安定ファイル版)</div>
-    
-    <div id="login-form">
-      <input type="text" id="login-id" placeholder="内線ID (半角英数字)">
-      <input type="password" id="login-pass" placeholder="パスワード">
-      <div id="auth-error" class="error-text"></div>
-      <button onclick="doLogin()" id="btn-login">ログイン</button>
-      <button onclick="toggleForm()" class="btn-secondary">新規登録へ</button>
-    </div>
+  <div id="auth-overlay">
+    <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
+      <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+      <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
 
-    <div id="register-form" style="display: none;">
-      <input type="text" id="reg-id" placeholder="希望する内線ID (半角英数字)">
-      <input type="text" id="reg-name" placeholder="あなたの名前 (表示名)">
-      <input type="password" id="reg-pass" placeholder="パスワード(6文字以上)">
-      <div id="reg-error" class="error-text"></div>
-      <button onclick="doRegister()" id="btn-reg">登録して開始</button>
-      <button onclick="toggleForm()" class="btn-secondary">ログインへ戻る</button>
-    </div>
+      <div id="invite-alert" style="display: none; background: #eef2f5; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: bold; color: #007bff; border: 1px solid #007bff;">
+        ✉️ 「<span id="invite-group-name"></span>」への招待が届いています！<br>
+        <span style="font-size: 11px; color: #555; font-weight: normal;">ログインするか、一時的なゲストとして参加してください。</span>
+      </div>
+      
+      <div id="login-panel">
+        <h3 style="margin-top:0; color: inherit;">ログイン</h3>
+        <input type="text" id="login-id" placeholder="内線ID (半角英数字)">
+        <input type="password" id="login-pass" placeholder="パスワード">
+        <button class="btn-action" id="login-btn" onclick="window.doLogin()" style="margin-top: 12px;">ログイン</button>
+        <p style="font-size:12px; margin-top:16px;">初めての方は <a href="#" onclick="window.toggleAuth('register')" style="color:#007bff; font-weight:bold; text-decoration: none;">新規登録</a></p>
+      </div>
 
-    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
-      <button onclick="doGuestLogin()" class="btn-secondary">👤 ゲストとして参加</button>
+      <div id="register-panel" style="display: none;">
+        <h3 style="margin-top:0; color: inherit;">新規アカウント作成</h3>
+        <input type="text" id="reg-id" placeholder="希望する内線ID (半角英数字)">
+        <input type="text" id="reg-name" placeholder="あなたの名前 (表示名)">
+        <input type="password" id="reg-pass" placeholder="パスワード (6文字以上)">
+        <button class="btn-action" id="reg-btn" onclick="window.doRegister()" style="margin-top: 12px;">登録して始める</button>
+        <p style="font-size:12px; margin-top:16px;">すでにIDをお持ちの方は <a href="#" onclick="window.toggleAuth('login')" style="color:#007bff; font-weight:bold; text-decoration: none;">ログイン</a></p>
+      </div>
+      
+      <div id="auth-error" style="color: #dc3545; font-size: 13px; margin-top: 12px; font-weight: bold; min-height: 20px;"></div>
+
+      <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 16px;">
+        <p style="font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold;">アカウントを作らずに一時的に参加</p>
+        <button class="btn-action btn-secondary" onclick="window.doGuestLogin()">👤 ゲストとして参加 (機能制限あり)</button>
+      </div>
+
+      <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px; font-size: 12px;">
+        <a href="#" onclick="window.openAuthHelp()" style="color:#888; text-decoration: none; font-weight: bold;">❓ Q&A</a>
+        <a href="#" onclick="window.openChangelog()" style="color:#888; text-decoration: none; font-weight: bold;">📜 更新一覧</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="notification-container"></div>
+  <div id="game-invite-container">
+    <div id="game-invite-msg"></div>
+    <div style="display: flex; justify-content: center; gap: 10px;">
+      <button class="btn-action btn-success" id="btn-accept-invite" style="width: auto; padding: 8px 16px; margin: 0; font-size: 12px;" onclick="window.acceptGameInvite()">対戦する</button>
+      <button class="btn-action btn-secondary" style="width: auto; padding: 8px 16px; margin: 0; font-size: 12px;" onclick="window.declineGameInvite()">断る</button>
     </div>
   </div>
 
   <!-- =============================== -->
-  <!-- メイン画面 -->
+  <!-- メインヘッダー＆カード -->
   <!-- =============================== -->
-  <div id="main-view" class="card" style="display: none;">
-    <div class="title">Naisync</div>
-
-    <!-- グループタブエリア -->
-    <div class="tabs-wrapper" id="tabs-wrapper">
-      <!-- JSでタブが追加される -->
+  <div class="header-container" id="main-header" style="display: none;">
+    <div class="tabs-wrapper" id="tabs-wrapper"></div>
+    <div class="header-btns">
+      <button class="icon-btn" onclick="window.openChangelog()" title="更新一覧">📜</button>
+      <button class="icon-btn" onclick="window.openSettings()" title="設定">⚙️</button>
+      <button class="icon-btn" onclick="window.openHelp()" title="ヘルプ">❓</button>
     </div>
-    
-    <div class="section-title">👤 プロフィール</div>
-    <div class="info-box">
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
-        <span style="font-size: 12px; width: 30px;">名前:</span>
-        <input type="text" id="setting-my-name" style="margin: 0; padding: 4px 8px; font-size: 13px;" placeholder="表示名">
-        <button onclick="saveMyName()" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;">保存</button>
-      </div>
-      <div style="font-size: 12px;">ID: <span id="my-id-display" style="font-weight: bold; color: #007bff;">-</span></div>
+  </div>
+
+  <div class="card" id="main-card" style="display: none;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 16px;">
+      <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 32px; height: 32px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+      <div class="app-title" style="margin-bottom: 0;">Naisync</div>
     </div>
 
-    <div id="status-display" style="color: #dc3545; font-size: 13px; font-weight: bold; margin-bottom: 15px;">システム初期化中...</div>
-
-    <!-- 1対1通話パネル -->
-    <div id="direct-panel" class="panel">
-      <div class="section-title">📞 1対1通話</div>
-      <div id="direct-inputs">
-        <input type="text" id="target-id" placeholder="相手の内線IDを入力">
-        <button onclick="callPeer()" id="btn-call">発信する</button>
-      </div>
-      <button onclick="endCall()" id="btn-end-direct" class="btn-danger" style="display: none;">通話を切る</button>
+    <div class="section-title">👤 あなたのプロフィール:</div>
+    <div class="id-box" style="text-align: center;">
+      <div style="margin-bottom: 4px;"><span style="font-size:11px; opacity:0.7;">名前:</span> <span id="display-my-name" style="font-size: 15px; color: #007bff;">-</span></div>
+      <div><span style="font-size:11px; opacity:0.7;">ID:</span> <span id="my-id" style="font-size: 14px; font-weight:bold;">-</span></div>
     </div>
 
-    <!-- グループ通話パネル -->
-    <div id="group-panel" class="panel" style="display: none;">
-      <div class="section-title">👥 グループ通話</div>
-      <div id="group-inputs">
-        <input type="text" id="room-id" placeholder="合言葉（ルームID）を入力">
-        <button onclick="joinGroupFromInput()" id="btn-join" class="btn-success">グループに参加</button>
+    <div id="direct-panel" style="display: none;">
+      <input type="text" id="peer-id-input" placeholder="相手の内線IDを入力">
+      <button class="btn-action" id="connect-btn">1対1で発信</button>
+    </div>
+
+    <div id="group-panel" style="display: none;">
+      <div id="member-count">接続中: 0人 (あなただけです)</div>
+      <button class="btn-action btn-outline" onclick="window.copyGroupInvite()" style="padding: 8px; font-size: 12px; margin-top: 12px;">🔗 このグループの招待リンクをコピー</button>
+      <div id="host-controls" style="display: none; margin-top: 8px;">
+        <button class="btn-action btn-danger" onclick="window.changeRoomPassword()" style="padding: 8px; font-size: 12px;">👑 グループのパスワードを変更する</button>
       </div>
-      <div id="group-active-ui" style="display: none;">
-        <div id="group-member-count" style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #28a745;">接続中: 1人</div>
-        <button onclick="leaveGroup()" id="btn-leave-group" class="btn-danger">グループを退出</button>
+      <div id="se-board" style="display: none; margin-top: 12px; padding: 8px; background: rgba(0,0,0,0.05); border-radius: 8px; border: 1px solid #ddd;">
+        <div style="font-size: 11px; color: #777; margin-bottom: 6px; font-weight: bold;">🎛️ 効果音(SE)ボード</div>
+        <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('pingpong')" title="正解">⭕</button>
+        <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('buzzer')" title="不正解">❌</button>
+        <button class="btn-action btn-outline" style="width:auto; padding:4px 10px; margin:2px; font-size:16px;" onclick="window.sendSE('applause')" title="拍手">👏</button>
       </div>
     </div>
 
-    <div id="call-status" style="margin-top: 10px; font-size: 14px; font-weight: bold;"></div>
+    <div id="status">初期化中...</div>
 
-    <div style="display: flex; gap: 8px; margin-top: 15px;">
-      <button id="talk-btn" disabled style="flex: 2; margin: 0; height: 60px; font-size: 16px; border-radius: 8px;">準備中...</button>
-      <button onclick="toggleScreenShare()" id="share-screen-btn" class="btn-secondary" disabled style="flex: 1; margin: 0; height: 60px; font-size: 12px; border-radius: 8px;">🖥️<br>画面共有</button>
+    <div class="controls">
+      <button id="talk-btn" disabled>準備中...</button>
+      <div style="display: flex; gap: 8px; width: 100%;">
+        <button id="toggle-btn" disabled style="flex: 1;">常時通話 (OFF)</button>
+        <button id="share-screen-btn" class="btn-action btn-secondary" onclick="window.startScreenShare()" disabled style="flex: 1; padding: 12px; margin: 0; font-size: 13px;">🖥️ Field Share</button>
+      </div>
     </div>
 
-    <!-- 画面共有表示エリア -->
     <div id="screen-share-container" class="screen-share-container">
-      <div id="screen-share-label" class="screen-share-label">誰かの画面</div>
+      <div id="screen-share-label" class="screen-share-label">誰かのField</div>
       <video id="screen-share-video" class="screen-share-video" autoplay playsinline></video>
     </div>
 
-    <!-- ゲーム・遊びセクション -->
-    <div class="panel" style="margin-top: 15px;">
-      <div class="section-title">🎮 遊び・ゲーム</div>
-      <div id="quiz-status" style="font-size: 12px; margin-bottom: 5px; font-weight: bold; color: #555; text-align: center;">準備OK</div>
-      <div class="game-grid">
-        <button onclick="pushQuizBtn()" class="btn-danger">💡 早押し</button>
-        <button onclick="toggleWhiteboard()" style="background: #0d6efd;">🎨 お絵かき</button>
-        <button onclick="openDiceModal()" style="background: #198754;">🎲 サイコロ</button>
-        <button onclick="openPollModal()" style="background: #6f42c1;">📊 アンケート</button>
-        <button onclick="inviteReversi()" style="background: #28a745;">🎮 リバーシ(1対1)</button>
-        <button onclick="inviteSmash()" style="background: #fd7e14;">⚡ 早撃ち(1対1)</button>
+    <div id="play-section" style="margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
+      <div class="chat-title">🎮 遊び・ゲーム</div>
+      <button class="btn-action btn-outline" onclick="window.openGameMenuModal()" style="padding: 12px; font-weight: bold; font-size: 14px;">
+        🕹️ ゲーム・遊びメニューを開く
+      </button>
+      <div id="quiz-status" style="font-size: 11px; margin-top: 8px; font-weight: bold; color: #555; height: 18px;">準備OK</div>
+    </div>
+
+    <div id="smash-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: center;">
+      <div class="chat-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 14px;">⚡ 早撃ちスマッシュ</span>
+        <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitSmash()">対戦終了</button>
       </div>
-
-      <!-- ゲーム拡張エリア -->
-      <div id="game-expand-area">
-        
-        <!-- お絵かきボード -->
-        <div id="whiteboard-section" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <span style="font-size: 13px; font-weight: bold;">🎨 お絵かき</span>
-            <button onclick="quitWhiteboard()" class="btn-danger" style="width: auto; padding: 2px 8px; margin: 0; font-size: 11px;">閉じる</button>
-          </div>
-          <canvas id="whiteboard-canvas" width="300" height="300" style="background: white; border: 1px solid #ccc; border-radius: 8px; touch-action: none; cursor: crosshair; max-width: 100%;"></canvas>
-          <div style="display: flex; justify-content: center; gap: 8px; margin-top: 8px;">
-            <button class="color-btn" style="background: #111;" onclick="setDrawColor('#111')"></button>
-            <button class="color-btn" style="background: #dc3545;" onclick="setDrawColor('#dc3545')"></button>
-            <button class="color-btn" style="background: #0d6efd;" onclick="setDrawColor('#0d6efd')"></button>
-            <button class="color-btn" style="background: white; border: 1px solid #ccc; color: #333;" onclick="setDrawColor('white')">消</button>
-            <button onclick="clearWhiteboard(true)" class="btn-secondary" style="width: auto; padding: 4px 8px; margin: 0; font-size: 11px;">全消去</button>
-          </div>
-        </div>
-
-        <!-- リバーシ -->
-        <div id="reversi-section" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <span style="font-size: 13px; font-weight: bold;">🎮 リバーシ</span>
-            <button onclick="quitReversi()" class="btn-danger" style="width: auto; padding: 2px 8px; margin: 0; font-size: 11px;">終了</button>
-          </div>
-          <div id="reversi-info" style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">準備中...</div>
-          <div id="reversi-board" class="reversi-board"></div>
-        </div>
-
-        <!-- 早撃ちスマッシュ -->
-        <div id="smash-section" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <span style="font-size: 13px; font-weight: bold;">⚡ 早撃ちスマッシュ</span>
-            <button onclick="quitSmash()" class="btn-danger" style="width: auto; padding: 2px 8px; margin: 0; font-size: 11px;">終了</button>
-          </div>
-          <div style="font-size: 11px; color: #888;">赤(本物)を撃て！ 青(ダミー)は自爆！</div>
-          <div id="smash-score-board" style="font-size: 14px; font-weight: bold; color: #007bff; margin: 5px 0;">あなた: <span id="smash-my-score">0</span> | 相手: <span id="smash-partner-score">0</span></div>
-          <div id="smash-status" style="font-size: 12px; font-weight: bold; margin-bottom: 5px;">準備中...</div>
-          <div id="smash-board">
-            <div id="smash-target-real" class="smash-target" onmousedown="shootSmash(false, event)" ontouchstart="shootSmash(false, event)"></div>
-            <div id="smash-target-dummy" class="smash-target" onmousedown="shootSmash(true, event)" ontouchstart="shootSmash(true, event)"></div>
-          </div>
-        </div>
-
-        <!-- アンケート結果 -->
-        <div id="poll-result-section" style="display: none; margin-top: 15px; border-top: 1px solid #ccc; padding-top: 10px; text-align: left;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-            <span id="poll-title-display" style="font-size: 13px; font-weight: bold; color:#6f42c1;">アンケート</span>
-            <span id="poll-timer-display" style="font-size: 11px; font-weight: bold; color: #dc3545;">残り: --秒</span>
-          </div>
-          <div id="poll-options-container"></div>
-          <div style="font-size: 11px; color: #888; text-align: right; margin-top: 5px;">総投票数: <span id="poll-total-votes">0</span></div>
-        </div>
-
+      <div style="font-size: 11px; color: #888; margin-bottom: 8px;">ルール: <span style="color:#ff4655; font-weight:bold;">赤(本物)</span>を撃て！ <span style="color:#00e5ff; font-weight:bold;">青(ダミー)</span>を撃つと負け！</div>
+      <div id="smash-score-board" style="font-size: 16px; font-weight: bold; margin-bottom: 8px; color: #007bff;">あなた: <span id="smash-my-score">0</span> | 相手: <span id="smash-partner-score">0</span></div>
+      <div id="smash-status" style="font-size: 12px; font-weight: bold; color: #555; margin-bottom: 8px;">準備中...</div>
+      <div id="smash-board">
+        <div id="smash-target-real" class="smash-target" onmousedown="window.shootSmash(false, event)" ontouchstart="window.shootSmash(false, event)"></div>
+        <div id="smash-target-dummy" class="smash-target" onmousedown="window.shootSmash(true, event)" ontouchstart="window.shootSmash(true, event)"></div>
       </div>
     </div>
 
-    <!-- テキストチャット -->
-    <div class="panel" style="padding: 10px;">
-      <div class="section-title">💬 テキストチャット</div>
+    <div id="poll-result-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px; text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 14px; font-weight: bold; color:#6f42c1;">📊 <span id="poll-title-display">アンケート</span></span>
+        <span id="poll-timer-display" style="font-size: 12px; font-weight: bold; color: #dc3545;">残り: --秒</span>
+      </div>
+      <div id="poll-options-container"></div>
+      <div style="font-size: 11px; color: #888; margin-top: 8px; text-align: right;">総投票数: <span id="poll-total-votes">0</span></div>
+    </div>
+
+    <div id="whiteboard-section" style="display: none; margin-top: 16px; border-top: 1px solid #eee; padding-top: 12px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-size: 14px; font-weight: bold; color:#0d6efd;">🎨 お絵かきボード</span>
+        <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitWhiteboard()">閉じる</button>
+      </div>
+      <canvas id="whiteboard-canvas" width="300" height="300" style="background: white; border: 2px solid #ccc; border-radius: 8px; touch-action: none; cursor: crosshair; max-width: 100%;"></canvas>
+      <div id="wb-tools" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 8px;">
+        <button class="color-btn" style="background: #111;" onclick="window.setDrawColor('#111')"></button>
+        <button class="color-btn" style="background: #dc3545;" onclick="window.setDrawColor('#dc3545')"></button>
+        <button class="color-btn" style="background: #0d6efd;" onclick="window.setDrawColor('#0d6efd')"></button>
+        <button class="color-btn" style="background: #198754;" onclick="window.setDrawColor('#198754')"></button>
+        <button class="color-btn" style="background: white; border: 1px solid #ccc; color: #333;" onclick="window.setDrawColor('white')" title="消しゴム">消</button>
+        <button class="btn-action btn-secondary" style="width: auto; padding: 4px 8px; margin: 0 0 0 12px; font-size: 11px;" onclick="window.clearWhiteboard(true)">全消去</button>
+      </div>
+    </div>
+
+    <div class="participants-section" id="participants-section" style="display: none;">
+      <div class="chat-title">👥 参加者の個別音量 ＆ 3D配置</div>
+      <div id="participants-list"></div>
+    </div>
+
+    <div id="reversi-section" style="display: none;">
+      <div class="chat-title" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-size: 14px;">🎮 リアルタイム・リバーシ</span>
+        <button class="btn-action btn-danger" style="width: auto; padding: 4px 10px; margin: 0; font-size: 11px;" onclick="window.quitReversi()">対戦終了</button>
+      </div>
+      <div id="reversi-info" class="reversi-info">準備中...</div>
+      <div id="reversi-board" class="reversi-board"></div>
+    </div>
+
+    <div id="subtitle-container"></div>
+
+    <div class="chat-section">
+      <div class="chat-title">💬 テキストチャット</div>
       <div class="chat-logs" id="chat-logs">
-        <div style="color:#aaa; font-size:11px; text-align:center; margin-top:50px;">メッセージはここに表示されます</div>
+        <div style="color:#aaa; font-size:11px; text-align:center; margin-top:20px;">メッセージはここに表示されます</div>
       </div>
       <div class="chat-input-box">
         <input type="text" id="chat-input" placeholder="メッセージを入力...">
-        <button onclick="sendChatMessage()" id="chat-send-btn">送信</button>
+        <button class="btn-action" id="chat-send-btn">送信</button>
       </div>
     </div>
-
-    <div style="margin-top: 10px; padding-top: 10px; display: flex; gap: 10px;">
-      <button onclick="toggleDarkMode()" class="btn-secondary" style="font-size: 12px; padding: 8px;">🌙 ダークモード</button>
-      <button onclick="logout()" class="btn-secondary" style="font-size: 12px; padding: 8px;">ログアウト</button>
-    </div>
   </div>
-
-  <div id="audio-container" style="display: none;"></div>
 
   <!-- =============================== -->
   <!-- モーダル群 -->
   <!-- =============================== -->
-  <!-- ゲーム招待通知 -->
-  <div class="modal-overlay" id="game-invite-modal" style="z-index: 9999;">
-    <div class="modal-box" style="text-align: center;">
-      <h3 style="font-size: 16px;">🎮 招待が届きました</h3>
-      <div id="game-invite-msg" style="font-size: 14px; margin-bottom: 20px;"></div>
-      <div style="display: flex; justify-content: center; gap: 10px;">
-        <button onclick="acceptGameInvite()" class="btn-success">対戦する</button>
-        <button onclick="declineGameInvite()" class="btn-secondary">断る</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ダイス -->
-  <div class="modal-overlay" id="dice-modal">
-    <div class="modal-box" style="text-align: center;">
-      <h3>🎲 サイコロ</h3>
-      <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0;">
-        <input type="number" id="dice-count" value="1" min="1" max="10" style="width: 60px; text-align: center; font-size: 18px; padding: 5px;">
-        <span style="font-size: 20px; font-weight: bold;">d</span>
-        <input type="number" id="dice-faces" value="6" min="2" max="100" style="width: 80px; text-align: center; font-size: 18px; padding: 5px;">
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <button onclick="closeDiceModal()" class="btn-secondary">キャンセル</button>
-        <button onclick="executeDice()" class="btn-success">振る！</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- アンケート作成 -->
-  <div class="modal-overlay" id="poll-create-modal">
+  <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
-      <h3>📊 アンケート作成</h3>
-      <label style="font-size: 12px; font-weight: bold;">お題</label>
-      <input type="text" id="poll-title" placeholder="例: 今日のランチは？">
-      <label style="font-size: 12px; font-weight: bold;">選択肢 (カンマ区切り)</label>
-      <input type="text" id="poll-options" placeholder="例: カレー, ラーメン, うどん">
-      <label style="font-size: 12px; font-weight: bold;">募集時間</label>
-      <select id="poll-time">
-        <option value="10">10秒</option>
-        <option value="30" selected>30秒</option>
-        <option value="60">1分</option>
-      </select>
-      <div style="display: flex; gap: 10px;">
-        <button onclick="closePollModal()" class="btn-secondary">キャンセル</button>
-        <button onclick="executePollCreate()" class="btn-success">開始</button>
+      <h3>⚙️ プロフィールと設定</h3>
+      <div class="modal-tabs" style="margin-bottom: 16px;">
+        <button class="modal-tab-btn active" id="settings-tab-general" onclick="window.switchSettingsTab('general')">一般</button>
+        <button class="modal-tab-btn" id="settings-tab-audio" onclick="window.switchSettingsTab('audio')">音声</button>
+        <button class="modal-tab-btn" id="settings-tab-notif" onclick="window.switchSettingsTab('notif')">字幕・通知</button>
+      </div>
+      <div id="settings-content-general">
+        <label>👤 あなたの名前（表示名）</label>
+        <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+          <input type="text" id="setting-my-name" placeholder="名前を入力" style="flex-grow: 1; min-width: 120px;">
+          <button class="btn-action" style="width: auto; padding: 10px 14px; margin:0;" onclick="window.saveMyName()">保存</button>
+        </div>
+        <label style="margin-top: 20px;">👁️ 配信者モード（IDを隠す）</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="streamer-mode-checkbox">
+          <div class="toggle-slider"></div><span id="streamer-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
+        </label>
+        <label style="margin-top: 20px;">🌙 ダークモード</label>
+        <label class="toggle-switch">
+          <input type="checkbox" id="dark-mode-checkbox">
+          <div class="toggle-slider"></div><span id="dark-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
+        </label>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 24px 0;">
+        <label>🚪 アカウント操作</label>
+        <button class="btn-action btn-danger" style="margin-top: 8px;" onclick="window.logout()">ログアウト</button>
+      </div>
+      <div id="settings-content-audio" style="display: none;">
+        <label>🎤 自分のマイク音量</label>
+        <div style="display: flex; align-items: center; gap: 10px;"><input type="range" id="mic-volume-slider" min="0" max="2" step="0.1" value="1"><span id="mic-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span></div>
+        <label style="margin-top: 20px;">🔊 相手の基本音量</label>
+        <div style="display: flex; align-items: center; gap: 10px;"><input type="range" id="spk-volume-slider" min="0" max="1" step="0.05" value="1"><span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span></div>
+        <label style="margin-top: 20px;">🎧 ノイズキャンセリング</label>
+        <label class="toggle-switch"><input type="checkbox" id="nc-checkbox" checked><div class="toggle-slider"></div><span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span></label>
+      </div>
+      <div id="settings-content-notif" style="display: none;">
+        <label>🗣️ 自分の声の文字起こし</label>
+        <div class="modal-tabs" style="margin-top: 4px; margin-bottom: 0; border: none; padding-bottom: 0;">
+          <button class="modal-tab-btn active" id="trans-off" onclick="window.setTransMode('off')">OFF</button>
+          <button class="modal-tab-btn" id="trans-self" onclick="window.setTransMode('self')">自分のみ</button>
+          <button class="modal-tab-btn" id="trans-all" onclick="window.setTransMode('all')">相手に共有</button>
+        </div>
+        <p style="font-size: 11px; color: #888; margin-top: 6px; margin-bottom: 16px;">※「相手に共有」にすると、あなたの声が相手の画面にも字幕として表示されます。</p>
+        <label style="margin-top: 20px;">🔔 通常チャットの通知</label>
+        <label class="toggle-switch"><input type="checkbox" id="notif-checkbox" checked><div class="toggle-slider"></div><span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span></label>
+        <label style="margin-top: 20px;">🔔 文字起こしの通知</label>
+        <label class="toggle-switch"><input type="checkbox" id="transcription-notif-checkbox" checked><div class="toggle-slider"></div><span id="transcription-notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span></label>
+      </div>
+      <div class="modal-buttons" style="margin-top: 24px;"><button class="btn-action btn-secondary" onclick="window.closeSettings()">閉じる</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="group-modal">
+    <div class="modal-box">
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" id="tab-btn-create" onclick="window.switchGroupModalTab('create')">➕ グループを作成</button>
+        <button class="modal-tab-btn" id="tab-btn-join" onclick="window.switchGroupModalTab('join')">🔗 グループに参加</button>
+      </div>
+      <div id="form-create-section">
+        <h3>グループを作成 (オーナー)</h3>
+        <label>表示名（画面上のタブ名）</label>
+        <input type="text" id="modal-create-name" placeholder="例: 営業チーム">
+        <label>グループID（半角英数字）</label>
+        <input type="text" id="modal-create-id" placeholder="例: room-101">
+        <label>パスワード (必須)</label>
+        <input type="password" id="modal-create-pass" placeholder="パスワードを入力">
+        <label class="checkbox-label"><input type="checkbox" id="modal-create-no-guests">ゲスト（未ログイン）の参加を禁止する</label>
+        <label class="checkbox-label"><input type="checkbox" id="modal-create-allow-se">メンバー全員も効果音(SE)を使えるようにする</label>
+        <div class="modal-buttons"><button class="btn-action btn-secondary" onclick="window.closeGroupModal()">キャンセル</button><button class="btn-action" id="btn-create-submit" onclick="window.executeCreateGroup()">作成して参加</button></div>
+      </div>
+      <div id="form-join-section" style="display: none;">
+        <h3>既存グループに参加</h3>
+        <label>表示名（画面上のタブ名）</label>
+        <input type="text" id="modal-join-name" placeholder="例: 営業チーム(参加)">
+        <label>グループID（半角英数字）</label>
+        <input type="text" id="modal-join-id" placeholder="例: room-101">
+        <label>パスワード</label>
+        <input type="password" id="modal-join-pass" placeholder="パスワードを入力">
+        <div class="modal-buttons"><button class="btn-action btn-secondary" onclick="window.closeGroupModal()">キャンセル</button><button class="btn-action" id="btn-join-submit" onclick="window.executeJoinGroup()">参加する</button></div>
       </div>
     </div>
   </div>
 
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal-box">
+      <h3>❓ Naisync よくある質問</h3>
+      <div class="faq-item"><strong>Q. 誰とも繋がらない・音が聞こえない</strong><p>A. お互いに同じグループIDとパスワードで参加しているか確認してください。</p></div>
+      <div class="faq-item"><strong>Q. リーダー（👑）とは？</strong><p>A. グループを作成した人のことです。参加者を追放したり、パスワードを強制変更して部屋をロックできます。</p></div>
+      <div style="background: #eef2f5; padding: 12px; border-radius: 8px; margin-top: 16px;" id="test-server-wrap">
+        <h4 style="margin: 0 0 8px 0; color: #007bff; font-size: 14px;">🧪 公式テストサーバー</h4>
+        <button class="btn-action" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="window.addTestGroup('public')">公式パブリックルームに参加</button>
+        <button class="btn-action btn-outline" style="padding: 8px; font-size: 12px; margin-top: 8px;" onclick="window.addTestGroup('noguest')">ゲスト禁止ルームを追加</button>
+      </div>
+      <div class="modal-buttons"><button class="btn-action btn-secondary" onclick="window.closeHelp()">閉じる</button></div>
+    </div>
+  </div>
 
-  <!-- スクリプト群 -->
+  <div class="modal-overlay top-layer" id="auth-help-modal">
+    <div class="modal-box">
+      <h3>❓ ログイン・登録のQ&A</h3>
+      <div class="faq-item"><strong>Q. メールアドレスは必要ですか？</strong><p>A. 不要です。お好きな "内線ID" と "パスワード" だけで利用できます。</p></div>
+      <div class="modal-buttons"><button class="btn-action btn-secondary" onclick="window.closeAuthHelp()">閉じる</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay top-layer" id="dice-modal">
+    <div class="modal-box" style="text-align: center;">
+      <h3>🎲 サイコロを振る</h3>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin: 20px 0;">
+        <input type="number" id="dice-count" value="1" min="1" max="10" style="width: 60px; font-size: 20px; text-align: center;">
+        <span style="font-size: 24px; font-weight: bold;">d</span>
+        <input type="number" id="dice-faces" value="6" min="2" max="100" style="width: 80px; font-size: 20px; text-align: center;">
+      </div>
+      <div class="modal-buttons" style="justify-content: center;"><button class="btn-action btn-secondary" onclick="window.closeDiceModal()">キャンセル</button><button class="btn-action btn-success" onclick="window.executeDice()">振る！</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay top-layer" id="poll-create-modal">
+    <div class="modal-box">
+      <h3>📊 アンケートを作成</h3>
+      <label>お題</label>
+      <input type="text" id="poll-create-title" placeholder="例: 今日の夜ご飯なにする？">
+      <label>選択肢 (カンマ区切りで入力)</label>
+      <input type="text" id="poll-create-options" placeholder="例: ラーメン, 焼肉, 寿司">
+      <label>募集時間</label>
+      <select id="poll-create-time"><option value="10">10秒</option><option value="30" selected>30秒</option><option value="60">1分</option><option value="300">5分</option></select>
+      <div class="modal-buttons"><button class="btn-action btn-secondary" onclick="window.closePollModal()">キャンセル</button><button class="btn-action btn-success" onclick="window.executePollCreate()">開始する</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay top-layer" id="game-menu-modal">
+    <div class="modal-box" style="max-width: 400px;">
+      <h3 style="margin-top:0;">🕹️ ゲーム・遊びメニュー</h3>
+      <div class="game-list">
+        <div class="game-list-item"><button onclick="window.pushQuizBtn(); window.closeGameMenuModal();" class="game-btn" style="background: #dc3545; color: white;">💡 早押し</button><div class="game-desc">誰が一番早くボタンを押したか判定します。</div></div>
+        <div class="game-list-item"><button onclick="window.toggleWhiteboard(); window.closeGameMenuModal();" class="game-btn" style="background: #0d6efd; color: white;">🎨 お絵かき</button><div class="game-desc">全員の画面に同期されるお絵かきボードを開いて共有します。</div></div>
+        <div class="game-list-item"><button onclick="window.openDiceModal(); window.closeGameMenuModal();" class="game-btn" style="background: #198754; color: white;">🎲 サイコロ</button><div class="game-desc">TRPGのようにサイコロを振り、全員に結果を送信します。</div></div>
+        <div class="game-list-item"><button onclick="window.openPollModal(); window.closeGameMenuModal();" class="game-btn" style="background: #6f42c1; color: white;">📊 アンケート</button><div class="game-desc">選択肢を設定して多数決をとります。(ホストのみ作成可能)</div></div>
+        <div class="game-list-item"><button onclick="window.inviteReversi(); window.closeGameMenuModal();" class="game-btn" style="background: #28a745; color: white;">🎮 リバーシ</button><div class="game-desc">【1対1専用】相手にリバーシ（オセロ）の対戦を申し込みます。</div></div>
+        <div class="game-list-item"><button onclick="window.inviteSmash(); window.closeGameMenuModal();" class="game-btn" style="background: #fd7e14; color: white;">⚡ 早撃ち</button><div class="game-desc">【1対1専用】出現する的を先に撃ち抜いた方の勝ち！</div></div>
+      </div>
+      <div class="modal-buttons" style="margin-top: 16px;"><button class="btn-action btn-secondary" onclick="window.closeGameMenuModal()">閉じる</button></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay top-layer" id="changelog-modal">
+    <div class="modal-box">
+      <h3>📜 更新一覧</h3>
+      <div class="changelog-list">
+        <div class="changelog-item">
+          <div class="changelog-version">v3.4.0 (最新) 🛠️真・完全動作版</div>
+          <div>・AI出力システムの限界によりコードが欠落していた問題を完全解消しました。<br>・重複エラーをすべて削ぎ落とし、1つのクリーンなプログラムとして全機能が完璧に動作するようにしました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v3.0.0 🛠️マイクなし環境対応</div>
+          <div>・マイクの使用が拒否された環境でも、エラーで止まらずにチャットや聞き専で参加できるようにシステム構造を修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v2.2.28 🕹️UI整理</div>
+          <div>・遊びやゲームのメニューをリスト形式に整理し、分かりやすい説明文を追加しました。</div>
+        </div>
+      </div>
+      <div class="modal-buttons"><button class="btn-action btn-secondary" onclick="window.closeChangelog()">閉じる</button></div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.1/peerjs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.3.5/mqtt.min.js"></script>
-  
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -330,580 +553,831 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const APP_PREFIX = 'Naisync/v340/';
-    const $ = id => document.getElementById(id);
+    const APP_PREFIX = 'Naisync/v400/';
 
-    // グローバル変数
-    let peer = null, mqttClient = null, localStream = null, audioTrack = null, screenStream = null;
-    let activeCalls = {}, activeDataConns = {}; 
-    let myName = '', myCustomId = '';
-    let currentMode = 'idle', activeRoomId = null, currentGroupTopic = null;
-    let isScreenSharing = false, isGuestMode = false, isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
-    let savedGroups = JSON.parse(localStorage.getItem('my_naisen_saved_groups_v3')) || [];
+    // Globals
+    let myPeerId = null, peer = null, mqttClient = null;
+    let currentMode = 'idle', currentGroupId = null, currentGroupTopic = null;
+    let activeCalls = {}, activeDataConns = {}, peerNames = {}, pannerNodes = {}; 
+    let spatialSettings = JSON.parse(localStorage.getItem('my_naisen_spatial') || '{}');
+    let rawStream = null, rawAudioTrack = null, screenStream = null, isScreenSharing = false;
+    let audioCtx = null, gainNode = null, processedStream = null;
+    let isLocked = false, currentUser = null, savedMyName = '', isGuestMode = false;
+    let checkingGroupId = null, isGroupIdTaken = false, joiningGroupId = null, joiningGroupPass = null;
+    let isJoinRoomFound = false, isJoinPassCorrect = false, isJoinRoomClosed = false, joiningFoundRadio = false, joiningFoundAllowMemberSE = false, joiningFoundNoGuests = false;
+    let transMode = localStorage.getItem('my_naisen_trans_mode') || 'off';
+    let speechRecognition = null;
+    let isNoiseCanceling = localStorage.getItem('my_naisen_nc') !== 'false';
+    let savedMicVolume = parseFloat(localStorage.getItem('my_naisen_mic_vol')) || 1.0;
+    let savedSpeakerVolume = parseFloat(localStorage.getItem('my_naisen_spk_vol')) || 1.0;
+    let isNotificationOn = localStorage.getItem('my_naisen_notif') !== 'false';
+    let isTranscriptionNotifOn = localStorage.getItem('my_naisen_transcription_notif') !== 'false';
+    let isStreamerMode = localStorage.getItem('my_naisen_streamer') === 'true';
+    let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
 
-    // ゲーム用変数
-    let isQuizLocked = false;
-    let wbCtx = null, isDrawing = false, drawColor = '#111', lastX=0, lastY=0, drawBuffer=[], drawTimer=null, isWhiteboardInitialized=false;
-    let currentPollId = null, pollInterval = null, hasVoted = false, pollVotes = {};
+    // Game Globals
     let isReversiActive = false, reversiBoard = [], reversiMyColor = 1, reversiCurrentTurn = 1, pendingReversiConn = null;
-    let isSmashActive = false, isSmashHost = false, smashGameActive = false, smashScoreMe = 0, smashScoreOpp = 0, smashRoundTimeout, pendingSmashConn = null;
-    let pendingGameType = null;
+    let isQuizLocked = false, isDrawing = false, drawColor = '#111', lastX = 0, lastY = 0, wbCtx = null, isWhiteboardInitialized = false, drawBuffer = [], drawTimer = null;
+    let currentPollId = null, pollInterval = null, hasVoted = false, pollVotes={};
+    let isSmashActive = false, isSmashHost = false, smashGameActive = false, smashMyScore = 0, smashPartnerScore = 0, smashRoundTimeout, pendingSmashConn = null, pendingGameType = null; 
+    let savedGroups = JSON.parse(localStorage.getItem('my_naisen_saved_groups_v4')) || [];
 
-    // 音声エフェクト用
-    let audioCtx = null, processedStream = null;
-    const SE_URLS = { 'pingpong': './correct.mp3', 'buzzer': './wrong.mp3' };
     const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
+    const SE_FILES = { 'applause': './applause.mp3', 'pingpong': './correct.mp3', 'buzzer': './wrong.mp3' };
+    let pendingInvite = null;
 
-    // ダークモード初期化
-    if(isDarkMode) document.body.classList.add('dark-mode');
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('g') && params.has('p')) {
+        pendingInvite = { id: params.get('g'), pass: params.get('p'), name: params.get('n') || params.get('g'), requireName: params.get('req') === '1', noGuests: params.get('ng') === '1', hostId: null, createdAt: 9999999999999, isRadio: params.get('r') === '1' };
+        window.history.replaceState(null, '', window.location.pathname);
+        document.getElementById('invite-alert').style.display = 'block';
+        document.getElementById('invite-group-name').innerText = pendingInvite.name;
+      }
+      updateDarkModeUI();
+    });
 
-    // ==========================================
-    // ヘルパー・設定機能
-    // ==========================================
-    function showToast(msg) {
-      const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
-      document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+    function saveGroupsToLocal() { if (!isGuestMode) localStorage.setItem('my_naisen_saved_groups_v4', JSON.stringify(savedGroups)); }
+    function loadAndMigrateGroups(myId) {
+      if (isGuestMode) { savedGroups = []; return; }
+      let groups = JSON.parse(localStorage.getItem('my_naisen_groups_v4'));
+      if (!groups) {
+         groups = JSON.parse(localStorage.getItem('my_naisen_saved_groups_v3')) || [];
+         groups = groups.map(g => {
+           if (!g.createdAt) g.createdAt = (g.hostId === myId) ? 1 : 9999999999999;
+           if (g.isRadio === undefined) g.isRadio = false; 
+           if (g.allowMemberSE === undefined) g.allowMemberSE = false;
+           if (g.noGuests === undefined) g.noGuests = false; 
+           return g;
+         });
+         saveGroupsToLocal();
+      }
+      savedGroups = groups;
     }
-    
-    function containsNGWord(text) {
-      if (!text) return false;
-      return NG_WORDS.some(word => text.includes(word));
-    }
 
-    window.toggleDarkMode = () => {
-      isDarkMode = !isDarkMode; localStorage.setItem('my_naisen_dark', isDarkMode);
-      if(isDarkMode) document.body.classList.add('dark-mode'); else document.body.classList.remove('dark-mode');
+    // UI Utilities
+    window.showNotification = function(msg) {
+      if (!isNotificationOn) return; 
+      const container = document.getElementById('notification-container');
+      const toast = document.createElement('div'); toast.className = 'toast'; toast.innerText = msg;
+      container.appendChild(toast); setTimeout(() => toast.remove(), 3900);
     };
 
-    window.toggleForm = () => {
-      const isLogin = $('login-form').style.display !== 'none';
-      $('login-form').style.display = isLogin ? 'none' : 'block';
-      $('register-form').style.display = isLogin ? 'block' : 'none';
-      $('auth-error').innerText = ''; $('reg-error').innerText = '';
+    function escapeHtml(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    function containsNGWord(text) { if (!text) return false; return NG_WORDS.some(word => text.includes(word)); }
+
+    // Auth
+    window.toggleAuth = function(mode) {
+      document.getElementById('login-panel').style.display = mode === 'login' ? 'block' : 'none';
+      document.getElementById('register-panel').style.display = mode === 'register' ? 'block' : 'none';
+      document.getElementById('auth-error').innerText = ''; document.getElementById('reg-error').innerText = '';
     };
 
-    window.saveMyName = async () => {
-      if (isGuestMode) return alert('ゲストは名前を変更できません。');
-      const newName = $('setting-my-name').value.trim();
-      if (!newName) return alert('名前を入力してください。');
-      if (containsNGWord(newName)) return alert('不適切な単語が含まれています。');
-      myName = newName;
-      await updateProfile(auth.currentUser, { displayName: JSON.stringify({ name: newName, customId: myCustomId }) });
-      showToast('名前を保存しました');
-    };
-
-    // ==========================================
-    // グループタブ保存機能
-    // ==========================================
-    function saveGroupsToLocal() {
-      if(!isGuestMode) localStorage.setItem('my_naisen_saved_groups_v3', JSON.stringify(savedGroups));
+    function showAuthError(msg) {
+      document.getElementById('auth-error').innerText = msg;
+      document.getElementById('reg-error').innerText = msg;
+      document.getElementById('login-btn').disabled = false; document.getElementById('reg-btn').disabled = false;
     }
 
-    function renderTabs() {
-      const wrapper = $('tabs-wrapper');
-      wrapper.innerHTML = '';
-
-      // 1対1タブ
-      const directTab = document.createElement('button');
-      directTab.className = `tab ${currentMode === 'direct' || currentMode === 'idle' ? 'active' : ''}`;
-      directTab.innerText = '📞 1対1通話';
-      directTab.onclick = () => window.endCall();
-      wrapper.appendChild(directTab);
-
-      // 保存されたグループタブ
-      savedGroups.forEach(g => {
-        const t = document.createElement('button');
-        t.className = `tab ${currentMode === 'group' && activeRoomId === g.id ? 'active' : ''}`;
-        t.innerText = `👥 ${g.id}`;
-        
-        const del = document.createElement('span');
-        del.className = 'btn-del'; del.innerText = '✕';
-        del.onclick = (e) => {
-          e.stopPropagation();
-          if(confirm(`${g.id} を一覧から削除しますか？`)){
-            savedGroups = savedGroups.filter(x => x.id !== g.id);
-            saveGroupsToLocal();
-            if(activeRoomId === g.id) window.endCall();
-            else renderTabs();
-          }
-        };
-        t.appendChild(del);
-        
-        t.onclick = () => window.joinGroup(g.id);
-        wrapper.appendChild(t);
-      });
-    }
-
-    // ==========================================
-    // 認証処理
-    // ==========================================
-    window.doRegister = async () => {
-      const id = $('reg-id').value.trim().toLowerCase(), name = $('reg-name').value.trim(), pass = $('reg-pass').value.trim();
-      if (!id || !name || !pass) return $('reg-error').innerText = '全て入力してください。';
-      if (containsNGWord(id) || containsNGWord(name)) return $('reg-error').innerText = '不適切な単語が含まれています。';
-      $('btn-reg').disabled = true; $('reg-error').innerText = '登録中...';
+    window.doRegister = async function() {
+      const id = document.getElementById('reg-id').value.trim().toLowerCase(), name = document.getElementById('reg-name').value.trim(), pass = document.getElementById('reg-pass').value.trim();
+      if (!id || !name || !pass) return showAuthError('すべての項目を入力してください。');
+      if (!/^[a-zA-Z0-9-]+$/.test(id)) return showAuthError('IDは半角英数字とハイフン(-)のみ使用できます。');
+      if (pass.length < 6) return showAuthError('パスワードは6文字以上で設定してください。');
+      if (containsNGWord(id) || containsNGWord(name)) return showAuthError('不適切な単語が含まれています。');
+      document.getElementById('reg-btn').disabled = true; document.getElementById('reg-error').innerText = '登録中...';
+      const email = `${id}@naisy.nc`;
       try {
-        const userC = await createUserWithEmailAndPassword(auth, `${id}@naisy.nc`, pass);
-        await updateProfile(userC.user, { displayName: JSON.stringify({ name, customId: id }) });
-        showToast('登録完了！');
-        window.executeLogin(id, pass);
-      } catch (e) { $('reg-error').innerText = '登録失敗（ID重複など）。'; }
-      $('btn-reg').disabled = false;
+        const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        await updateProfile(userCredential.user, { displayName: JSON.stringify({ name: name, customId: id }) });
+        alert('登録成功！ログインします。'); await window.executeLogin(id, pass);
+      } catch (error) { showAuthError('登録失敗: このIDはすでに使われている可能性があります。'); }
     };
 
-    window.doLogin = async () => {
-      const id = $('login-id').value.trim().toLowerCase(), pass = $('login-pass').value.trim();
-      if (!id || !pass) return $('auth-error').innerText = '入力してください。';
-      window.executeLogin(id, pass);
+    window.doLogin = async function() {
+      const id = document.getElementById('login-id').value.trim().toLowerCase(), pass = document.getElementById('login-pass').value.trim();
+      if (!id || !pass) return showAuthError('IDとパスワードを入力してください。');
+      await window.executeLogin(id, pass);
     };
 
-    window.executeLogin = async (id, pass) => {
-      $('btn-login').disabled = true;
-      try { 
-        const userC = await signInWithEmailAndPassword(auth, `${id}@naisy.nc`, pass); 
-        currentUser = userC.user; parseUserData(currentUser); startMainApp();
-      } 
-      catch (e) { $('auth-error').innerText = 'ログイン失敗'; $('btn-login').disabled = false; }
+    window.executeLogin = async function(id, pass) {
+      document.getElementById('login-btn').disabled = true;
+      try {
+        const userCredential = await signInWithEmailAndPassword(auth, `${id}@naisy.nc`, pass);
+        currentUser = userCredential.user; parseUserData(currentUser); startMainApp();
+      } catch (error) { showAuthError('ログイン失敗: IDまたはパスワードが違います。'); }
     };
 
-    window.doGuestLogin = () => {
-      isGuestMode = true;
-      const r = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
-      myName = 'ゲスト' + r; myCustomId = 'guest-' + r;
-      startMainApp();
+    window.doGuestLogin = function() {
+      isGuestMode = true; const rId = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
+      currentUser = { customId: 'guest-' + rId }; savedMyName = 'ゲスト' + rId;
+      document.getElementById('auth-overlay').style.display = 'none'; startMainApp();
     };
 
-    window.logout = async () => {
-      if (!confirm('ログアウトしますか？')) return;
+    window.logout = async function() {
+      if (!confirm('ログアウト(退出)しますか？')) return;
       if (isGuestMode) location.reload(); else { await signOut(auth); location.reload(); }
     };
 
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        try { const info = JSON.parse(user.displayName); myName = info.name; myCustomId = info.customId; } 
-        catch(e) { myCustomId = user.email.split('@')[0]; myName = myCustomId; }
-        startMainApp();
-      } else {
-        $('auth-view').style.display = 'block'; $('main-view').style.display = 'none';
-      }
+    function parseUserData(user) {
+      try { const info = JSON.parse(user.displayName); savedMyName = info.name; currentUser.customId = info.customId; } 
+      catch (e) { savedMyName = user.email.split('@')[0]; currentUser.customId = user.email.split('@')[0]; }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) { currentUser = user; parseUserData(user); startMainApp(); } 
+      else { if (!isGuestMode) document.getElementById('auth-overlay').style.display = 'flex'; }
     });
 
-    // ==========================================
-    // メインシステム起動
-    // ==========================================
+    // App Initialization
     async function startMainApp() {
-      $('auth-view').style.display = 'none'; $('main-view').style.display = 'block';
-      $('setting-my-name').value = myName; if (isGuestMode) $('setting-my-name').disabled = true;
-      $('my-id-display').innerText = myCustomId;
+      document.getElementById('auth-overlay').style.display = 'none'; document.getElementById('main-header').style.display = 'flex'; document.getElementById('main-card').style.display = 'block';
+      document.getElementById('display-my-name').innerText = savedMyName + (isGuestMode ? ' (ゲスト)' : '');
+      document.getElementById('setting-my-name').value = savedMyName; if (isGuestMode) document.getElementById('setting-my-name').disabled = true;
+      document.getElementById('streamer-mode-checkbox').checked = isStreamerMode; document.getElementById('streamer-mode-status-text').innerText = isStreamerMode ? 'ON' : 'OFF';
 
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
-        audioTrack = localStream.getAudioTracks()[0]; audioTrack.enabled = false;
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        $('status-display').innerText = '通信サーバーに接続中...';
-      } catch (e) {
-        showToast('マイクがありません（聞き専モード）');
-        localStream = new MediaStream();
-        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
-        $('status-display').innerText = '⚠️マイクなし。通信サーバーに接続中...';
-      }
-
-      renderTabs();
-      initPeerJS();
-    }
-
-    function initPeerJS() {
-      if (typeof Peer === 'undefined') return $('status-display').innerText = '⚠️ PeerJSがブロックされています。';
-      peer = new Peer(myCustomId);
-      peer.on('open', () => {
-        $('status-display').innerText = '通信準備完了！';
-        $('status-display').style.color = '#28a745';
-        $('talk-btn').innerText = '長押しで発言';
-      });
-      peer.on('error', err => {
-        if (err.type === 'unavailable-id') alert('このIDは使用中です。');
-        else $('status-display').innerText = '通信エラー: ' + err.type;
-      });
-      peer.on('call', call => {
-        if (currentMode === 'group') { setupCall(call); call.answer(getCombinedStream()); } 
-        else {
-          if (confirm(`${call.metadata?.senderName || call.peer} から着信。応答しますか？`)) {
-            currentMode = 'direct'; uiDirectConnected(call.peer); setupCall(call); call.answer(getCombinedStream());
-          } else call.close();
-        }
-      });
-      peer.on('connection', conn => setupDataConn(conn));
-    }
-
-    // ==========================================
-    // 画面共有 (Field Share)
-    // ==========================================
-    window.toggleScreenShare = async () => {
-      if (!navigator.mediaDevices?.getDisplayMedia) return alert('非対応ブラウザです。');
-      if (isScreenSharing) {
-        if (screenStream) screenStream.getTracks().forEach(t => t.stop());
-        screenStream = null; isScreenSharing = false;
-        $('share-screen-btn').innerHTML = '🖥️<br>画面共有'; $('share-screen-btn').className = 'btn-secondary';
-        $('screen-share-video').srcObject = null; $('screen-share-container').style.display = 'none';
-        reconnectAllWithScreen();
-      } else {
-        try {
-          screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-          isScreenSharing = true;
-          $('share-screen-btn').innerHTML = '⏹️<br>共有停止'; $('share-screen-btn').className = 'btn-danger';
-          $('screen-share-video').srcObject = screenStream; $('screen-share-label').innerText = 'あなたの画面'; $('screen-share-container').style.display = 'block';
-          screenStream.getVideoTracks()[0].onended = () => window.toggleScreenShare();
-          reconnectAllWithScreen();
-        } catch (e) {}
-      }
-    };
-    function getCombinedStream() {
-      const cs = new MediaStream();
-      if (localStream) localStream.getAudioTracks().forEach(t => cs.addTrack(t));
-      if (isScreenSharing && screenStream) screenStream.getVideoTracks().forEach(t => cs.addTrack(t));
-      return cs;
-    }
-    function reconnectAllWithScreen() {
-      const ns = getCombinedStream();
-      Object.keys(activeCalls).forEach(pId => setupCall(peer.call(pId, ns, { metadata: { senderName: myName, isScreen: isScreenSharing } })));
-    }
-
-    // ==========================================
-    // 1対1通話
-    // ==========================================
-    window.callPeer = () => {
-      const t = $('target-id').value.trim();
-      if (!t) return alert('IDを入力してください。');
-      if (t === myCustomId) return alert('自分には発信できません。');
-      currentMode = 'direct'; uiDirectConnected(t);
-      setupCall(peer.call(t, getCombinedStream(), { metadata: { senderName: myName, isScreen: isScreenSharing } }));
-      setupDataConn(peer.connect(t));
-    };
-    window.endCall = () => { endAllConnections(); currentMode = 'idle'; activeRoomId = null; uiIdle(); renderTabs(); };
-
-    // ==========================================
-    // グループ通話 (MQTT)
-    // ==========================================
-    window.joinGroupFromInput = () => {
-      const id = $('room-id').value.trim();
-      if(!id) return alert('ルームIDを入力してください');
-      if(containsNGWord(id)) return alert('不適切な単語が含まれています。');
-      if(!savedGroups.find(g => g.id === id)) { savedGroups.push({id}); saveGroupsToLocal(); renderTabs(); }
-      window.joinGroup(id);
-    };
-
-    window.joinGroup = (roomId) => {
-      if(currentMode !== 'idle') window.endCall();
-      currentMode = 'group'; activeRoomId = roomId; currentGroupTopic = `${APP_PREFIX}${roomId}`;
-      uiGroupConnected(); renderTabs();
-
-      if (mqttClient) { try { mqttClient.end(true); } catch(e){} }
-      if (typeof mqtt === 'undefined') return alert('MQTTライブラリがブロックされています。');
+      loadAndMigrateGroups(currentUser.customId);
+      window.renderTabs();
       
-      mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-      mqttClient.on('connect', () => {
-        mqttClient.subscribe(currentGroupTopic);
-        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'join', peerId: myCustomId, senderName: myName }));
-      });
-      mqttClient.on('message', (topic, msg) => {
-        const d = JSON.parse(msg.toString());
-        if (d.type === 'join' && d.peerId !== myCustomId) setupCall(peer.call(d.peerId, getCombinedStream(), { metadata: { senderName: myName } }));
-        if (d.type === 'leave' && d.peerId !== myCustomId) {
-          if (activeCalls[d.peerId]) { activeCalls[d.peerId].close(); removeAudio(d.peerId); delete activeCalls[d.peerId]; }
-          if (activeDataConns[d.peerId]) { activeDataConns[d.peerId].close(); delete activeDataConns[d.peerId]; }
-          updateGroupMemberCount();
+      try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch(e) {}
+      
+      document.getElementById('trans-off').classList.remove('active'); document.getElementById('trans-self').classList.remove('active'); document.getElementById('trans-all').classList.remove('active');
+      document.getElementById('trans-' + transMode).classList.add('active');
+      document.getElementById('nc-checkbox').checked = isNoiseCanceling; document.getElementById('nc-status-text').innerText = isNoiseCanceling ? 'ON' : 'OFF';
+      document.getElementById('mic-volume-slider').value = savedMicVolume; document.getElementById('mic-volume-display').innerText = Math.round(savedMicVolume * 100) + '%';
+      document.getElementById('spk-volume-slider').value = savedSpeakerVolume; document.getElementById('spk-volume-display').innerText = Math.round(savedSpeakerVolume * 100) + '%';
+      document.getElementById('notif-checkbox').checked = isNotificationOn; document.getElementById('notif-status-text').innerText = isNotificationOn ? 'ON' : 'OFF';
+      document.getElementById('transcription-notif-checkbox').checked = isTranscriptionNotifOn; document.getElementById('transcription-notif-status-text').innerText = isTranscriptionNotifOn ? 'ON' : 'OFF';
+
+      if (transMode !== 'off') initSpeechRecognition();
+
+      const audioConstraints = { audio: { echoCancellation: isNoiseCanceling, noiseSuppression: isNoiseCanceling, autoGainControl: isNoiseCanceling }, video: false };
+      try {
+        rawStream = await navigator.mediaDevices.getUserMedia(audioConstraints);
+        rawAudioTrack = rawStream.getAudioTracks()[0]; rawAudioTrack.enabled = false;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaStreamSource(rawStream);
+        gainNode = audioCtx.createGain(); gainNode.gain.value = savedMicVolume;
+        const destination = audioCtx.createMediaStreamDestination();
+        source.connect(gainNode); gainNode.connect(destination);
+        processedStream = destination.stream;
+      } catch (err) {
+        window.showNotification('マイクなしモードで起動しました');
+        document.getElementById('status').innerText = '⚠️ マイクなし（聞き専・テキスト・ゲームのみ可）';
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); processedStream = audioCtx.createMediaStreamDestination().stream; } catch(e) { processedStream = new MediaStream(); }
+      }
+      
+      startNetworking();
+      window.updateChatUI();
+    }
+
+    function initSpeechRecognition() {
+      if (!('webkitSpeechRecognition' in window)) return;
+      speechRecognition = new webkitSpeechRecognition(); speechRecognition.lang = 'ja-JP'; speechRecognition.continuous = true; speechRecognition.interimResults = false;
+      speechRecognition.onresult = (event) => {
+        if (currentMode === 'group' && currentGroupId === 'test-noguest') return;
+        let text = ''; for (let i = event.resultIndex; i < event.results.length; i++) { if (event.results[i].isFinal) text += event.results[i][0].transcript; }
+        if (text.trim() !== '') {
+          let sName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
+          if (transMode === 'self') { window.showSubtitle(sName + ' (自分のみ)', text.trim()); } 
+          else if (transMode === 'all') { window.showSubtitle(sName, text.trim()); window.broadcastData({ type: 'subtitle', senderName: sName, text: text.trim() }); }
         }
-        handleDataMessage(d); 
-      });
-    };
-    window.leaveGroup = () => {
-      if (mqttClient && currentGroupTopic) { mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', peerId: myCustomId })); mqttClient.end(true); }
-      mqttClient = null; activeRoomId = null; currentGroupTopic = null;
-      endAllConnections(); currentMode = 'idle'; uiIdle(); renderTabs();
+      };
+      speechRecognition.onerror = (e) => console.warn('自動文字起こしエラー:', e.error); 
+      speechRecognition.onend = () => { if (isLocked && transMode !== 'off' && rawAudioTrack && rawAudioTrack.enabled) { try { speechRecognition.start(); } catch(e){} } };
+    }
+
+    window.broadcastData = function(msgObj) {
+      msgObj.senderId = myPeerId;
+      if (currentMode === 'group' && mqttClient) mqttClient.publish(currentGroupTopic, JSON.stringify(msgObj));
+      else if (currentMode === 'direct') Object.values(activeDataConns).forEach(conn => conn.send(msgObj));
     };
 
-    // ==========================================
-    // 通信・チャット共通ロジック
-    // ==========================================
-    function setupCall(call) {
-      if (activeCalls[call.peer]) activeCalls[call.peer].close();
-      activeCalls[call.peer] = call;
-      call.on('stream', rs => {
-        let a = $(`audio-${call.peer}`);
-        if (!a) { a = document.createElement('audio'); a.id = `audio-${call.peer}`; a.autoplay = true; $('audio-container').appendChild(a); }
-        if (rs.getVideoTracks().length > 0) {
-          $('screen-share-video').srcObject = rs; $('screen-share-label').innerText = `${call.metadata?.senderName || call.peer} の画面`; $('screen-share-container').style.display = 'block';
-        } else { if ($('screen-share-video').srcObject?.id === rs.id) { $('screen-share-video').srcObject = null; $('screen-share-container').style.display = 'none'; } }
-        a.srcObject = rs; updateGroupMemberCount();
+    // Networking Setup
+    function startNetworking() {
+      if (typeof Peer === 'undefined') { document.getElementById('status').innerText = '⚠️ 通信システムがブロックされています'; return; }
+      try { peer = new Peer(currentUser.customId); } catch(e) { document.getElementById('status').innerText = '⚠️ P2P通信ライブラリの初期化に失敗しました'; return; }
+
+      let peerTimeout = setTimeout(() => { if (!myPeerId) document.getElementById('status').innerText = '⚠️ サーバー接続タイムアウト（Wi-Fiの制限の可能性があります）'; }, 8000);
+
+      peer.on('open', (id) => {
+        clearTimeout(peerTimeout); myPeerId = id; document.getElementById('my-id').innerText = id; applyStreamerModeToUI();
+        if (!pendingInvite) window.switchToDirect(); else document.getElementById('status').innerText = 'グループ招待を確認中...';
+
+        let isMqttConnected = false;
+        if (typeof mqtt === 'undefined') { console.warn("MQTT is undefined"); return; }
+        const brokers = [ 'wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt' ];
+
+        const tryConnectMQTT = (bIndex) => {
+          if (bIndex >= brokers.length) { if (currentMode === 'group' || pendingInvite) document.getElementById('status').innerText = '⚠️ グループ通信サーバーがブロックされています'; return; }
+          if (mqttClient) { try { mqttClient.end(true); } catch(e){} }
+          mqttClient = mqtt.connect(brokers[bIndex], { connectTimeout: 4000 });
+          let fallbackTimer = setTimeout(() => { if (!isMqttConnected) tryConnectMQTT(bIndex + 1); }, 4000);
+
+          mqttClient.on('connect', () => {
+            if (isMqttConnected) return; isMqttConnected = true; clearTimeout(fallbackTimer);
+            if (pendingInvite) {
+              const listIdx = savedGroups.findIndex(g => g.id === pendingInvite.id);
+              if (listIdx >= 0) {
+                savedGroups[listIdx].pass = pendingInvite.pass; savedGroups[listIdx].name = pendingInvite.name; savedGroups[listIdx].requireName = pendingInvite.requireName;
+                if (pendingInvite.hostId && !savedGroups[listIdx].hostId) savedGroups[listIdx].hostId = pendingInvite.hostId;
+                if (pendingInvite.isRadio) savedGroups[listIdx].isRadio = true; if (pendingInvite.noGuests) savedGroups[listIdx].noGuests = true;
+              } else { savedGroups.push(pendingInvite); }
+              saveGroupsToLocal(); const targetGroup = savedGroups.find(g => g.id === pendingInvite.id); pendingInvite = null; window.joinGroup(targetGroup.id);
+            }
+          });
+
+          mqttClient.on('message', (topic, message) => {
+            const data = JSON.parse(message.toString());
+            if (currentMode !== 'group') return;
+            const currentGroupObj = savedGroups.find(g => g.id === currentGroupId);
+
+            if (data.type === 'poll_start') { window.startPollUI(data); window.showNotification(`📊 ${data.senderId === myPeerId ? 'あなた' : 'リーダー'}がアンケートを開始しました`); }
+            if (data.type === 'poll_vote') window.handlePollVote(data);
+            if (data.type === 'draw_batch' && data.senderId !== myPeerId) { if (document.getElementById('whiteboard-section').style.display !== 'block') { document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(window.initWhiteboard, 100); } setTimeout(() => { if (!wbCtx) return; data.lines.forEach(l => window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false)); }, wbCtx ? 0 : 150); }
+            if (data.type === 'wb_open' && data.senderId !== myPeerId) { document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(window.initWhiteboard, 100); window.showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`); }
+            if (data.type === 'wb_close' && data.senderId !== myPeerId) document.getElementById('whiteboard-section').style.display = 'none';
+            if (data.type === 'draw' && data.senderId !== myPeerId) { if (document.getElementById('whiteboard-section').style.display !== 'block') { document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(window.initWhiteboard, 100); } setTimeout(() => { window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false); }, wbCtx ? 0 : 150); }
+            if (data.type === 'draw_clear' && data.senderId !== myPeerId) window.clearWhiteboard(false);
+            if (data.type === 'se' && data.senderId !== myPeerId) window.playAudioEffect(data.sound);
+            if (data.type === 'quiz_push' && data.senderId !== myPeerId) window.handleQuizPush(data.senderName);
+            if (data.type === 'radio_close' && data.senderId !== myPeerId) { if (currentGroupObj && currentGroupObj.isRadio && data.senderId === currentGroupObj.hostId) { alert('📻 放送局が終了しました。'); savedGroups = savedGroups.filter(g => g.id !== currentGroupObj.id); saveGroupsToLocal(); window.switchToDirect(); return; } }
+            if (data.type === 'leave' && data.senderId !== myPeerId) {
+              if (activeCalls[data.senderId]) { if (activeCalls[data.senderId].peerConnection) activeCalls[data.senderId].peerConnection.close(); activeCalls[data.senderId].close(); delete activeCalls[data.senderId]; }
+              if (activeDataConns[data.senderId]) { activeDataConns[data.senderId].close(); delete activeDataConns[data.senderId]; }
+              if (pannerNodes[data.senderId]) { pannerNodes[data.senderId].disconnect(); delete pannerNodes[data.senderId]; }
+              const audio = document.getElementById('audio-' + data.senderId); if (audio) audio.remove(); window.removeParticipantUI(data.senderId); window.updateStatus(); if (isReversiActive) window.endReversi();
+            }
+
+            if ((data.type === 'room_meta' || data.type === 'host_sync' || data.type === 'join') && data.hostId && currentGroupObj) {
+              const remoteTime = data.createdAt || 9999999999999; const localTime = currentGroupObj.createdAt || 9999999999999;
+              const isRemoteDominant = remoteTime < localTime || (remoteTime === localTime && data.hostId < currentGroupObj.hostId);
+              if (currentGroupObj.hostId !== data.hostId) {
+                if (isRemoteDominant) {
+                  currentGroupObj.hostId = data.hostId; currentGroupObj.createdAt = remoteTime;
+                  if (data.isRadio !== undefined) currentGroupObj.isRadio = data.isRadio; if (data.allowMemberSE !== undefined) currentGroupObj.allowMemberSE = data.allowMemberSE; if (data.noGuests !== undefined) currentGroupObj.noGuests = data.noGuests; 
+                  saveGroupsToLocal(); window.renderTabs(); document.getElementById('host-controls').style.display = (currentGroupObj.hostId === myPeerId && !currentGroupObj.isRadio) ? 'block' : 'none'; window.updateStatus();
+                } else if (currentGroupObj.hostId === myPeerId) {
+                  mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'host_sync', senderId: myPeerId, hostId: myPeerId, createdAt: localTime, isRadio: currentGroupObj.isRadio, allowMemberSE: currentGroupObj.allowMemberSE, noGuests: currentGroupObj.noGuests }), { retain: true });
+                }
+              } else if (currentGroupObj.hostId === data.hostId) {
+                 let updated = false;
+                 if (remoteTime < localTime) { currentGroupObj.createdAt = remoteTime; updated = true; }
+                 if (data.isRadio !== undefined && currentGroupObj.isRadio !== data.isRadio) { currentGroupObj.isRadio = data.isRadio; updated = true; }
+                 if (data.allowMemberSE !== undefined && currentGroupObj.allowMemberSE !== data.allowMemberSE) { currentGroupObj.allowMemberSE = data.allowMemberSE; updated = true; }
+                 if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { currentGroupObj.noGuests = data.noGuests; updated = true; }
+                 if (updated) { saveGroupsToLocal(); window.updateStatus(); }
+              }
+              if (isGuestMode && currentGroupObj.noGuests) { alert('🚨 このグループはゲストの参加が許可されていません。
+強制退出します。'); savedGroups = savedGroups.filter(g => g.id !== currentGroupObj.id); saveGroupsToLocal(); window.switchToDirect(); return; }
+            }
+
+            if (data.type === 'kick' && data.targetId === myPeerId) { if (currentGroupObj && data.senderId === currentGroupObj.hostId) { alert('👑 リーダーから強制退出させられました。'); savedGroups = savedGroups.filter(g => g.id !== currentGroupObj.id); saveGroupsToLocal(); window.switchToDirect(); return; } }
+            if (data.type === 'change_pass') { if (currentGroupObj && data.senderId === currentGroupObj.hostId) { alert('👑 パスワード変更により再接続します。'); currentGroupObj.pass = data.newPass; saveGroupsToLocal(); window.joinGroup(currentGroupObj.id); return; } }
+            if (data.type === 'join' && data.peerId !== myPeerId) {
+              if (data.senderName) window.updateParticipantName(data.peerId, data.senderName);
+              if (currentGroupObj && currentGroupObj.noGuests && data.isGuest) return;
+              if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+              let combinedStream = processedStream || new MediaStream();
+              if (isScreenSharing && screenStream) { combinedStream = new MediaStream(); if (processedStream) processedStream.getAudioTracks().forEach(track => combinedStream.addTrack(track)); screenStream.getVideoTracks().forEach(track => combinedStream.addTrack(track)); }
+              const call = peer.call(data.peerId, combinedStream, { metadata: { senderName: savedMyName, mode: 'group', groupId: currentGroupId, isGuest: isGuestMode, isScreen: isScreenSharing } }); setupCall(call);
+            } else if (data.type === 'chat' && data.senderId !== myPeerId) {
+              if (data.senderName) window.updateParticipantName(data.senderId, data.senderName); if (currentGroupId === 'test-noguest') return;
+              window.showNotification(`💬 ${data.senderName}: ${data.text}`); window.addChatLog(data.senderName, data.text, false);
+            } else if (data.type === 'subtitle' && data.senderId !== myPeerId) { window.showSubtitle(data.senderName, data.text); }
+            else if (data.type === 'smash_req') { pendingGameType = 'smash'; document.getElementById('game-invite-msg').innerText = `⚡ ${data.senderName} さんから早撃ち対戦！`; document.getElementById('game-invite-modal').style.display='flex'; }
+            else if (data.type === 'reversi_req') { pendingGameType = 'reversi'; document.getElementById('game-invite-msg').innerText = `🎮 ${data.senderName} さんからリバーシ対戦！`; document.getElementById('game-invite-modal').style.display='flex'; }
+          });
+        };
+        tryConnectMQTT(0);
       });
-      call.on('close', () => { removeAudio(call.peer); delete activeCalls[call.peer]; if ($('screen-share-video').srcObject) { $('screen-share-video').srcObject = null; $('screen-share-container').style.display = 'none'; } updateGroupMemberCount(); if (currentMode === 'direct') window.endCall(); });
+
+      peer.on('error', (err) => {
+        if (err.type === 'unavailable-id') alert(`ID「${customId}」は現在他の端末で使用されています。`); else console.error('PeerJS Error:', err);
+      });
+
+      peer.on('call', (call) => {
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        const callerName = call.metadata ? call.metadata.senderName : ''; const callMode = call.metadata ? call.metadata.mode : 'direct'; const callGroupId = call.metadata ? call.metadata.groupId : null; const callerIsGuest = call.metadata ? call.metadata.isGuest : false; const callerIsScreen = call.metadata ? call.metadata.isScreen : false; 
+        if (isGuestMode && callMode === 'direct') { call.close(); return; }
+        if (currentMode === 'group') { if (callMode !== 'group' || callGroupId !== currentGroupId) { call.close(); return; } } 
+        else if (currentMode === 'direct') { if (callMode === 'group') { call.close(); return; } }
+
+        if (callerName) window.updateParticipantName(call.peer, callerName);
+        const currentGroupObj = savedGroups.find(g => g.id === currentGroupId);
+        if (currentMode === 'group' && currentGroupObj && currentGroupObj.noGuests) { if (callerIsGuest) { call.close(); return; } }
+
+        let combinedStream = processedStream || new MediaStream();
+        if (isScreenSharing && screenStream) {
+           combinedStream = new MediaStream();
+           if (processedStream) processedStream.getAudioTracks().forEach(track => combinedStream.addTrack(track));
+           screenStream.getVideoTracks().forEach(track => combinedStream.addTrack(track));
+        }
+        call.answer(combinedStream); setupCall(call);
+      });
+
+      peer.on('connection', (conn) => {
+        if (isGuestMode) { conn.on('open', () => conn.close()); return; }
+        setupDataConn(conn);
+      });
+    }
+
+    // Connect Methods
+    window.switchToDirect = function() {
+      window.endAllConnections(); currentMode = 'direct'; currentGroupId = null; window.endReversi(); window.endSmash(); window.renderTabs(); window.updateChatUI();
+      document.getElementById('direct-panel').style.display = 'block'; document.getElementById('group-panel').style.display = 'none';
+      if (isGuestMode) {
+        document.getElementById('status').innerText = 'ゲストモード中は1対1通話を利用できません';
+        document.getElementById('talk-btn').disabled = true; document.getElementById('toggle-btn').disabled = true; document.getElementById('connect-btn').disabled = true; document.getElementById('peer-id-input').disabled = true; document.getElementById('share-screen-btn').disabled = true;
+      } else {
+        document.getElementById('status').innerText = '1対1モード: 相手のIDを入力して発信してください';
+        document.getElementById('talk-btn').disabled = true; document.getElementById('toggle-btn').disabled = true; document.getElementById('talk-btn').innerText = '接続待ち'; document.getElementById('share-screen-btn').disabled = true;
+      }
+    };
+
+    window.callPeer = function() {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      const targetId = document.getElementById('peer-id-input').value.trim();
+      if (!targetId) return alert('相手の内線IDを入力してください');
+      if (targetId === myCustomId) return alert('自分には発信できません');
+      document.getElementById('status').innerText = '発信中...';
+      
+      let combinedStream = processedStream || new MediaStream();
+      if (isScreenSharing && screenStream) { combinedStream = new MediaStream(); if (processedStream) processedStream.getAudioTracks().forEach(t => combinedStream.addTrack(t)); screenStream.getVideoTracks().forEach(t => combinedStream.addTrack(t)); }
+
+      const call = peer.call(targetId, combinedStream, { metadata: { senderName: savedMyName, mode: 'direct', isScreen: isScreenSharing } });
+      setupCall(call);
+      const conn = peer.connect(targetId); setupDataConn(conn);
+      document.getElementById('direct-inputs').style.display = 'none'; document.getElementById('btn-end-direct').style.display = 'block'; document.getElementById('call-status').innerText = `${targetId} と通話中`; document.getElementById('talk-btn').disabled = false; document.getElementById('share-screen-btn').disabled = false;
+    };
+
+    window.endCall = function() { window.switchToDirect(); };
+
+    window.joinGroup = function(roomId) {
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      window.endAllConnections(); currentMode = 'group'; currentGroupId = roomId; window.renderTabs(); window.updateChatUI();
+      document.getElementById('direct-panel').style.display = 'none'; document.getElementById('group-panel').style.display = 'block'; document.getElementById('group-inputs').style.display = 'none'; document.getElementById('group-active-ui').style.display = 'block';
+      const g = savedGroups.find(x => x.id === roomId);
+      const isHost = (g && g.hostId === myPeerId); document.getElementById('host-controls').style.display = isHost && !g.isRadio ? 'block' : 'none';
+      if (document.getElementById('se-board') && g) { document.getElementById('se-board').style.display = (isHost || (!g.isRadio && g.allowMemberSE && !isGuestMode)) ? 'block' : 'none'; }
+      currentGroupTopic = `${APP_PREFIX}${roomId}/${g.pass}`;
+
+      if (mqttClient) {
+        mqttClient.subscribe(currentGroupTopic);
+        if (isHost) { mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'room_meta', peerId: myPeerId, senderName: savedMyName, hostId: g.hostId, createdAt: g.createdAt, isRadio: g.isRadio, allowMemberSE: g.allowMemberSE, noGuests: g.noGuests }), { retain: true }); }
+        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'join', peerId: myPeerId, senderName: savedMyName, isGuest: isGuestMode, hostId: g.hostId, createdAt: g.createdAt }));
+      }
+      window.updateStatus(); 
+    };
+
+    window.executeJoinGroup = function() {
+        const name = document.getElementById('modal-join-name').value.trim(); const id = document.getElementById('modal-join-id').value.trim(); const pass = document.getElementById('modal-join-pass').value.trim();
+        if (!name || !id) return alert('表示名とグループIDを入力してください');
+        const g = { id: id, name: name, pass: pass, hostId: null, createdAt: Date.now(), isRadio: false, allowMemberSE: false, noGuests: false };
+        const idx = savedGroups.findIndex(x => x.id === id); if(idx >= 0) savedGroups[idx] = g; else savedGroups.push(g); saveGroupsToLocal();
+        document.getElementById('group-modal').style.display = 'none'; window.joinGroup(id);
+    };
+
+    window.executeCreateGroup = function() {
+        const name = document.getElementById('modal-create-name').value.trim(); const id = document.getElementById('modal-create-id').value.trim(); const pass = document.getElementById('modal-create-pass').value.trim(); const noGuests = document.getElementById('modal-create-no-guests').checked; const allowMemberSE = document.getElementById('modal-create-allow-se').checked;
+        if (!name || !id || pass === '') return alert('全項目を入力してください（パスワード必須）');
+        const g = { id: id, name: name, pass: pass, hostId: myCustomId, createdAt: Date.now(), isRadio: false, allowMemberSE: allowMemberSE, noGuests: noGuests };
+        const idx = savedGroups.findIndex(x => x.id === id); if(idx >= 0) savedGroups[idx] = g; else savedGroups.push(g); saveGroupsToLocal();
+        document.getElementById('group-modal').style.display = 'none'; window.joinGroup(id);
+    };
+
+    window.leaveGroup = function() {
+      if (mqttClient && currentGroupTopic) { mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', peerId: myPeerId })); }
+      currentGroupTopic = null; window.switchToDirect();
+    };
+
+    function setupCall(call) {
+      if (activeCalls[call.peer]) { activeCalls[call.peer].close(); }
+      activeCalls[call.peer] = call;
+
+      call.on('stream', (remoteStream) => {
+        let audio = document.getElementById('audio-' + call.peer);
+        if (!audio) { audio = document.createElement('audio'); audio.id = 'audio-' + call.peer; audio.autoplay = true; audio.playsinline = true; document.getElementById('audio-container').appendChild(audio); }
+        
+        const hasVideo = remoteStream.getVideoTracks().length > 0;
+        if (hasVideo) {
+          document.getElementById('screen-share-video').srcObject = remoteStream;
+          const sName = call.metadata?.senderName || call.peer;
+          document.getElementById('screen-share-label').innerText = `${sName} の画面`; document.getElementById('screen-share-container').style.display = 'block';
+        } else {
+          if (document.getElementById('screen-share-video').srcObject?.id === remoteStream.id) { document.getElementById('screen-share-video').srcObject = null; document.getElementById('screen-share-container').style.display = 'none'; }
+        }
+
+        if (audioCtx && audioCtx.state !== 'closed') {
+           audio.srcObject = remoteStream; audio.muted = true; 
+           if (pannerNodes[call.peer]) pannerNodes[call.peer].disconnect();
+
+           const audioStream = new MediaStream(remoteStream.getAudioTracks()); const sourceNode = audioCtx.createMediaStreamSource(audioStream);
+           const panner = audioCtx.createPanner(); panner.panningModel = 'HRTF'; panner.distanceModel = 'inverse'; panner.refDistance = 1; panner.maxDistance = 10000; panner.rolloffFactor = 1;
+
+           const volGain = audioCtx.createGain(); volGain.gain.value = savedSpeakerVolume;
+           sourceNode.connect(panner); panner.connect(volGain); volGain.connect(audioCtx.destination); pannerNodes[call.peer] = panner;
+
+           setTimeout(() => {
+             const slider = document.querySelector(`#ui-${call.peer} input[type=range]`); const icon = document.querySelector(`#ui-${call.peer} span`);
+             if (slider) { const newSlider = slider.cloneNode(true); slider.parentNode.replaceChild(newSlider, slider); newSlider.addEventListener('input', (e) => { volGain.gain.value = e.target.value; icon.innerText = e.target.value == 0 ? '🔇' : '🔊'; }); }
+             const savedPos = spatialSettings[call.peer] || 'center'; window.updateSpatialPosition(call.peer, savedPos);
+           }, 200);
+        } else { audio.srcObject = remoteStream; }
+
+        window.addParticipantUI(call.peer); window.updateStatus();
+      });
+
+      call.on('close', () => {
+        if (pannerNodes[call.peer]) { pannerNodes[call.peer].disconnect(); delete pannerNodes[call.peer]; }
+        const audio = document.getElementById('audio-' + call.peer); if (audio) audio.remove(); delete activeCalls[call.peer];
+        if (document.getElementById('screen-share-video').srcObject) { document.getElementById('screen-share-video').srcObject = null; document.getElementById('screen-share-container').style.display = 'none'; }
+        window.updateStatus(); window.removeParticipantUI(call.peer);
+        if (currentMode === 'direct') window.endCall();
+      });
     }
 
     function setupDataConn(conn) {
-      if (activeDataConns[conn.peer]) activeDataConns[conn.peer].close();
+      if (isGuestMode) return; 
+      if (activeDataConns[conn.peer]) { activeDataConns[conn.peer].close(); delete activeDataConns[conn.peer]; }
       activeDataConns[conn.peer] = conn;
-      conn.on('data', d => handleDataMessage(d));
+
+      conn.on('data', (data) => {
+        if (data && data.type === 'poll_start') { window.startPollUI(data); window.showNotification(`📊 ${data.senderId === myPeerId ? 'あなた' : 'リーダー'}がアンケートを開始しました`); } 
+        else if (data && data.type === 'poll_vote') window.handlePollVote(data);
+        else if (data && data.type === 'draw_batch') { if (document.getElementById('whiteboard-section').style.display !== 'block') { document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(window.initWhiteboard, 100); } setTimeout(() => { if (!wbCtx) return; data.lines.forEach(l => window.drawLine(l.x0, l.y0, l.x1, l.y1, l.c, false)); }, wbCtx ? 0 : 150); }
+        else if (data && data.type === 'wb_open') { document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(window.initWhiteboard, 100); window.showNotification(`🎨 ${data.senderName}さんのField (お絵かき) が開きました`); } 
+        else if (data && data.type === 'wb_close') document.getElementById('whiteboard-section').style.display = 'none';
+        else if (data && data.type === 'draw') { if (document.getElementById('whiteboard-section').style.display !== 'block') { document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(window.initWhiteboard, 100); } setTimeout(() => { window.drawLine(data.x0, data.y0, data.x1, data.y1, data.color, false); }, wbCtx ? 0 : 150); } 
+        else if (data && data.type === 'draw_clear') window.clearWhiteboard(false);
+        else if (data && data.type === 'se') window.playAudioEffect(data.sound);
+        else if (data && data.type === 'quiz_push') window.handleQuizPush(data.senderName);
+        else if (data && data.type === 'chat') { window.updateParticipantName(conn.peer, data.senderName); window.showNotification(`💬 ${data.senderName}: ${data.text}`); window.addChatLog(data.senderName, data.text, false); }
+        else if (data && data.type === 'subtitle') window.showSubtitle(data.senderName, data.text);
+        else if (data && data.type === 'smash_req') { pendingGameType = 'smash'; pendingSmashConn = conn; document.getElementById('game-invite-msg').innerText = `⚡ ${data.senderName} さんから早撃ちの対戦！`; document.getElementById('game-invite-modal').style.display='flex'; }
+        else if (data && data.type === 'smash_acc') { window.startSmash(true); window.showNotification(`⚡ 対戦承諾！`); }
+        else if (data && data.type === 'smash_dec') { window.showNotification(`⚡ 対戦を断られました。`); }
+        else if (data && data.type === 'smash_spawn') { window.showSmashTarget(data.spawnData); }
+        else if (data && data.type === 'smash_end_round') { window.processSmashRoundEnd(data.resultData); }
+        else if (data && data.type === 'smash_quit') { window.showNotification('⚡ 相手が終了しました。'); window.endSmash(); }
+        else if (data && data.type === 'reversi_req') { pendingGameType = 'reversi'; pendingReversiConn = conn; document.getElementById('game-invite-msg').innerText = `🎮 ${data.senderName} さんからリバーシの対戦！`; document.getElementById('game-invite-modal').style.display='flex'; }
+        else if (data && data.type === 'reversi_acc') { window.startReversi(2); window.showNotification(`🎮 対戦承諾！`); }
+        else if (data && data.type === 'reversi_dec') { window.showNotification(`🎮 対戦を断られました。`); }
+        else if (data && data.type === 'reversi_move') { window.applyReversiMove(data.r, data.c, data.color); }
+        else if (data && data.type === 'reversi_pass') { window.showNotification('相手はパスしました。'); reversiCurrentTurn = reversiMyColor; window.updateReversiUI(); window.checkReversiPassOrEnd(); }
+        else if (data && data.type === 'reversi_quit') { window.showNotification('🎮 相手が終了しました。'); window.endReversi(); }
+        else if (data && data.type === 'leave') {
+          if (activeCalls[conn.peer]) { if (activeCalls[conn.peer].peerConnection) activeCalls[conn.peer].peerConnection.close(); activeCalls[conn.peer].close(); delete activeCalls[conn.peer]; }
+          if (pannerNodes[conn.peer]) { pannerNodes[conn.peer].disconnect(); delete pannerNodes[conn.peer]; }
+          const audio = document.getElementById('audio-' + conn.peer); if (audio) audio.remove(); window.removeParticipantUI(conn.peer); window.updateStatus(); if (isReversiActive) window.endReversi(); if (isSmashActive) window.endSmash();
+        }
+      });
       conn.on('close', () => delete activeDataConns[conn.peer]);
     }
 
-    function handleDataMessage(d) {
-      if(!d) return;
-      if(d.type === 'chat' && d.senderId !== myCustomId) { addChatLog(d.senderName, d.text, false); showToast(`💬 ${d.senderName} からメッセージ`); }
-      else if(d.type === 'quiz_push' && d.senderId !== myCustomId) { handleQuizPush(d.senderName); }
-      else if(d.type === 'se' && d.senderId !== myCustomId) { playSE(d.sound); }
-      else if(d.type === 'draw_batch' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='block'; initWhiteboard(); setTimeout(()=>d.lines.forEach(l=>window.drawLine(l.x0,l.y0,l.x1,l.y1,l.c,false)),100); }
-      else if(d.type === 'draw_clear' && d.senderId !== myCustomId) { if(wbCtx) wbCtx.clearRect(0,0,300,300); }
-      else if(d.type === 'wb_close' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='none'; }
-      else if(d.type === 'wb_open' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='block'; initWhiteboard(); showToast(`🎨 ${d.senderName}がお絵かき開始`); }
-      else if(d.type === 'draw' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='block'; initWhiteboard(); setTimeout(() => window.drawLine(d.x0, d.y0, d.x1, d.y1, d.color, false), 150); }
-      else if(d.type === 'poll_start') { startPollUI(d); showToast(`📊 アンケート開始`); }
-      else if(d.type === 'poll_vote') { handlePollVote(d); }
-      else if(d.type === 'reversi_req') { pendingGameType = 'reversi'; pendingReversiConn = activeDataConns[d.senderId]; $('game-invite-msg').innerText = `🎮 ${d.senderName}さんからリバーシの対戦！`; $('game-invite-modal').style.display='flex'; }
-      else if(d.type === 'reversi_acc') { window.startReversi(2); showToast(`🎮 対戦承諾！`); }
-      else if(d.type === 'reversi_dec') { showToast(`🎮 対戦を断られました。`); }
-      else if(d.type === 'reversi_move') { window.applyReversiMove(d.r, d.c, d.color); }
-      else if(d.type === 'reversi_pass') { showToast('相手はパスしました。'); reversiCurrentTurn = reversiMyColor; window.updateReversiUI(); window.checkReversiPassOrEnd(); }
-      else if(d.type === 'reversi_quit') { showToast('🎮 相手が終了しました。'); window.endReversi(); }
-      else if(d.type === 'smash_req') { pendingGameType = 'smash'; pendingSmashConn = activeDataConns[d.senderId]; $('game-invite-msg').innerText = `⚡ ${d.senderName}さんから早撃ち対戦！`; $('game-invite-modal').style.display='flex'; }
-      else if(d.type === 'smash_acc') { window.startSmash(true); showToast(`⚡ 対戦承諾！`); }
-      else if(d.type === 'smash_dec') { showToast(`⚡ 対戦を断られました。`); }
-      else if(d.type === 'smash_spawn') { showSmashTarget(d.spawnData); }
-      else if(d.type === 'smash_end_round') { processSmashRoundEnd(d.resultData); }
-      else if(d.type === 'smash_quit') { showToast('⚡ 相手が終了しました。'); window.endSmash(); }
+    window.endAllConnections = function() {
+      if (currentGroupTopic && mqttClient) { mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', senderId: myPeerId })); mqttClient.unsubscribe(currentGroupTopic); }
+      window.stopScreenShare();
+      Object.values(activeDataConns).forEach(conn => { if (conn.open) { conn.send({ type: 'leave', senderId: myPeerId }); setTimeout(() => { if (conn.close) conn.close(); }, 200); } else { if (conn.close) conn.close(); } });
+      Object.values(activeCalls).forEach(call => { if (call.peerConnection) call.peerConnection.close(); call.close(); });
+      if (peer && peer.connections) { Object.keys(peer.connections).forEach(peerId => { peer.connections[peerId].forEach(conn => { if (conn.close) conn.close(); }); }); }
+      Object.values(pannerNodes).forEach(p => p.disconnect()); pannerNodes = {}; activeCalls = {}; activeDataConns = {}; document.getElementById('audio-container').innerHTML = ''; currentGroupTopic = null; document.getElementById('chat-logs').innerHTML = ''; document.getElementById('participants-list').innerHTML = ''; document.getElementById('participants-section').style.display = 'none'; peerNames = {}; 
+      document.getElementById('game-invite-container').style.display = 'none'; pendingReversiConn = null; pendingSmashConn = null; pendingGameType = null; document.getElementById('poll-result-section').style.display = 'none'; if (pollInterval) clearInterval(pollInterval); currentPollId = null;
     }
 
-    function broadcastData(msgObj) {
-      if(currentMode === 'group' && mqttClient) mqttClient.publish(currentGroupTopic, JSON.stringify(msgObj));
-      else if(currentMode === 'direct') Object.values(activeDataConns).forEach(c => c.send(msgObj));
-    }
-
-    function endAllConnections() {
-      Object.values(activeCalls).forEach(c => c.close()); Object.values(activeDataConns).forEach(c => c.close());
-      activeCalls = {}; activeDataConns = {}; $('audio-container').innerHTML = '';
-      if ($('screen-share-video').srcObject) { $('screen-share-video').srcObject = null; $('screen-share-container').style.display = 'none'; }
-      window.endReversi(); window.endSmash(); $('whiteboard-section').style.display='none'; $('poll-result-section').style.display='none';
-    }
-    function removeAudio(pId) { const a = $(`audio-${pId}`); if (a) a.remove(); }
-    function updateGroupMemberCount() { if (currentMode === 'group') $('group-member-count').innerText = `接続中: ${Object.keys(activeCalls).length + 1}人`; }
-
-    // ==========================================
-    // チャット関連
-    // ==========================================
-    function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-    function addChatLog(s, t, isMe) {
-      if (!t) return; const m = document.createElement('div'); m.className = `chat-msg ${isMe ? 'me' : ''}`; m.innerHTML = `<span class="sender">${escapeHtml(s)}:</span>${escapeHtml(t)}`;
-      $('chat-logs').appendChild(m); $('chat-logs').scrollTop = $('chat-logs').scrollHeight; 
-      const g = $('chat-logs').querySelector('div[style*="text-align:center"]'); if (g) g.remove();
-    }
-    window.sendChatMessage = () => {
-      const t = $('chat-input').value.trim(); if (!t) return; const sN = myName || myCustomId;
-      if (containsNGWord(t)) return alert('不適切な単語が含まれています。');
-      broadcastData({ type: 'chat', senderId: myCustomId, senderName: sN, text: t });
-      addChatLog(sN + ' (あなた)', t, true); $('chat-input').value = '';
-    };
-    $('chat-input').addEventListener('keypress', e => { if (e.key === 'Enter') window.sendChatMessage(); });
-
-    // ==========================================
-    // UI 切り替え
-    // ==========================================
-    function uiDirectConnected(tId) {
-      $('direct-inputs').style.display = 'none'; $('btn-end-direct').style.display = 'block'; $('group-panel').style.display = 'none';
-      $('call-status').innerText = `${tId} と通話中`; $('talk-btn').disabled = false; $('share-screen-btn').disabled = false;
-    }
-    function uiGroupConnected() {
-      $('group-inputs').style.display = 'none'; $('group-active-ui').style.display = 'block'; $('direct-panel').style.display = 'none';
-      $('call-status').innerText = `「${activeRoomId}」に参加中`; $('talk-btn').disabled = false; $('share-screen-btn').disabled = false; updateGroupMemberCount();
-    }
-    function uiIdle() {
-      $('direct-inputs').style.display = 'block'; $('btn-end-direct').style.display = 'none'; $('group-inputs').style.display = 'block'; $('group-active-ui').style.display = 'none';
-      $('direct-panel').style.display = 'block'; $('group-panel').style.display = 'block';
-      $('call-status').innerText = ''; $('talk-btn').disabled = true; $('share-screen-btn').disabled = true; $('talk-btn').classList.remove('active');
-      if (audioTrack) audioTrack.enabled = false; if (isScreenSharing) window.toggleScreenShare();
-    }
-
-    // ==========================================
-    // PTTボタン (長押し発言)
-    // ==========================================
-    const btnTalk = $('talk-btn');
-    const startTalk = e => { e.preventDefault(); if (currentMode === 'idle' || !audioTrack) return; audioTrack.enabled = true; btnTalk.classList.add('active'); btnTalk.innerText = '発言中...'; };
-    const stopTalk = e => { e.preventDefault(); if (currentMode === 'idle' || !audioTrack) return; audioTrack.enabled = false; btnTalk.classList.remove('active'); btnTalk.innerText = '長押しで発言'; };
-    btnTalk.addEventListener('mousedown', startTalk); btnTalk.addEventListener('touchstart', startTalk, { passive: false }); btnTalk.addEventListener('mouseup', stopTalk); btnTalk.addEventListener('touchend', stopTalk); btnTalk.addEventListener('mouseleave', stopTalk);
-
-    // ==========================================
-    // ゲーム機能：早押し・SE
-    // ==========================================
-    function playSE(type) {
-      if(!audioCtx || audioCtx.state === 'suspended') return;
-      if(SE_URLS[type]){
-        fetch(SE_URLS[type]).then(r=>r.arrayBuffer()).then(b=>audioCtx.decodeAudioData(b)).then(buf=>{const s=audioCtx.createBufferSource();s.buffer=buf;s.connect(audioCtx.destination);s.start();}).catch(e=>e);
-      } else if(type === 'quiz'){
-        const o=audioCtx.createOscillator();const g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);
-        o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(0.1,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+1.5);o.start();o.stop(audioCtx.currentTime+1.5);
+    // UI Updates
+    window.updateStatus = function() {
+      const count = Object.keys(activeCalls).length;
+      if (currentMode === 'group') {
+        const g = savedGroups.find(x => x.id === currentGroupId);
+        if (g && g.isRadio) {
+          if (g.hostId === myPeerId) {
+            document.getElementById('status').innerText = `【📻 ${g.name}】を放送中`; document.getElementById('group-member-count').innerText = count > 0 ? `接続中: リスナー ${count} 人` : '接続中: リスナー 0人 (あなただけです)';
+            document.getElementById('talk-btn').disabled = false; document.getElementById('toggle-btn').disabled = false; document.getElementById('talk-btn').innerText = '長押しで放送'; document.getElementById('share-screen-btn').disabled = false; 
+          } else {
+            document.getElementById('status').innerText = `【🎧 ${g.name}】を受信中`; document.getElementById('group-member-count').innerText = count > 0 ? `接続中: ほかリスナー ${count} 人` : '接続中: リスナー (あなただけです)';
+            document.getElementById('talk-btn').disabled = true; document.getElementById('toggle-btn').disabled = true; document.getElementById('talk-btn').innerText = '🎧 聞き専モード'; document.getElementById('talk-btn').classList.remove('active');
+            if (rawAudioTrack) rawAudioTrack.enabled = false; document.getElementById('share-screen-btn').disabled = true; 
+          }
+        } else {
+          document.getElementById('status').innerText = `【${g ? g.name : ''}】に参加中`; document.getElementById('group-member-count').innerText = count > 0 ? `接続中: ほか ${count} 人` : '接続中: 0人 (あなただけです)';
+          document.getElementById('talk-btn').disabled = false; document.getElementById('toggle-btn').disabled = false; document.getElementById('talk-btn').innerText = '長押しで話す'; document.getElementById('share-screen-btn').disabled = false; 
+        }
+        const seBoard = document.getElementById('se-board');
+        if (seBoard && g) { seBoard.style.display = (g.hostId === myPeerId || (!g.isRadio && g.allowMemberSE && !isGuestMode)) ? 'block' : 'none'; }
+      } else if (currentMode === 'direct') {
+        if (isGuestMode) { document.getElementById('status').innerText = 'ゲストモード中は1対1通話を利用できません'; document.getElementById('share-screen-btn').disabled = true; } 
+        else { document.getElementById('status').innerText = count > 0 ? '1対1通話中！' : '1対1モード: 相手のIDを入力して発信してください'; document.getElementById('share-screen-btn').disabled = count === 0; }
+        document.getElementById('talk-btn').disabled = count === 0; document.getElementById('toggle-btn').disabled = count === 0;
+        if (count > 0) { document.getElementById('talk-btn').innerText = '長押しで話す'; document.getElementById('direct-panel').style.display = 'block'; } 
       }
-    }
-    window.pushQuizBtn = () => {
-      if (isQuizLocked) return; const sN = myName || myCustomId;
-      broadcastData({ type: 'quiz_push', senderId: myCustomId, senderName: sN }); handleQuizPush(sN);
-    };
-    function handleQuizPush(sN) {
-      if (isQuizLocked) return; isQuizLocked = true; playSE('quiz');
-      $('quiz-status').innerText = `💡 ${sN}さん！`; $('quiz-status').style.color = '#dc3545'; $('main-card').style.boxShadow = '0 0 30px rgba(220, 53, 69, 0.6)';
-      setTimeout(() => { isQuizLocked = false; $('quiz-status').innerText = '準備OK'; $('quiz-status').style.color = '#555'; $('main-card').style.boxShadow = isDarkMode ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.08)'; }, 4000);
-    }
-
-    // ==========================================
-    // ゲーム機能：サイコロ
-    // ==========================================
-    window.openDiceModal = () => $('dice-modal').style.display = 'flex';
-    window.closeDiceModal = () => $('dice-modal').style.display = 'none';
-    window.executeDice = () => {
-      const c = parseInt($('dice-count').value), f = parseInt($('dice-faces').value);
-      if (isNaN(c) || c<1 || c>10 || isNaN(f) || f<2 || f>100) return alert('エラー');
-      let rs = [], tot = 0; for(let i=0;i<c;i++){ const r=Math.floor(Math.random()*f)+1; rs.push(r); tot+=r; }
-      const sN = myName || myCustomId; const txt = `🎲 ${c}d${f} ＞ [${rs.join(', ')}] ＝ **${tot}**`;
-      broadcastData({ type: 'chat', senderId: myCustomId, senderName: sN, text: txt });
-      addChatLog(sN + ' (あなた)', txt, true); window.closeDiceModal();
     };
 
-    // ==========================================
-    // ゲーム機能：お絵かき
-    // ==========================================
-    window.toggleWhiteboard = () => { $('whiteboard-section').style.display = 'block'; initWhiteboard(); broadcastData({ type: 'wb_open', senderId: myCustomId, senderName: myName }); };
-    window.quitWhiteboard = () => { $('whiteboard-section').style.display = 'none'; broadcastData({ type: 'wb_close', senderId: myCustomId }); };
-    window.setDrawColor = c => drawColor = c;
-    window.clearWhiteboard = emit => { if(wbCtx) wbCtx.clearRect(0,0,300,300); if(emit) broadcastData({ type: 'draw_clear', senderId: myCustomId }); };
-    function initWhiteboard() {
-      if(isWhiteboardInitialized) return; let cvs = $('whiteboard-canvas'); const nCvs = cvs.cloneNode(true); cvs.replaceWith(nCvs); cvs = nCvs;
-      wbCtx = cvs.getContext('2d'); wbCtx.lineCap = 'round'; wbCtx.lineJoin = 'round';
-      const getP = e => { const r = e.target.getBoundingClientRect(); const cx = e.touches ? e.touches[0].clientX : e.clientX; const cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: (cx-r.left)*(e.target.width/r.width), y: (cy-r.top)*(e.target.height/r.height) }; };
-      const startD = e => { if(e.cancelable) e.preventDefault(); isDrawing = true; const p = getP(e); lastX = p.x; lastY = p.y; };
-      const draw = e => { if(!isDrawing) return; if(e.cancelable) e.preventDefault(); const p = getP(e); window.drawLine(lastX, lastY, p.x, p.y, drawColor, true); lastX = p.x; lastY = p.y; };
-      const endD = () => isDrawing = false;
-      cvs.addEventListener('mousedown', startD); cvs.addEventListener('mousemove', draw); cvs.addEventListener('mouseup', endD); cvs.addEventListener('mouseout', endD); cvs.addEventListener('touchstart', startD, {passive:false}); cvs.addEventListener('touchmove', draw, {passive:false}); cvs.addEventListener('touchend', endD); isWhiteboardInitialized = true;
-    }
-    window.drawLine = (x0, y0, x1, y1, col, emit) => {
-      if(!wbCtx) return; wbCtx.beginPath(); wbCtx.moveTo(x0, y0); wbCtx.lineTo(x1, y1); wbCtx.strokeStyle = col; wbCtx.lineWidth = col==='white'?15:3; wbCtx.stroke(); wbCtx.closePath();
-      if(emit) { drawBuffer.push({x0:Math.round(x0), y0:Math.round(y0), x1:Math.round(x1), y1:Math.round(y1), c:col}); if(!drawTimer) drawTimer = setTimeout(()=>{ broadcastData({type:'draw_batch', lines:drawBuffer, senderId:myCustomId}); drawBuffer=[]; drawTimer=null; }, 50); }
+    window.addChatLog = function(sender, text, isMe) {
+      if (!text) return; const msgEl = document.createElement('div'); msgEl.className = `chat-msg ${isMe ? 'me' : ''}`; msgEl.innerHTML = `<span class="sender">${escapeHtml(sender)}:</span>${escapeHtml(text)}`;
+      document.getElementById('chat-logs').appendChild(msgEl); document.getElementById('chat-logs').scrollTop = document.getElementById('chat-logs').scrollHeight; 
+      const guide = document.getElementById('chat-logs').querySelector('div[style*="text-align:center"]'); if (guide) guide.remove();
     };
 
-    // ==========================================
-    // ゲーム機能：アンケート
-    // ==========================================
-    window.openPollModal = () => { if(currentMode==='idle') return alert('通話中のみ可能です'); $('poll-title').value=''; $('poll-options').value=''; $('poll-create-modal').style.display='flex'; };
-    window.closePollModal = () => $('poll-create-modal').style.display='none';
-    window.executePollCreate = () => {
-      const ttl = $('poll-title').value.trim(), optsRaw = $('poll-options').value.trim(), tm = parseInt($('poll-time').value);
-      if(!ttl || !optsRaw) return alert('入力してください'); const opts = optsRaw.split(',').map(s=>s.trim()).filter(s=>s!==''); if(opts.length<2 || opts.length>5) return alert('2〜5つ');
-      const d = { type: 'poll_start', pollId: 'poll_'+Date.now(), title: ttl, options: opts, duration: tm, senderId: myCustomId }; broadcastData(d); window.closePollModal(); startPollUI(d);
+    window.sendChatMessage = function() {
+      if (isGuestMode) return; if (currentMode === 'group' && currentGroupId === 'test-noguest') return alert('このルームではチャットは使用できません。');
+      const text = document.getElementById('chat-input').value.trim(); if (!text) return;
+      if (currentMode === 'direct' && Object.keys(activeDataConns).length === 0 && text === '/radio') {
+        document.getElementById('chat-input').value = '';
+        setTimeout(() => {
+          const name = prompt('📻 [SECRET] ラジオ局の名前を入力してください:'); if (!name) return; const id = prompt('📻 [SECRET] ラジオ局のグループIDを入力してください (半角英数字):'); if (!id) return;
+          const newGroup = { id, name, pass: '', noGuests: false, hostId: myPeerId, createdAt: Date.now(), isRadio: true, allowMemberSE: false }; savedGroups.push(newGroup); saveGroupsToLocal(); window.joinGroup(newGroup.id);
+        }, 100); return;
+      }
+      let senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分'); if (containsNGWord(text)) return alert('不適切な単語が含まれているため送信できません。');
+      window.broadcastData({ type: 'chat', senderName: senderName, text: text });
+      window.addChatLog(senderName + ' (あなた)', text, true); document.getElementById('chat-input').value = '';
     };
-    function startPollUI(d) {
-      currentPollId=d.pollId; hasVoted=false; $('poll-result-section').style.display='block'; $('poll-title-display').innerText=d.title; $('poll-total-votes').innerText='0'; $('poll-options-container').innerHTML='';
-      d.options.forEach((opt, idx) => {
-        const w=document.createElement('div'); w.style.marginBottom='8px'; const b=document.createElement('button'); b.className='poll-option-btn';
-        b.innerHTML=`<span style="font-weight:bold;">${opt}</span> <span id="poll-pct-${idx}" style="float:right; font-size:11px; color:#888;">0% (0票)</span>`; b.onclick=()=>window.sendPollVote(d.pollId, idx);
-        const bw=document.createElement('div'); bw.className='poll-bar-container'; const bar=document.createElement('div'); bar.className='poll-bar'; bar.id=`poll-bar-${idx}`;
-        bw.appendChild(bar); w.appendChild(b); w.appendChild(bw); $('poll-options-container').appendChild(w);
+
+    window.updateParticipantName = function(peerId, name) {
+      peerNames[peerId] = name; const nameEl = document.getElementById('name-' + peerId); if (nameEl) nameEl.innerText = name;
+    };
+
+    window.updateSpatialPosition = function(peerId, pos) {
+      if (!pannerNodes[peerId]) return; const panner = pannerNodes[peerId];
+      switch(pos) { case 'center': panner.positionX.value = 0; panner.positionY.value = 0; panner.positionZ.value = 0; break; case 'left': panner.positionX.value = -1.5; panner.positionY.value = 0; panner.positionZ.value = 0; break; case 'right': panner.positionX.value = 1.5; panner.positionY.value = 0; panner.positionZ.value = 0; break; case 'top': panner.positionX.value = 0; panner.positionY.value = 1; panner.positionZ.value = 2; break; case 'bottom': panner.positionX.value = 0; panner.positionY.value = -1; panner.positionZ.value = -2; break; case 'top-left': panner.positionX.value = -1.5; panner.positionY.value = 1; panner.positionZ.value = 1.5; break; case 'top-right': panner.positionX.value = 1.5; panner.positionY.value = 1; panner.positionZ.value = 1.5; break; }
+    };
+
+    window.addParticipantUI = function(peerId) {
+      if (document.getElementById('ui-' + peerId)) return;
+      const name = peerNames[peerId] || peerId.substring(0, 5) + " (不明)";
+      const div = document.createElement('div'); div.className = 'participant-item'; div.id = 'ui-' + peerId;
+      const mainDiv = document.createElement('div'); mainDiv.className = 'participant-main';
+      const nameEl = document.createElement('span'); nameEl.className = 'p-name'; nameEl.id = 'name-' + peerId; nameEl.innerText = name;
+      const ctrlDiv = document.createElement('div'); ctrlDiv.className = 'p-ctrl';
+      const icon = document.createElement('span'); icon.innerText = '🔊'; icon.style.fontSize = '14px';
+      const slider = document.createElement('input'); slider.type = 'range'; slider.min = '0'; slider.max = '1'; slider.step = '0.05'; slider.value = savedSpeakerVolume;
+      slider.addEventListener('input', (e) => { const audio = document.getElementById('audio-' + peerId); if (audio) { audio.volume = e.target.value; icon.innerText = e.target.value == 0 ? '🔇' : '🔊'; } });
+      ctrlDiv.appendChild(icon); ctrlDiv.appendChild(slider);
+      const currentGroupObj = savedGroups.find(g => g.id === currentGroupId); const isHost = currentGroupObj && currentGroupObj.hostId === myPeerId;
+      if (isHost && peerId !== myPeerId) { const kickBtn = document.createElement('button'); kickBtn.innerText = '✕ 退出'; kickBtn.className = 'btn-kick'; kickBtn.onclick = () => window.kickUser(peerId, name); ctrlDiv.appendChild(kickBtn); }
+      mainDiv.appendChild(nameEl); mainDiv.appendChild(ctrlDiv);
+      const spatialDiv = document.createElement('div'); spatialDiv.style.display = 'flex'; spatialDiv.style.justifyContent = 'space-between'; spatialDiv.style.alignItems = 'center'; spatialDiv.style.paddingTop = '6px'; spatialDiv.style.borderTop = '1px dashed #e0e0e0';
+      const spatialLabel = document.createElement('span'); spatialLabel.innerText = '🗺️ 3D配置:'; spatialLabel.style.fontSize = '11px'; spatialLabel.style.color = '#777';
+      const spatialSelect = document.createElement('select'); spatialSelect.className = 'spatial-select';
+      const options = [ {val: 'center', txt: '正面'}, {val: 'left', txt: '左方向'}, {val: 'right', txt: '右方向'}, {val: 'top', txt: '上方向'}, {val: 'bottom', txt: '下方向'}, {val: 'top-left', txt: '左上'}, {val: 'top-right', txt: '右上'} ];
+      options.forEach(opt => { const o = document.createElement('option'); o.value = opt.val; o.innerText = opt.txt; spatialSelect.appendChild(o); });
+      const savedPos = spatialSettings[peerId] || 'center'; spatialSelect.value = savedPos;
+      spatialSelect.addEventListener('change', (e) => { const pos = e.target.value; spatialSettings[peerId] = pos; localStorage.setItem('my_naisen_spatial', JSON.stringify(spatialSettings)); window.updateSpatialPosition(peerId, pos); });
+      spatialDiv.appendChild(spatialLabel); spatialDiv.appendChild(spatialSelect);
+      div.appendChild(mainDiv); div.appendChild(spatialDiv);
+      document.getElementById('participants-list').appendChild(div); document.getElementById('participants-section').style.display = 'block';
+      if (pannerNodes[peerId]) window.updateSpatialPosition(peerId, savedPos);
+    };
+
+    window.removeParticipantUI = function(peerId) {
+      const el = document.getElementById('ui-' + peerId); if (el) el.remove();
+      if (document.getElementById('participants-list').children.length === 0) document.getElementById('participants-section').style.display = 'none';
+    };
+
+    window.playAudioEffect = function(type) {
+      if (!audioCtx || audioCtx.state === 'suspended') return;
+      const now = audioCtx.currentTime; const panner = audioCtx.createPanner(); panner.panningModel = 'HRTF'; panner.distanceModel = 'inverse'; panner.refDistance = 1; panner.maxDistance = 10000; panner.rolloffFactor = 1; panner.positionX.value = 0; panner.positionY.value = 2; panner.positionZ.value = 3; 
+      if (SE_FILES[type]) { fetch(SE_FILES[type]).then(r => r.arrayBuffer()).then(ab => audioCtx.decodeAudioData(ab)).then(audioBuffer => { const source = audioCtx.createBufferSource(); source.buffer = audioBuffer; const gain = audioCtx.createGain(); gain.gain.value = savedSpeakerVolume; source.connect(gain); gain.connect(panner); panner.connect(audioCtx.destination); source.start(now); }).catch(e => e); return; }
+      const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(panner); panner.connect(audioCtx.destination);
+      if (type === 'quiz') { osc.type = 'sine'; osc.frequency.setValueAtTime(880, now); gain.gain.setValueAtTime(0.1, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 1.5); osc.start(now); osc.stop(now + 1.5); }
+    };
+
+    // Games and Extras
+    window.openDiceModal = function() { const g = savedGroups.find(x => x.id === currentGroupId); if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return alert('リスナーはサイコロを振れません。'); document.getElementById('dice-modal').style.display = 'flex'; };
+    window.closeDiceModal = function() { document.getElementById('dice-modal').style.display = 'none'; };
+    window.executeDice = function() {
+      const count = parseInt(document.getElementById('dice-count').value), faces = parseInt(document.getElementById('dice-faces').value);
+      if (isNaN(count) || count < 1 || count > 10) return alert('個数は1〜10で指定してください'); if (isNaN(faces) || faces < 2 || faces > 100) return alert('面数は2〜100で指定してください');
+      let results = [], total = 0; for (let i = 0; i < count; i++) { const r = Math.floor(Math.random() * faces) + 1; results.push(r); total += r; }
+      const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分'); const text = `🎲 ${count}d${faces} ＞ [${results.join(', ')}] ＝ **${total}**`;
+      window.broadcastData({ type: 'chat', senderName: senderName, text: text }); window.addChatLog(senderName + ' (あなた)', text, true); window.closeDiceModal();
+    };
+
+    window.openPollModal = function() { const g = savedGroups.find(x => x.id === currentGroupId); if (currentMode === 'group' && g && g.hostId !== myPeerId) return alert('アンケートを作成できるのはリーダーのみです。'); if (currentMode === 'direct') return alert('グループ通話でのみ使用できます。'); document.getElementById('poll-create-title').value = ''; document.getElementById('poll-create-options').value = ''; document.getElementById('poll-create-modal').style.display = 'flex'; };
+    window.closePollModal = function() { document.getElementById('poll-create-modal').style.display = 'none'; };
+    window.executePollCreate = function() {
+      const title = document.getElementById('poll-create-title').value.trim(), optionsRaw = document.getElementById('poll-create-options').value.trim(), time = parseInt(document.getElementById('poll-create-time').value);
+      if (!title || !optionsRaw) return alert('お題と選択肢を入力してください。'); let options = optionsRaw.split(',').map(s => s.trim()).filter(s => s !== ''); if (options.length < 2 || options.length > 5) return alert('選択肢は2〜5つです');
+      const pollData = { type: 'poll_start', pollId: 'poll_' + Date.now(), title: title, options: options, duration: time, senderId: myPeerId };
+      window.broadcastData(pollData); window.closePollModal(); window.startPollUI(pollData);
+    };
+
+    window.startPollUI = function(data) {
+      currentPollId = data.pollId; hasVoted = false; document.getElementById('poll-result-section').style.display = 'block'; document.getElementById('poll-title-display').innerText = data.title; document.getElementById('poll-total-votes').innerText = '0'; document.getElementById('poll-options-container').innerHTML = '';
+      data.options.forEach((opt, idx) => {
+        const wrap = document.createElement('div'); wrap.style.marginBottom = '8px'; const btn = document.createElement('button'); btn.className = 'poll-option-btn';
+        btn.innerHTML = `<span style="font-weight:bold;">${opt}</span> <span id="poll-pct-${idx}" style="float:right; font-size:11px; color:#888;">0% (0票)</span>`;
+        btn.onclick = () => window.sendPollVote(data.pollId, idx);
+        const barWrap = document.createElement('div'); barWrap.className = 'poll-bar-container'; const bar = document.createElement('div'); bar.className = 'poll-bar'; bar.id = `poll-bar-${idx}`;
+        barWrap.appendChild(bar); wrap.appendChild(btn); wrap.appendChild(barWrap); document.getElementById('poll-options-container').appendChild(wrap);
       });
-      let rem=d.duration; $('poll-timer-display').innerText=`残り: ${rem}秒`; if(pollInterval) clearInterval(pollInterval);
-      pollInterval=setInterval(()=>{ rem--; if(rem<=0){ clearInterval(pollInterval); $('poll-timer-display').innerText='終了'; document.querySelectorAll('.poll-option-btn').forEach(b=>b.disabled=true); currentPollId=null; } else $('poll-timer-display').innerText=`残り: ${rem}秒`; }, 1000);
-    }
-    window.sendPollVote = (pId, idx) => { if(hasVoted) return; hasVoted=true; document.querySelectorAll('.poll-option-btn')[idx].style.borderLeft='4px solid #0d6efd'; broadcastData({type:'poll_vote', pollId:pId, optionIndex:idx}); };
-    function handlePollVote(d) {
-      if(currentPollId!==d.pollId) return; if(!pollVotes[d.pollId]) pollVotes[d.pollId]={t:0,c:{}}; let p=pollVotes[d.pollId]; p.t++; p.c[d.optionIndex]=(p.c[d.optionIndex]||0)+1; $('poll-total-votes').innerText=p.t;
-      for(let i=0; i<$('poll-options-container').children.length; i++){ let c=p.c[i]||0; let pct=p.t===0?0:Math.round((c/p.t)*100); if($(`poll-bar-${i}`)) $(`poll-bar-${i}`).style.width=`${pct}%`; if($(`poll-pct-${i}`)) $(`poll-pct-${i}`).innerText=`${pct}% (${c}票)`; }
-    }
+      let remaining = data.duration; document.getElementById('poll-timer-display').innerText = `残り: ${remaining}秒`; if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(() => { remaining--; if (remaining <= 0) { clearInterval(pollInterval); document.getElementById('poll-timer-display').innerText = '終了しました'; document.querySelectorAll('.poll-option-btn').forEach(b => { b.disabled = true; }); currentPollId = null; } else { document.getElementById('poll-timer-display').innerText = `残り: ${remaining}秒`; } }, 1000);
+    };
 
-    // ==========================================
-    // ゲーム機能：リバーシ (1対1専用)
-    // ==========================================
-    window.inviteReversi = () => { if(currentMode!=='direct') return alert('1対1通話中のみ可能です'); broadcastData({type:'reversi_req', senderName:myName||myCustomId}); showToast('招待を送信しました'); };
-    window.startReversi = (c) => { isReversiActive=true; reversiMyColor=c; reversiCurrentTurn=1; $('reversi-section').style.display='block'; initReversiBoard(); window.updateReversiUI(); };
-    window.endReversi = () => { isReversiActive=false; $('reversi-section').style.display='none'; };
-    window.quitReversi = () => { if(!confirm("終了しますか？")) return; broadcastData({type:'reversi_quit'}); window.endReversi(); };
-    function initReversiBoard() { reversiBoard=Array(8).fill().map(()=>Array(8).fill(0)); reversiBoard[3][3]=2; reversiBoard[3][4]=1; reversiBoard[4][3]=1; reversiBoard[4][4]=2; }
-    window.updateReversiUI = () => {
-      const bEl=$('reversi-board'); bEl.innerHTML=''; let bC=0, wC=0;
-      for(let r=0; r<8; r++){ for(let c=0; c<8; c++){
-          const v=reversiBoard[r][c]; if(v===1) bC++; if(v===2) wC++;
-          const cell=document.createElement('div'); cell.className='reversi-cell'; cell.onclick=()=>handleReversiClick(r,c);
-          if(v!==0){ const p=document.createElement('div'); p.className='reversi-piece '+(v===1?'black':'white'); cell.appendChild(p); } 
-          else if(isReversiActive && reversiCurrentTurn===reversiMyColor && getFlips(r,c,reversiMyColor).length>0){ const h=document.createElement('div'); h.className='reversi-hint'; cell.appendChild(h); }
-          bEl.appendChild(cell);
-      }}
-      $('reversi-info').innerText = `${reversiCurrentTurn===reversiMyColor?'🔵あなたの番':'⏳相手の番'} (あなた:${reversiMyColor===1?'黒':'白'}) | 黒:${bC} 白:${wC}`;
+    window.sendPollVote = function(pollId, optionIndex) {
+      if (hasVoted || isGuestMode) return; hasVoted = true; document.querySelectorAll('.poll-option-btn')[optionIndex].style.borderLeft = '4px solid #0d6efd';
+      window.broadcastData({ type: 'poll_vote', pollId: pollId, optionIndex: optionIndex });
     };
-    function getFlips(r,c,col) {
-      if(reversiBoard[r][c]!==0) return []; const opp=col===1?2:1; let res=[];
-      [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dr,dc])=>{
-        let nr=r+dr, nc=c+dc, tmp=[]; while(nr>=0&&nr<8&&nc>=0&&nc<8&&reversiBoard[nr][nc]===opp){ tmp.push([nr,nc]); nr+=dr; nc+=dc; }
-        if(nr>=0&&nr<8&&nc>=0&&nc<8&&reversiBoard[nr][nc]===col&&tmp.length>0) res.push(...tmp);
-      }); return res;
-    }
-    function handleReversiClick(r,c) {
-      if(!isReversiActive||reversiCurrentTurn!==reversiMyColor) return; const f=getFlips(r,c,reversiMyColor); if(f.length===0) return;
-      window.applyReversiMove(r,c,reversiMyColor,f); broadcastData({type:'reversi_move',r,c,color:reversiMyColor});
-    }
-    window.applyReversiMove = (r,c,col,flips=null) => {
-      const f=flips||getFlips(r,c,col); reversiBoard[r][c]=col; f.forEach(([fr,fc])=>reversiBoard[fr][fc]=col); reversiCurrentTurn=(col===1)?2:1; window.updateReversiUI(); window.checkReversiPassOrEnd();
+
+    window.handlePollVote = function(data) {
+      if (currentPollId !== data.pollId) return; if (!pollVotes[data.pollId]) pollVotes[data.pollId] = { total: 0, counts: {} };
+      let pData = pollVotes[data.pollId]; pData.total++; pData.counts[data.optionIndex] = (pData.counts[data.optionIndex] || 0) + 1; document.getElementById('poll-total-votes').innerText = pData.total;
+      for(let i=0; i<document.getElementById('poll-options-container').children.length; i++) { let count = pData.counts[i] || 0; let pct = pData.total === 0 ? 0 : Math.round((count / pData.total) * 100); const bar = document.getElementById(`poll-bar-${i}`); const pctText = document.getElementById(`poll-pct-${i}`); if(bar) bar.style.width = `${pct}%`; if(pctText) pctText.innerText = `${pct}% (${count}票)`; }
     };
-    window.checkReversiPassOrEnd = () => {
-      let cM=false; for(let r=0;r<8;r++)for(let c=0;c<8;c++) if(getFlips(r,c,reversiCurrentTurn).length>0) cM=true;
-      if(!cM){
-        const nT=reversiCurrentTurn===1?2:1; let oM=false; for(let r=0;r<8;r++)for(let c=0;c<8;c++) if(getFlips(r,c,nT).length>0) oM=true;
-        if(!oM) setTimeout(()=>{ let b=0,w=0; for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(reversiBoard[r][c]===1)b++;if(reversiBoard[r][c]===2)w++;} alert(`終了! 黒:${b} 白:${w}
-${b>w?'黒の勝ち':w>b?'白の勝ち':'引き分け'}`); window.endReversi(); }, 500);
-        else if(reversiCurrentTurn===reversiMyColor) { showToast('パスしました'); reversiCurrentTurn=nT; window.updateReversiUI(); broadcastData({type:'reversi_pass'}); }
+
+    window.pushQuizBtn = function() {
+      if (isQuizLocked) return; const g = savedGroups.find(x => x.id === currentGroupId); if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
+      const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
+      window.broadcastData({ type: 'quiz_push', senderName: senderName }); window.handleQuizPush(senderName);
+    };
+
+    window.handleQuizPush = function(senderName) {
+      if (isQuizLocked) return; isQuizLocked = true; window.playAudioEffect('quiz');
+      const qStatus = document.getElementById('quiz-status'); const qBtn = document.querySelector('.game-btn[style*="dc3545"]'); const card = document.getElementById('main-card');
+      if (qStatus && qBtn && card) {
+        qStatus.innerText = `💡 ${senderName}さんが押しました！`; qStatus.style.color = '#dc3545'; qBtn.style.opacity = '0.5'; card.style.boxShadow = '0 0 30px rgba(220, 53, 69, 0.6)';
+        setTimeout(() => { isQuizLocked = false; qStatus.innerText = '準備OK'; qStatus.style.color = '#555'; qBtn.style.opacity = '1'; card.style.boxShadow = isDarkMode ? '0 4px 20px rgba(0,0,0,0.4)' : '0 4px 20px rgba(0,0,0,0.08)'; }, 4000);
       }
     };
 
-    // ==========================================
-    // ゲーム機能：早撃ちスマッシュ (1対1専用)
-    // ==========================================
-    window.inviteSmash = () => { if(currentMode!=='direct') return alert('1対1通話中のみ可能です'); broadcastData({type:'smash_req', senderName:myName||myCustomId}); showToast('招待を送信しました'); };
-    window.startSmash = (h) => { isSmashActive=true; isSmashHost=h; smashScoreMe=0; smashScoreOpp=0; $('smash-my-score').innerText='0'; $('smash-partner-score').innerText='0'; $('smash-section').style.display='block'; if(isSmashHost) setTimeout(startSmashRound, 2000); $('smash-status').innerText='準備...！'; };
-    window.endSmash = () => { isSmashActive=false; clearTimeout(smashRoundTimeout); $('smash-section').style.display='none'; };
-    window.quitSmash = () => { if(!confirm("終了しますか？")) return; broadcastData({type:'smash_quit'}); window.endSmash(); };
-    function startSmashRound() {
-      smashGameActive=false; $('smash-target-real').style.display='none'; $('smash-target-dummy').style.display='none'; $('smash-status').innerText='準備...！';
-      setTimeout(()=>{
-        const isD=Math.random()<0.3, sx=Math.floor(Math.random()*80), sy=Math.floor(Math.random()*75), ex=Math.max(0,Math.min(85,sx+(Math.random()*40-20))), ey=Math.max(0,Math.min(80,sy+(Math.random()*40-20)));
-        const d={isDummy:isD, startX:sx, startY:sy, endX:ex, endY:ey}; showSmashTarget(d); broadcastData({type:'smash_spawn', spawnData:d});
-        smashRoundTimeout=setTimeout(()=>{ if(smashGameActive) endSmashRound({winner:'draw'}); }, 1500);
-      }, Math.floor(Math.random()*2500)+1500);
-    }
-    function showSmashTarget(d) {
-      const t = d.isDummy?$('smash-target-dummy'):$('smash-target-real'); t.style.transition='none'; t.style.left=d.startX+'%'; t.style.top=d.startY+'%'; t.style.display='block';
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{ t.style.transition='left 1.5s linear, top 1.5s linear'; t.style.left=d.endX+'%'; t.style.top=d.endY+'%'; }));
-      $('smash-status').textContent=d.isDummy?"ダミーを撃つな！":"撃て！！！"; smashGameActive=true;
-    }
-    window.shootSmash = (isD, e) => {
-      if(e&&e.cancelable) e.preventDefault(); if(!smashGameActive) return; smashGameActive=false;
-      const res = isD ? {winner:isSmashHost?'guest':'host', reason:'dummy'} : {winner:isSmashHost?'host':'guest', reason:'fastest'};
-      if(isSmashHost) { clearTimeout(smashRoundTimeout); endSmashRound(res); } else broadcastData({type:'smash_end_round', resultData:res});
-    };
-    function endSmashRound(res) { smashGameActive=false; $('smash-target-real').style.display='none'; $('smash-target-dummy').style.display='none'; if(isSmashHost) { clearTimeout(smashRoundTimeout); broadcastData({type:'smash_end_round', resultData:res}); } processSmashRoundEnd(res); }
-    function processSmashRoundEnd(d) {
-      smashGameActive=false; $('smash-target-real').style.display='none'; $('smash-target-dummy').style.display='none'; const m=isSmashHost?'host':'guest';
-      if(d.winner==='draw'){ $('smash-status').textContent="⏱️ 時間切れ！"; }
-      else if(d.winner===m){ smashScoreMe++; $('smash-my-score').textContent=smashScoreMe; $('smash-status').textContent=d.reason==='dummy'?"🏆 相手の自爆！":"🏆 ナイスエイム！"; playSE('pingpong'); }
-      else{ smashScoreOpp++; $('smash-partner-score').textContent=smashScoreOpp; $('smash-status').textContent=d.reason==='dummy'?"💀 自爆！":"💀 負け..."; playSE('buzzer'); }
-      if(isSmashHost) setTimeout(startSmashRound, 2500);
-    }
-
-    // ゲーム招待の汎用受付
-    window.acceptGameInvite = () => {
-      $('game-invite-modal').style.display='none';
-      if(pendingGameType==='reversi') { pendingReversiConn.send({type:'reversi_acc', senderName:myName||myCustomId}); window.startReversi(1); }
-      else if(pendingGameType==='smash') { pendingSmashConn.send({type:'smash_acc', senderName:myName||myCustomId}); window.startSmash(false); }
-      pendingGameType=null;
-    };
-    window.declineGameInvite = () => {
-      $('game-invite-modal').style.display='none';
-      if(pendingGameType==='reversi') pendingReversiConn.send({type:'reversi_dec', senderName:myName||myCustomId});
-      else if(pendingGameType==='smash') pendingSmashConn.send({type:'smash_dec', senderName:myName||myCustomId});
-      pendingGameType=null;
+    window.toggleWhiteboard = function() {
+      document.getElementById('whiteboard-section').style.display = 'block'; setTimeout(window.initWhiteboard, 100);
+      const g = savedGroups.find(x => x.id === currentGroupId); if (isGuestMode || (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId)) return;
+      const senderName = savedMyName || (myPeerId ? myPeerId.substring(0, 5) : '自分');
+      window.broadcastData({ type: 'wb_open', senderName: senderName });
     };
 
+    window.initWhiteboard = function() {
+      if (isWhiteboardInitialized) return; let canvas = document.getElementById('whiteboard-canvas'); if (!canvas) return;
+      const newCanvas = canvas.cloneNode(true); canvas.replaceWith(newCanvas); canvas = newCanvas; wbCtx = canvas.getContext('2d'); wbCtx.lineCap = 'round'; wbCtx.lineJoin = 'round';
+      const getPos = (e) => { const target = e.target; const rect = target.getBoundingClientRect(); const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX; const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY; return { x: (clientX - rect.left) * (target.width / rect.width), y: (clientY - rect.top) * (target.height / rect.height) }; };
+      const startDraw = (e) => { if (isGuestMode) return; const g = savedGroups.find(x => x.id === currentGroupId); if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return; if(e.cancelable) e.preventDefault(); isDrawing = true; const pos = getPos(e); lastX = pos.x; lastY = pos.y; };
+      const draw = (e) => { if (!isDrawing || isGuestMode) return; if(e.cancelable) e.preventDefault(); const pos = getPos(e); window.drawLine(lastX, lastY, pos.x, pos.y, drawColor, true); lastX = pos.x; lastY = pos.y; };
+      const endDraw = () => { isDrawing = false; };
+      canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw); canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw); canvas.addEventListener('touchstart', startDraw, {passive: false}); canvas.addEventListener('touchmove', draw, {passive: false}); canvas.addEventListener('touchend', endDraw);
+      isWhiteboardInitialized = true; 
+    };
+
+    window.drawLine = function(x0, y0, x1, y1, color, emit) {
+      if(!wbCtx) return; wbCtx.beginPath(); wbCtx.moveTo(x0, y0); wbCtx.lineTo(x1, y1); wbCtx.strokeStyle = color; wbCtx.lineWidth = color === 'white' ? 15 : 3; wbCtx.stroke(); wbCtx.closePath();
+      if (!emit || isGuestMode) return; const g = savedGroups.find(x => x.id === currentGroupId); if (currentMode === 'group' && g && g.isRadio && g.hostId !== myPeerId) return;
+      drawBuffer.push({ x0: Math.round(x0), y0: Math.round(y0), x1: Math.round(x1), y1: Math.round(y1), c: color });
+      if (!drawTimer) { drawTimer = setTimeout(() => { window.broadcastData({ type: 'draw_batch', lines: drawBuffer }); drawBuffer = []; drawTimer = null; }, 50); }
+    };
+
+    window.clearWhiteboard = function(emit) {
+      if(!wbCtx) return; wbCtx.clearRect(0, 0, 300, 300); if (!emit || isGuestMode) return;
+      window.broadcastData({ type: 'draw_clear' });
+    };
+
+    window.setDrawColor = function(c) { drawColor = c; };
+    window.quitWhiteboard = function() { document.getElementById('whiteboard-section').style.display = 'none'; window.broadcastData({ type: 'wb_close' }); };
+
+    window.inviteReversi = function() {
+      if (currentMode !== 'direct' || Object.keys(activeDataConns).length === 0) return alert('「リバーシ」は1対1通話（Directモード）専用のゲームです。相手と接続してからお試しください。');
+      window.broadcastData({ type: 'reversi_req', senderName: savedMyName || myPeerId.substring(0,5) }); window.showNotification('相手にリバーシの対戦申し込みを送りました。返答待ちです...');
+    };
+
+    window.startReversi = function(color) {
+      isReversiActive = true; reversiMyColor = color; reversiCurrentTurn = 1;
+      document.getElementById('reversi-section').style.display = 'block';
+      reversiBoard = Array(8).fill().map(() => Array(8).fill(0)); reversiBoard[3][3] = 2; reversiBoard[3][4] = 1; reversiBoard[4][3] = 1; reversiBoard[4][4] = 2;
+      window.updateReversiUI();
+    };
+
+    window.updateReversiUI = function() {
+      const boardEl = document.getElementById('reversi-board'); boardEl.innerHTML = ''; let bCount = 0, wCount = 0;
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const val = reversiBoard[r][c]; if (val === 1) bCount++; if (val === 2) wCount++;
+          const cell = document.createElement('div'); cell.className = 'reversi-cell'; cell.onclick = () => window.handleReversiClick(r, c);
+          if (val !== 0) { const piece = document.createElement('div'); piece.className = 'reversi-piece ' + (val === 1 ? 'black' : 'white'); cell.appendChild(piece); } 
+          else if (isReversiActive && reversiCurrentTurn === reversiMyColor) {
+            if (window.getFlippablePieces(r, c, reversiMyColor).length > 0) { const hint = document.createElement('div'); hint.className = 'reversi-hint'; cell.appendChild(hint); }
+          }
+          boardEl.appendChild(cell);
+        }
+      }
+      document.getElementById('reversi-info').innerText = `${reversiCurrentTurn === reversiMyColor ? '🔵 あなたの番です' : '⏳ 相手の番です'} (あなたは${reversiMyColor === 1 ? '黒' : '白'}) | 黒: ${bCount} 白: ${wCount}`;
+    };
+
+    window.getFlippablePieces = function(r, c, color) {
+      if (reversiBoard[r][c] !== 0) return [];
+      const dirs = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]; const opp = color === 1 ? 2 : 1; let flippable = [];
+      for (const [dr, dc] of dirs) {
+        let nr = r + dr, nc = c + dc; let temp = [];
+        while (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === opp) { temp.push([nr, nc]); nr += dr; nc += dc; }
+        if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8 && reversiBoard[nr][nc] === color && temp.length > 0) flippable.push(...temp);
+      }
+      return flippable;
+    };
+
+    window.handleReversiClick = function(r, c) {
+      if (!isReversiActive || reversiCurrentTurn !== reversiMyColor) return;
+      const flips = window.getFlippablePieces(r, c, reversiMyColor); if (flips.length === 0) return;
+      window.applyReversiMove(r, c, reversiMyColor, flips); window.broadcastData({ type: 'reversi_move', r, c, color: reversiMyColor });
+    };
+
+    window.applyReversiMove = function(r, c, color, preCalcFlips = null) {
+      const flips = preCalcFlips || window.getFlippablePieces(r, c, color); reversiBoard[r][c] = color; flips.forEach(([fr, fc]) => { reversiBoard[fr][fc] = color; });
+      reversiCurrentTurn = (color === 1) ? 2 : 1; window.updateReversiUI(); window.checkReversiPassOrEnd();
+    };
+
+    window.checkReversiPassOrEnd = function() {
+      let canMove = false; for (let r=0; r<8; r++) { for (let c=0; c<8; c++) { if (window.getFlippablePieces(r, c, reversiCurrentTurn).length > 0) canMove = true; } }
+      if (!canMove) {
+        const nextTurn = reversiCurrentTurn === 1 ? 2 : 1; let oppCanMove = false;
+        for (let r=0; r<8; r++) { for (let c=0; c<8; c++) { if (window.getFlippablePieces(r, c, nextTurn).length > 0) oppCanMove = true; } }
+        if (!oppCanMove) {
+           setTimeout(() => { let bC=0, wC=0; for (let r=0; r<8; r++) { for (let c=0; c<8; c++) { if (reversiBoard[r][c] === 1) bC++; if (reversiBoard[r][c] === 2) wC++; } }
+             let msg = `🏁 ゲーム終了！ 黒:${bC} 白:${wC}
+`; if(bC > wC) msg += "黒の勝ち！"; else if (wC > bC) msg += "白の勝ち！"; else msg += "引き分け！";
+             alert(msg); window.endReversi();
+           }, 500);
+        } else {
+           if (reversiCurrentTurn === reversiMyColor) { window.showNotification('置ける場所がないためパスになります。'); reversiCurrentTurn = nextTurn; window.updateReversiUI(); window.broadcastData({ type: 'reversi_pass' }); }
+        }
+      }
+    };
+
+    window.quitReversi = function() { if(!confirm("リバーシを終了しますか？")) return; window.broadcastData({ type: 'reversi_quit' }); window.endReversi(); };
+    window.endReversi = function() { isReversiActive = false; document.getElementById('reversi-section').style.display = 'none'; };
+
+    window.inviteSmash = function() {
+      if (currentMode !== 'direct' || Object.keys(activeDataConns).length === 0) return alert('「早撃ちスマッシュ」は1対1通話（Directモード）専用のゲームです。');
+      window.broadcastData({ type: 'smash_req', senderName: savedMyName || myPeerId.substring(0,5) }); window.showNotification('相手に早撃ちの対戦申し込みを送りました。返答待ちです...');
+    };
+
+    window.startSmash = function(isHostRole) {
+      isSmashActive = true; isSmashHost = isHostRole; smashMyScore = 0; smashPartnerScore = 0;
+      document.getElementById('smash-my-score').innerText = '0'; document.getElementById('smash-partner-score').innerText = '0'; document.getElementById('smash-section').style.display = 'block';
+      if (isSmashHost) setTimeout(window.startSmashRound, 2000);
+      document.getElementById('smash-status').innerText = '準備...！'; document.getElementById('smash-status').style.color = '#fff';
+    };
+
+    window.startSmashRound = function() {
+      smashGameActive = false; document.getElementById('smash-target-real').style.display = 'none'; document.getElementById('smash-target-dummy').style.display = 'none'; document.getElementById('smash-status').innerText = '準備...！'; document.getElementById('smash-status').style.color = '#fff';
+      setTimeout(() => {
+        const isDummy = Math.random() < 0.3; const startX = Math.floor(Math.random() * 80); const startY = Math.floor(Math.random() * 75);
+        const endX = Math.max(0, Math.min(85, startX + (Math.random() * 40 - 20))); const endY = Math.max(0, Math.min(80, startY + (Math.random() * 40 - 20)));
+        const spawnData = { isDummy, startX, startY, endX, endY }; window.showSmashTarget(spawnData); window.broadcastData({ type: 'smash_spawn', spawnData });
+        smashRoundTimeout = setTimeout(() => { if (smashGameActive) window.endSmashRound({ winner: 'draw', reason: 'timeout' }); }, 1500);
+      }, Math.floor(Math.random() * 2500) + 1500);
+    };
+
+    window.showSmashTarget = function(data) {
+      const target = data.isDummy ? document.getElementById('smash-target-dummy') : document.getElementById('smash-target-real');
+      target.style.transition = 'none'; target.style.left = data.startX + '%'; target.style.top = data.startY + '%'; target.style.display = 'block';
+      requestAnimationFrame(() => requestAnimationFrame(() => { target.style.transition = 'left 1.5s linear, top 1.5s linear'; target.style.left = data.endX + '%'; target.style.top = data.endY + '%'; }));
+      document.getElementById('smash-status').textContent = data.isDummy ? "ダミーを撃つな！" : "撃て！！！"; document.getElementById('smash-status').style.color = data.isDummy ? "#00e5ff" : "#ff4655"; smashGameActive = true;
+    };
+
+    window.shootSmash = function(clickedDummy, event) {
+      if (event && event.cancelable) event.preventDefault(); if (!smashGameActive) return; smashGameActive = false; 
+      const resultData = clickedDummy ? { winner: isSmashHost ? 'guest' : 'host', reason: 'dummy' } : { winner: isSmashHost ? 'host' : 'guest', reason: 'fastest' };
+      if (isSmashHost) { clearTimeout(smashRoundTimeout); window.endSmashRound(resultData); } else { window.broadcastData({ type: 'smash_end_round', resultData }); }
+    };
+
+    window.endSmashRound = function(resultData) {
+      smashGameActive = false; document.getElementById('smash-target-real').style.display = 'none'; document.getElementById('smash-target-dummy').style.display = 'none';
+      if (isSmashHost) { clearTimeout(smashRoundTimeout); window.broadcastData({ type: 'smash_end_round', resultData }); } window.processSmashRoundEnd(resultData);
+    };
+
+    window.processSmashRoundEnd = function(data) {
+      smashGameActive = false; document.getElementById('smash-target-real').style.display = 'none'; document.getElementById('smash-target-dummy').style.display = 'none';
+      const myRole = isSmashHost ? 'host' : 'guest'; const statusDisplay = document.getElementById('smash-status');
+      if (data.winner === 'draw') { statusDisplay.textContent = "⏱️ 時間切れ！"; statusDisplay.style.color = "#aaa"; } 
+      else if (data.winner === myRole) { smashMyScore++; document.getElementById('smash-my-score').textContent = smashMyScore; statusDisplay.textContent = data.reason === 'dummy' ? "🏆 相手がダミーを撃ちました！あなたの勝ち！" : "🏆 撃ち勝ちました！ナイスエイム！"; statusDisplay.style.color = "#00ff00"; window.playAudioEffect('pingpong'); } 
+      else { smashPartnerScore++; document.getElementById('smash-partner-score').textContent = smashPartnerScore; statusDisplay.textContent = data.reason === 'dummy' ? "💀 ダミーを撃ってしまった！自爆！" : "💀 撃ち負けました...相手の方が早かった！"; statusDisplay.style.color = "#ff4655"; window.playAudioEffect('buzzer'); }
+      if (isSmashHost) setTimeout(window.startSmashRound, 2500); 
+    };
+
+    window.quitSmash = function() { if (!confirm("早撃ちスマッシュを終了しますか？")) return; window.broadcastData({ type: 'smash_quit' }); window.endSmash(); };
+    window.endSmash = function() { isSmashActive = false; clearTimeout(smashRoundTimeout); document.getElementById('smash-section').style.display = 'none'; };
+
+    // Push to Talk Events
+    const talkBtnEl = document.getElementById('talk-btn');
+    const startTalking = (e) => {
+      e.preventDefault();
+      if (currentMode === 'group' && currentGroupId) { const g = savedGroups.find(x => x.id === currentGroupId); if (g && g.isRadio && g.hostId !== myPeerId) return; }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      if (rawAudioTrack && !talkBtnEl.disabled && !isLocked) {
+        rawAudioTrack.enabled = true; talkBtnEl.classList.add('active'); talkBtnEl.innerText = '発言中!!';
+        if (transMode !== 'off' && speechRecognition) { try { speechRecognition.start(); } catch(err){} }
+      }
+    };
+    const stopTalking = (e) => {
+      e.preventDefault();
+      if (rawAudioTrack && !talkBtnEl.disabled && !isLocked) {
+        rawAudioTrack.enabled = false; talkBtnEl.classList.remove('active');
+        const g = savedGroups.find(x => x.id === currentGroupId);
+        if (currentMode === 'group' && g && g.isRadio && g.hostId === myPeerId) talkBtnEl.innerText = '長押しで放送'; else talkBtnEl.innerText = '長押しで話す';
+        if (transMode !== 'off' && speechRecognition) { try { speechRecognition.stop(); } catch(err){} }
+      }
+    };
+    talkBtnEl.addEventListener('mousedown', startTalking); talkBtnEl.addEventListener('touchstart', startTalking, { passive: false }); talkBtnEl.addEventListener('mouseup', stopTalking); talkBtnEl.addEventListener('touchend', stopTalking); talkBtnEl.addEventListener('mouseleave', stopTalking);
   </script>
 </body>
 </html>
