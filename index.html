@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - Classic UI & Robust Engine v4.0.0</title>
+  <title>Naisync - Classic UI & Robust Engine v4.1.0</title>
   <style>
     body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 100vh; font-family: sans-serif; background-color: #f4f6f9; margin: 0; transition: background-color 0.3s, color 0.3s; }
     body.dark-mode { background-color: #121212; color: #e0e0e0; }
@@ -179,11 +179,10 @@
 </head>
 <body>
 
-  <!-- =============================== -->
-  <!-- 認証画面 -->
-  <!-- =============================== -->
+  <!-- ログイン画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
+      
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
 
@@ -365,9 +364,7 @@
     </div>
   </div>
 
-  <!-- =============================== -->
   <!-- モーダル群 -->
-  <!-- =============================== -->
   <div class="modal-overlay" id="settings-modal">
     <div class="modal-box">
       <h3>⚙️ プロフィールと設定</h3>
@@ -377,12 +374,12 @@
         <button class="modal-tab-btn" id="settings-tab-notif" onclick="window.switchSettingsTab('notif')">字幕・通知</button>
       </div>
       <div id="settings-content-general">
-        <label>👤 あなたの名前（表示名）</label>
+        <label>👤 あなたの名前（チャット・通話時の表示名）</label>
         <div style="display: flex; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
-          <input type="text" id="setting-my-name" placeholder="名前を入力" style="flex-grow: 1; min-width: 120px;">
+          <input type="text" id="setting-my-name" placeholder="名前を入力 (例: 田中)" style="flex-grow: 1; min-width: 120px;">
           <button class="btn-action" style="width: auto; padding: 10px 14px; margin:0;" onclick="window.saveMyName()">保存</button>
         </div>
-        <label style="margin-top: 20px;">👁️ 配信者モード（IDを隠す）</label>
+        <label style="margin-top: 20px;">👁️ 配信者モード（全ID欄を隠す）</label>
         <label class="toggle-switch">
           <input type="checkbox" id="streamer-mode-checkbox">
           <div class="toggle-slider"></div><span id="streamer-mode-status-text" style="font-size: 14px; font-weight: bold;">OFF</span>
@@ -397,9 +394,9 @@
         <button class="btn-action btn-danger" style="margin-top: 8px;" onclick="window.logout()">ログアウト</button>
       </div>
       <div id="settings-content-audio" style="display: none;">
-        <label>🎤 自分のマイク音量</label>
+        <label>🎤 自分のマイク音量（相手への声の大きさ）</label>
         <div style="display: flex; align-items: center; gap: 10px;"><input type="range" id="mic-volume-slider" min="0" max="2" step="0.1" value="1"><span id="mic-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span></div>
-        <label style="margin-top: 20px;">🔊 相手の基本音量</label>
+        <label style="margin-top: 20px;">🔊 相手の基本音量（初期設定）</label>
         <div style="display: flex; align-items: center; gap: 10px;"><input type="range" id="spk-volume-slider" min="0" max="1" step="0.05" value="1"><span id="spk-volume-display" style="font-size: 14px; font-weight: bold; width: 45px; text-align: right;">100%</span></div>
         <label style="margin-top: 20px;">🎧 ノイズキャンセリング</label>
         <label class="toggle-switch"><input type="checkbox" id="nc-checkbox" checked><div class="toggle-slider"></div><span id="nc-status-text" style="font-size: 14px; font-weight: bold;">ON</span></label>
@@ -412,12 +409,12 @@
           <button class="modal-tab-btn" id="trans-all" onclick="window.setTransMode('all')">相手に共有</button>
         </div>
         <p style="font-size: 11px; color: #888; margin-top: 6px; margin-bottom: 16px;">※「相手に共有」にすると、あなたの声が相手の画面にも字幕として表示されます。</p>
-        <label style="margin-top: 20px;">🔔 通常チャットの通知</label>
+        <label style="margin-top: 20px;">🔔 全般のポップアップ通知（着信・通常チャット）</label>
         <label class="toggle-switch"><input type="checkbox" id="notif-checkbox" checked><div class="toggle-slider"></div><span id="notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span></label>
-        <label style="margin-top: 20px;">🔔 文字起こしの通知</label>
+        <label style="margin-top: 20px;">🔔 文字起こしのポップアップ通知</label>
         <label class="toggle-switch"><input type="checkbox" id="transcription-notif-checkbox" checked><div class="toggle-slider"></div><span id="transcription-notif-status-text" style="font-size: 14px; font-weight: bold;">ON</span></label>
       </div>
-      <div class="modal-buttons" style="margin-top: 24px;"><button class="btn-action btn-secondary" onclick="window.closeSettings()">閉じる</button></div>
+      <div class="modal-buttons"><button class="btn-action btn-secondary" onclick="window.closeSettings()">閉じる</button></div>
     </div>
   </div>
 
@@ -519,7 +516,11 @@
       <h3>📜 更新一覧</h3>
       <div class="changelog-list">
         <div class="changelog-item">
-          <div class="changelog-version">v3.4.0 (最新) 🛠️真・完全動作版</div>
+          <div class="changelog-version">v4.1.0 (最新) 🛠️ログインフリーズ修正版</div>
+          <div>・ファイル書き出し時に欠落してしまっていたタブ描画・UI更新機能（renderTabs / updateChatUI）を復元し、ログイン直後に進行不能になるバグを修正しました。</div>
+        </div>
+        <div class="changelog-item">
+          <div class="changelog-version">v4.0.0 (最新) 🛠️真・完全動作版</div>
           <div>・AI出力システムの限界によりコードが欠落していた問題を完全解消しました。<br>・重複エラーをすべて削ぎ落とし、1つのクリーンなプログラムとして全機能が完璧に動作するようにしました。</div>
         </div>
         <div class="changelog-item">
@@ -553,7 +554,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const APP_PREFIX = 'Naisync/v400/';
+    const APP_PREFIX = 'Naisync/v410/';
 
     // Globals
     let myPeerId = null, peer = null, mqttClient = null;
@@ -615,7 +616,75 @@
       savedGroups = groups;
     }
 
-    // UI Utilities
+// UI Utilities
+window.renderTabs = function() {
+  const wrapper = document.getElementById('tabs-wrapper');
+  if (!wrapper) return;
+  wrapper.innerHTML = '';
+  const directTab = document.createElement('button');
+  directTab.className = `tab ${currentMode === 'direct' || currentMode === 'idle' ? 'active' : ''}`;
+  directTab.innerText = '📞 1対1通話';
+  directTab.onclick = () => window.switchToDirect();
+  wrapper.appendChild(directTab);
+
+  savedGroups.forEach(g => {
+    const t = document.createElement('button');
+    t.className = `tab ${currentMode === 'group' && currentGroupId === g.id ? 'active' : ''}`;
+    t.innerText = `👥 ${g.name || g.id}`;
+    const del = document.createElement('span');
+    del.className = 'btn-del'; del.innerText = '✕';
+    del.onclick = (e) => {
+      e.stopPropagation();
+      if(confirm(`${g.name || g.id} を一覧から削除しますか？`)){
+        savedGroups = savedGroups.filter(x => x.id !== g.id);
+        saveGroupsToLocal();
+        if(currentMode === 'group' && currentGroupId === g.id) window.switchToDirect();
+        else window.renderTabs();
+      }
+    };
+    t.appendChild(del);
+    t.onclick = () => window.joinGroup(g.id);
+    wrapper.appendChild(t);
+  });
+  
+  const addBtn = document.createElement('button');
+  addBtn.className = 'tab tab-add';
+  addBtn.innerText = isGuestMode ? '＋ 参加' : '＋ 作成';
+  addBtn.onclick = () => {
+    if(isGuestMode) {
+      window.switchGroupModalTab('join');
+      document.getElementById('tab-btn-create').style.display = 'none';
+    } else {
+      window.switchGroupModalTab('create');
+      document.getElementById('tab-btn-create').style.display = 'block';
+    }
+    if(document.getElementById('modal-create-name')) document.getElementById('modal-create-name').value = '';
+    if(document.getElementById('modal-create-id')) document.getElementById('modal-create-id').value = '';
+    if(document.getElementById('modal-create-pass')) document.getElementById('modal-create-pass').value = '';
+    if(document.getElementById('modal-create-no-guests')) document.getElementById('modal-create-no-guests').checked = false; 
+    if(document.getElementById('modal-create-allow-se')) document.getElementById('modal-create-allow-se').checked = false; 
+    if(document.getElementById('modal-join-name')) document.getElementById('modal-join-name').value = '';
+    if(document.getElementById('modal-join-id')) document.getElementById('modal-join-id').value = '';
+    if(document.getElementById('modal-join-pass')) document.getElementById('modal-join-pass').value = '';
+    document.getElementById('group-modal').style.display = 'flex';
+  };
+  wrapper.appendChild(addBtn);
+};
+
+window.updateChatUI = function() {
+  const chatInput = document.getElementById('chat-input');
+  const chatSendBtn = document.getElementById('chat-send-btn');
+  if (!chatInput || !chatSendBtn) return;
+  if (isGuestMode) {
+    chatInput.disabled = true; chatSendBtn.disabled = true; chatInput.placeholder = "ゲストはチャットを送信できません";
+  } else if (currentMode === 'group' && currentGroupId === 'test-noguest') {
+    chatInput.disabled = true; chatSendBtn.disabled = true; chatInput.placeholder = "このルームではチャットは使用できません";
+  } else {
+    chatInput.disabled = false; chatSendBtn.disabled = false; chatInput.placeholder = "メッセージを入力...";
+  }
+};
+
+
     window.showNotification = function(msg) {
       if (!isNotificationOn) return; 
       const container = document.getElementById('notification-container');
@@ -828,8 +897,7 @@
                  if (data.noGuests !== undefined && currentGroupObj.noGuests !== data.noGuests) { currentGroupObj.noGuests = data.noGuests; updated = true; }
                  if (updated) { saveGroupsToLocal(); window.updateStatus(); }
               }
-              if (isGuestMode && currentGroupObj.noGuests) { alert('🚨 このグループはゲストの参加が許可されていません。
-強制退出します。'); savedGroups = savedGroups.filter(g => g.id !== currentGroupObj.id); saveGroupsToLocal(); window.switchToDirect(); return; }
+              if (isGuestMode && currentGroupObj.noGuests) { alert('🚨 このグループはゲストの参加が許可されていません。\n強制退出します。'); savedGroups = savedGroups.filter(g => g.id !== currentGroupObj.id); saveGroupsToLocal(); window.switchToDirect(); return; }
             }
 
             if (data.type === 'kick' && data.targetId === myPeerId) { if (currentGroupObj && data.senderId === currentGroupObj.hostId) { alert('👑 リーダーから強制退出させられました。'); savedGroups = savedGroups.filter(g => g.id !== currentGroupObj.id); saveGroupsToLocal(); window.switchToDirect(); return; } }
@@ -1292,8 +1360,7 @@
         for (let r=0; r<8; r++) { for (let c=0; c<8; c++) { if (window.getFlippablePieces(r, c, nextTurn).length > 0) oppCanMove = true; } }
         if (!oppCanMove) {
            setTimeout(() => { let bC=0, wC=0; for (let r=0; r<8; r++) { for (let c=0; c<8; c++) { if (reversiBoard[r][c] === 1) bC++; if (reversiBoard[r][c] === 2) wC++; } }
-             let msg = `🏁 ゲーム終了！ 黒:${bC} 白:${wC}
-`; if(bC > wC) msg += "黒の勝ち！"; else if (wC > bC) msg += "白の勝ち！"; else msg += "引き分け！";
+             let msg = `🏁 ゲーム終了！ 黒:${bC} 白:${wC}\n`; if(bC > wC) msg += "黒の勝ち！"; else if (wC > bC) msg += "白の勝ち！"; else msg += "引き分け！";
              alert(msg); window.endReversi();
            }, 500);
         } else {
