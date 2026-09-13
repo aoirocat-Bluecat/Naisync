@@ -3,23 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 安定グループ通話版 v3.1.0</title>
+  <title>Naisync - チャット＆共有対応版 v3.2.0</title>
   <style>
-    body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-    .card { background: white; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
+    body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s, color 0.3s; }
+    body.dark-mode { background-color: #121212; color: #e0e0e0; }
+    .card { background: white; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; border-radius: 12px; text-align: center; margin-bottom: 20px; transition: 0.3s; }
+    body.dark-mode .card { background: #1e1e1e; box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
     .title { font-size: 24px; font-weight: bold; color: #007bff; margin-bottom: 10px; }
     input { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    body.dark-mode input { background-color: #2a2d32; border-color: #444; color: #fff; }
     button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-bottom: 10px; transition: 0.2s; }
     button:disabled { background: #aaa; cursor: not-allowed; }
     .btn-danger { background: #dc3545; }
     .btn-success { background: #28a745; }
     .btn-secondary { background: #6c757d; }
     .info-box { background: #eef2f5; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 20px; word-break: break-all; font-size: 14px; }
+    body.dark-mode .info-box { background: #2a2d32; }
     #talk-btn { width: 140px; height: 140px; border-radius: 50%; font-size: 18px; margin: 20px auto; display: block; background: #ccc; box-shadow: 0 6px 12px rgba(0,0,0,0.2); user-select: none; }
     #talk-btn.active { background: #ff4444; transform: scale(0.96); }
     .error-text { color: red; font-size: 12px; font-weight: bold; min-height: 15px; margin-bottom: 10px;}
     .section-title { text-align: left; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 8px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+    body.dark-mode .section-title { color: #ccc; border-color: #444; }
     .panel { background: #fafafa; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+    body.dark-mode .panel { background: #2a2d32; border-color: #444; }
+    
+    /* チャット用スタイル */
+    .chat-logs { height: 120px; background: #fafafa; border: 1px solid #ddd; border-radius: 8px; padding: 8px; overflow-y: auto; font-size: 13px; display: flex; flex-direction: column; gap: 4px; text-align: left; margin-bottom: 10px; }
+    body.dark-mode .chat-logs { background: #1e1e1e; border-color: #444; }
+    .chat-msg { word-break: break-all; margin: 2px 0; }
+    .chat-msg .sender { font-weight: bold; color: #007bff; font-size: 11px; margin-right: 4px; }
+    .chat-input-box { display: flex; gap: 6px; }
+    .chat-input-box input { margin: 0; padding: 8px; font-size: 13px; flex-grow: 1; }
+    .chat-input-box button { width: auto; padding: 8px 14px; margin: 0; font-size: 13px; white-space: nowrap; }
+
+    /* 画面共有用スタイル */
+    .screen-share-container { width: 100%; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; display: none; position: relative; }
+    .screen-share-video { width: 100%; display: block; }
+    .screen-share-label { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -29,7 +49,7 @@
   <!-- =============================== -->
   <div id="auth-view" class="card">
     <div class="title">Naisync</div>
-    <div style="font-size: 12px; color: #666; margin-bottom: 15px;">※グループ対応・安定モデル (v3.1.0)</div>
+    <div style="font-size: 12px; color: #666; margin-bottom: 15px;">v3.2.0 (チャット・画面共有 追加版)</div>
     
     <div id="login-form">
       <input type="text" id="login-id" placeholder="内線ID (半角英数字)">
@@ -59,10 +79,14 @@
   <div id="main-view" class="card" style="display: none;">
     <div class="title">Naisync</div>
     
-    <div class="section-title">👤 プロフィール</div>
-    <div class="info-box">
-      名前: <span id="my-name-display" style="color: #007bff;">-</span><br>
-      ID: <span id="my-id-display">-</span>
+    <div class="section-title">👤 プロフィール ＆ 設定</div>
+    <div class="info-box" style="display: flex; flex-direction: column; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 12px; width: 40px; text-align: left;">名前:</span>
+        <input type="text" id="setting-my-name" style="margin: 0; padding: 6px; font-size: 13px;" placeholder="表示名">
+        <button onclick="saveMyName()" style="width: auto; padding: 6px 12px; margin: 0; font-size: 12px;">保存</button>
+      </div>
+      <div style="text-align: left; font-size: 13px;">ID: <span id="my-id-display" style="font-weight: bold;">-</span></div>
     </div>
 
     <div id="status-display" style="color: #dc3545; font-size: 13px; font-weight: bold; margin-bottom: 15px;">システム初期化中...</div>
@@ -92,11 +116,32 @@
 
     <div id="call-status" style="margin-top: 10px; font-size: 14px; font-weight: bold;"></div>
 
-    <!-- 発言ボタン -->
-    <button id="talk-btn" disabled>準備中...</button>
+    <div style="display: flex; gap: 8px; margin-top: 15px;">
+      <button id="talk-btn" disabled style="flex: 2; margin: 0; height: 60px; font-size: 16px; border-radius: 8px;">準備中...</button>
+      <button onclick="toggleScreenShare()" id="share-screen-btn" class="btn-secondary" disabled style="flex: 1; margin: 0; height: 60px; font-size: 12px; border-radius: 8px;">🖥️<br>画面共有</button>
+    </div>
 
-    <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px;">
-      <button onclick="logout()" class="btn-secondary">ログアウト</button>
+    <!-- 画面共有表示エリア -->
+    <div id="screen-share-container" class="screen-share-container">
+      <div id="screen-share-label" class="screen-share-label">誰かの画面</div>
+      <video id="screen-share-video" class="screen-share-video" autoplay playsinline></video>
+    </div>
+
+    <!-- テキストチャット -->
+    <div class="panel" style="margin-top: 20px; padding: 10px;">
+      <div class="section-title">💬 テキストチャット</div>
+      <div class="chat-logs" id="chat-logs">
+        <div style="color:#aaa; font-size:11px; text-align:center; margin-top:40px;">メッセージはここに表示されます</div>
+      </div>
+      <div class="chat-input-box">
+        <input type="text" id="chat-input" placeholder="メッセージを入力...">
+        <button onclick="sendChatMessage()" id="chat-send-btn">送信</button>
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; border-top: 1px solid #ccc; padding-top: 15px; display: flex; gap: 10px;">
+      <button onclick="toggleDarkMode()" class="btn-secondary" style="font-size: 12px;">🌙 ダークモード</button>
+      <button onclick="logout()" class="btn-secondary" style="font-size: 12px;">ログアウト</button>
     </div>
   </div>
 
@@ -121,7 +166,7 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const APP_PREFIX = 'Naisync/v310/';
+    const APP_PREFIX = 'Naisync/v320/';
     const $ = id => document.getElementById(id);
 
     // グローバル変数
@@ -129,11 +174,26 @@
     let mqttClient = null;
     let localStream = null;
     let audioTrack = null;
+    let screenStream = null;
+    let isScreenSharing = false;
     let activeCalls = {}; // { peerId: callObject }
+    let activeDataConns = {}; // { peerId: dataConnectionObject }
     let myName = '';
     let myCustomId = '';
     let currentMode = 'idle'; // 'idle', 'direct', 'group'
     let activeRoomId = null;
+    let isGuestMode = false;
+    let isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
+
+    // 初期ダークモード反映
+    if(isDarkMode) document.body.classList.add('dark-mode');
+
+    window.toggleDarkMode = () => {
+      isDarkMode = !isDarkMode;
+      localStorage.setItem('my_naisen_dark', isDarkMode);
+      if(isDarkMode) document.body.classList.add('dark-mode');
+      else document.body.classList.remove('dark-mode');
+    };
 
     // ==========================================
     // UI 制御
@@ -143,6 +203,15 @@
       $('login-form').style.display = isLogin ? 'none' : 'block';
       $('register-form').style.display = isLogin ? 'block' : 'none';
       $('auth-error').innerText = ''; $('reg-error').innerText = '';
+    };
+
+    window.saveMyName = async () => {
+      if (isGuestMode) return alert('ゲストは名前を変更できません。');
+      const newName = $('setting-my-name').value.trim();
+      if (!newName) return alert('名前を入力してください。');
+      myName = newName;
+      await updateProfile(auth.currentUser, { displayName: JSON.stringify({ name: newName, customId: myCustomId }) });
+      alert('名前を保存しました！');
     };
 
     // ==========================================
@@ -172,6 +241,7 @@
     };
 
     window.doGuestLogin = () => {
+      isGuestMode = true;
       const r = Math.floor(Math.random() * 100000).toString().padStart(5, '0');
       myName = 'ゲスト' + r; myCustomId = 'guest-' + r;
       startMainApp();
@@ -179,7 +249,7 @@
 
     window.logout = async () => {
       if (!confirm('ログアウトしますか？')) return;
-      if (myCustomId.startsWith('guest-')) location.reload();
+      if (isGuestMode) location.reload();
       else { await signOut(auth); location.reload(); }
     };
 
@@ -203,7 +273,8 @@
     async function startMainApp() {
       $('auth-view').style.display = 'none';
       $('main-view').style.display = 'block';
-      $('my-name-display').innerText = myName;
+      $('setting-my-name').value = myName;
+      if (isGuestMode) $('setting-my-name').disabled = true;
       $('my-id-display').innerText = myCustomId;
 
       try {
@@ -212,8 +283,8 @@
         audioTrack.enabled = false;
         $('status-display').innerText = 'マイク接続OK。通信サーバーに接続中...';
       } catch (e) {
-        alert('マイクが許可されませんでした。相手の声を聞くことはできますが、発言はできません。');
-        localStream = new MediaStream();
+        alert('マイクが許可されませんでした。聞き専・テキストチャットのみ可能です。');
+        localStream = new MediaStream(); // 無音のダミーストリーム
         $('status-display').innerText = '⚠️マイクなし。通信サーバーに接続中...';
       }
 
@@ -233,21 +304,80 @@
         else $('status-display').innerText = '通信エラー: ' + err.type;
       });
 
+      // 通話着信時の処理
       peer.on('call', (call) => {
-        // グループモード時は自動応答、1対1モード時は確認ダイアログ
         if (currentMode === 'group') {
+          // グループ通話中は自動応答
           setupCall(call);
-          call.answer(localStream);
+          call.answer(getCombinedStream());
         } else {
-          if (confirm(`${call.peer} から着信です。応答しますか？`)) {
+          // 1対1は確認を出す
+          if (confirm(`${call.metadata ? call.metadata.senderName : call.peer} から着信です。応答しますか？`)) {
             currentMode = 'direct';
             uiDirectConnected(call.peer);
             setupCall(call);
-            call.answer(localStream);
+            call.answer(getCombinedStream());
           } else {
             call.close();
           }
         }
+      });
+
+      // データ接続（チャット）着信時の処理
+      peer.on('connection', (conn) => {
+        setupDataConn(conn);
+      });
+    }
+
+    // ==========================================
+    // 画面共有 (Field Share)
+    // ==========================================
+    window.toggleScreenShare = async () => {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) return alert('ブラウザが画面共有に対応していません。');
+      
+      if (isScreenSharing) {
+        // 共有停止
+        if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+        screenStream = null;
+        isScreenSharing = false;
+        $('share-screen-btn').innerHTML = '🖥️<br>画面共有';
+        $('share-screen-btn').classList.remove('btn-danger');
+        $('share-screen-btn').classList.add('btn-secondary');
+        $('screen-share-video').srcObject = null;
+        $('screen-share-container').style.display = 'none';
+        reconnectAllWithScreen();
+      } else {
+        // 共有開始
+        try {
+          screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+          isScreenSharing = true;
+          $('share-screen-btn').innerHTML = '⏹️<br>共有停止';
+          $('share-screen-btn').classList.remove('btn-secondary');
+          $('share-screen-btn').classList.add('btn-danger');
+          $('screen-share-video').srcObject = screenStream;
+          $('screen-share-label').innerText = 'あなたの画面';
+          $('screen-share-container').style.display = 'block';
+          
+          screenStream.getVideoTracks()[0].onended = () => window.toggleScreenShare();
+          reconnectAllWithScreen();
+        } catch (e) { console.error('画面共有キャンセル:', e); }
+      }
+    };
+
+    // マイクと画面のストリームを結合して返す
+    function getCombinedStream() {
+      const combined = new MediaStream();
+      if (localStream) localStream.getAudioTracks().forEach(t => combined.addTrack(t));
+      if (isScreenSharing && screenStream) screenStream.getVideoTracks().forEach(t => combined.addTrack(t));
+      return combined;
+    }
+
+    // 画面共有状態が変わった時に全通話をかけ直す（ストリーム更新）
+    function reconnectAllWithScreen() {
+      const newStream = getCombinedStream();
+      Object.keys(activeCalls).forEach(peerId => {
+        const call = peer.call(peerId, newStream, { metadata: { senderName: myName, isScreen: isScreenSharing } });
+        setupCall(call);
       });
     }
 
@@ -261,12 +391,18 @@
       
       currentMode = 'direct';
       uiDirectConnected(target);
-      const call = peer.call(target, localStream);
+      
+      // 音声/画面通話を発信
+      const call = peer.call(target, getCombinedStream(), { metadata: { senderName: myName, isScreen: isScreenSharing } });
       setupCall(call);
+
+      // チャット用データコネクションも確立
+      const conn = peer.connect(target);
+      setupDataConn(conn);
     };
 
     window.endCall = () => {
-      endAllCalls();
+      endAllConnections();
       currentMode = 'idle';
       uiIdle();
     };
@@ -289,34 +425,40 @@
 
       mqttClient.on('connect', () => {
         mqttClient.subscribe(currentGroupTopic);
-        // 入室したことを部屋の全員に通知
-        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'join', peerId: myCustomId }));
+        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'join', peerId: myCustomId, senderName: myName }));
       });
 
       mqttClient.on('message', (topic, msg) => {
         const data = JSON.parse(msg.toString());
         
-        // 誰かが入室してきたら、その人にPeerJSで電話をかける
         if (data.type === 'join' && data.peerId !== myCustomId) {
-          const call = peer.call(data.peerId, localStream);
+          // 新規入室者に電話をかけ、データ接続（チャット用）もつなぐ
+          const call = peer.call(data.peerId, getCombinedStream(), { metadata: { senderName: myName, isScreen: isScreenSharing } });
           setupCall(call);
         }
         
-        // 誰かが退出したら、その人との通話を切る
         if (data.type === 'leave' && data.peerId !== myCustomId) {
           if (activeCalls[data.peerId]) {
             activeCalls[data.peerId].close();
             removeAudio(data.peerId);
             delete activeCalls[data.peerId];
-            updateGroupMemberCount();
           }
+          if (activeDataConns[data.peerId]) {
+            activeDataConns[data.peerId].close();
+            delete activeDataConns[data.peerId];
+          }
+          updateGroupMemberCount();
+        }
+
+        // グループからのチャットメッセージ受信
+        if (data.type === 'chat' && data.senderId !== myCustomId) {
+          addChatLog(data.senderName, data.text, false);
         }
       });
     };
 
     window.leaveGroup = () => {
       if (mqttClient && currentGroupTopic) {
-        // 退室することを全員に通知
         mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'leave', peerId: myCustomId }));
         mqttClient.end(true);
       }
@@ -324,15 +466,18 @@
       activeRoomId = null;
       currentGroupTopic = null;
       
-      endAllCalls();
+      endAllConnections();
       currentMode = 'idle';
       uiIdle();
     };
 
     // ==========================================
-    // 通話共通ロジック (Audio生成・破棄)
+    // 通信・チャット共通ロジック
     // ==========================================
     function setupCall(call) {
+      if (activeCalls[call.peer]) {
+        activeCalls[call.peer].close();
+      }
       activeCalls[call.peer] = call;
 
       call.on('stream', (remoteStream) => {
@@ -343,6 +488,22 @@
           audio.autoplay = true;
           $('audio-container').appendChild(audio);
         }
+        
+        // 映像トラックがある場合は画面共有エリアに表示
+        const hasVideo = remoteStream.getVideoTracks().length > 0;
+        if (hasVideo) {
+          $('screen-share-video').srcObject = remoteStream;
+          const sName = call.metadata && call.metadata.senderName ? call.metadata.senderName : call.peer;
+          $('screen-share-label').innerText = `${sName} の画面`;
+          $('screen-share-container').style.display = 'block';
+        } else {
+          // 映像がなくなったら消す
+          if ($('screen-share-video').srcObject && $('screen-share-video').srcObject.id === remoteStream.id) {
+             $('screen-share-video').srcObject = null;
+             $('screen-share-container').style.display = 'none';
+          }
+        }
+
         audio.srcObject = remoteStream;
         updateGroupMemberCount();
       });
@@ -350,22 +511,38 @@
       call.on('close', () => {
         removeAudio(call.peer);
         delete activeCalls[call.peer];
-        updateGroupMemberCount();
-        
-        // 1対1モードで相手が切った場合はUIを戻す
-        if (currentMode === 'direct') {
-          alert('通話が終了しました。');
-          endCall();
+        if ($('screen-share-video').srcObject) {
+           $('screen-share-video').srcObject = null;
+           $('screen-share-container').style.display = 'none';
         }
+        updateGroupMemberCount();
+        if (currentMode === 'direct') endCall();
       });
     }
 
-    function endAllCalls() {
-      Object.values(activeCalls).forEach(call => {
-        call.close();
+    function setupDataConn(conn) {
+      if (activeDataConns[conn.peer]) activeDataConns[conn.peer].close();
+      activeDataConns[conn.peer] = conn;
+
+      conn.on('data', (data) => {
+        // 1対1通話時のチャット受信
+        if (data.type === 'chat') {
+          addChatLog(data.senderName, data.text, false);
+        }
       });
+      conn.on('close', () => delete activeDataConns[conn.peer]);
+    }
+
+    function endAllConnections() {
+      Object.values(activeCalls).forEach(call => call.close());
+      Object.values(activeDataConns).forEach(conn => conn.close());
       activeCalls = {};
+      activeDataConns = {};
       $('audio-container').innerHTML = '';
+      if ($('screen-share-video').srcObject) {
+         $('screen-share-video').srcObject = null;
+         $('screen-share-container').style.display = 'none';
+      }
     }
 
     function removeAudio(peerId) {
@@ -381,24 +558,68 @@
     }
 
     // ==========================================
+    // テキストチャットの送受信
+    // ==========================================
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function addChatLog(sender, text, isMe) {
+      if (!text) return;
+      const msgEl = document.createElement('div');
+      msgEl.className = `chat-msg ${isMe ? 'me' : ''}`;
+      msgEl.innerHTML = `<span class="sender">${escapeHtml(sender)}:</span>${escapeHtml(text)}`;
+      $('chat-logs').appendChild(msgEl);
+      $('chat-logs').scrollTop = $('chat-logs').scrollHeight; 
+      
+      // 最初にある「メッセージはここに〜」のガイド文を消す
+      const guide = $('chat-logs').querySelector('div[style*="text-align:center"]');
+      if (guide) guide.remove();
+    }
+
+    window.sendChatMessage = () => {
+      const text = $('chat-input').value.trim();
+      if (!text) return;
+      
+      const sName = myName || myCustomId;
+
+      if (currentMode === 'group' && mqttClient) {
+        mqttClient.publish(currentGroupTopic, JSON.stringify({ type: 'chat', senderId: myCustomId, senderName: sName, text: text }));
+      } else if (currentMode === 'direct') {
+        Object.values(activeDataConns).forEach(conn => {
+          conn.send({ type: 'chat', senderName: sName, text: text });
+        });
+      }
+
+      addChatLog(sName + ' (あなた)', text, true);
+      $('chat-input').value = '';
+    };
+
+    $('chat-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') window.sendChatMessage();
+    });
+
+    // ==========================================
     // UI表示切り替え
     // ==========================================
     function uiDirectConnected(targetId) {
       $('direct-inputs').style.display = 'none';
       $('btn-end-direct').style.display = 'block';
-      $('group-panel').style.opacity = '0.3'; // グループ操作を無効化っぽく見せる
+      $('group-panel').style.opacity = '0.3';
       $('btn-join').disabled = true;
       $('call-status').innerText = `${targetId} と通話中`;
       $('talk-btn').disabled = false;
+      $('share-screen-btn').disabled = false;
     }
 
     function uiGroupConnected() {
       $('group-inputs').style.display = 'none';
       $('group-active-ui').style.display = 'block';
-      $('direct-panel').style.opacity = '0.3'; // 1対1操作を無効化っぽく見せる
+      $('direct-panel').style.opacity = '0.3';
       $('btn-call').disabled = true;
       $('call-status').innerText = `グループ「${activeRoomId}」に通話参加中`;
       $('talk-btn').disabled = false;
+      $('share-screen-btn').disabled = false;
       updateGroupMemberCount();
     }
 
@@ -415,8 +636,10 @@
       
       $('call-status').innerText = '';
       $('talk-btn').disabled = true;
+      $('share-screen-btn').disabled = true;
       $('talk-btn').classList.remove('active');
       if (audioTrack) audioTrack.enabled = false;
+      if (isScreenSharing) window.toggleScreenShare(); // 通話終了時は画面共有も強制停止
     }
 
     // ==========================================
@@ -449,4 +672,3 @@
   </script>
 </body>
 </html>
-
