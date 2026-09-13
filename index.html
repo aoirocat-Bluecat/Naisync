@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Naisync - 完全復活版 v3.3.0</title>
+  <title>Naisync - 完全復活版 v3.4.0</title>
   <style>
     body { font-family: sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; transition: background-color 0.3s, color 0.3s; }
     body.dark-mode { background-color: #121212; color: #e0e0e0; }
@@ -85,7 +85,7 @@
   <!-- =============================== -->
   <div id="auth-view" class="card">
     <div class="title">Naisync</div>
-    <div style="font-size: 12px; color: #666; margin-bottom: 15px;">v3.3.0 (全機能・完全復活版)</div>
+    <div style="font-size: 12px; color: #666; margin-bottom: 15px;">v3.4.0 (完全安定ファイル版)</div>
     
     <div id="login-form">
       <input type="text" id="login-id" placeholder="内線ID (半角英数字)">
@@ -330,28 +330,29 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const APP_PREFIX = 'Naisync/v330/';
+    const APP_PREFIX = 'Naisync/v340/';
     const $ = id => document.getElementById(id);
 
     // グローバル変数
     let peer = null, mqttClient = null, localStream = null, audioTrack = null, screenStream = null;
     let activeCalls = {}, activeDataConns = {}; 
     let myName = '', myCustomId = '';
-    let currentMode = 'idle', activeRoomId = null;
+    let currentMode = 'idle', activeRoomId = null, currentGroupTopic = null;
     let isScreenSharing = false, isGuestMode = false, isDarkMode = localStorage.getItem('my_naisen_dark') === 'true';
     let savedGroups = JSON.parse(localStorage.getItem('my_naisen_saved_groups_v3')) || [];
 
     // ゲーム用変数
     let isQuizLocked = false;
-    let wbCtx = null, isDrawing = false, drawColor = '#111', lastX=0, lastY=0, drawBuffer=[], drawTimer=null;
+    let wbCtx = null, isDrawing = false, drawColor = '#111', lastX=0, lastY=0, drawBuffer=[], drawTimer=null, isWhiteboardInitialized=false;
     let currentPollId = null, pollInterval = null, hasVoted = false, pollVotes = {};
     let isReversiActive = false, reversiBoard = [], reversiMyColor = 1, reversiCurrentTurn = 1, pendingReversiConn = null;
     let isSmashActive = false, isSmashHost = false, smashGameActive = false, smashScoreMe = 0, smashScoreOpp = 0, smashRoundTimeout, pendingSmashConn = null;
     let pendingGameType = null;
 
-    // 音声エフェクト用 (AudioContextはマイク取得時に初期化)
-    let audioCtx = null;
+    // 音声エフェクト用
+    let audioCtx = null, processedStream = null;
     const SE_URLS = { 'pingpong': './correct.mp3', 'buzzer': './wrong.mp3' };
+    const NG_WORDS = ['死ね', '殺す', '馬鹿', 'バカ', 'アホ', 'クソ', 'fuck', 'shit'];
 
     // ダークモード初期化
     if(isDarkMode) document.body.classList.add('dark-mode');
@@ -362,6 +363,11 @@
     function showToast(msg) {
       const t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
       document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+    }
+    
+    function containsNGWord(text) {
+      if (!text) return false;
+      return NG_WORDS.some(word => text.includes(word));
     }
 
     window.toggleDarkMode = () => {
@@ -380,8 +386,8 @@
       if (isGuestMode) return alert('ゲストは名前を変更できません。');
       const newName = $('setting-my-name').value.trim();
       if (!newName) return alert('名前を入力してください。');
+      if (containsNGWord(newName)) return alert('不適切な単語が含まれています。');
       myName = newName;
-      $('my-name-display').innerText = myName;
       await updateProfile(auth.currentUser, { displayName: JSON.stringify({ name: newName, customId: myCustomId }) });
       showToast('名前を保存しました');
     };
@@ -401,7 +407,7 @@
       const directTab = document.createElement('button');
       directTab.className = `tab ${currentMode === 'direct' || currentMode === 'idle' ? 'active' : ''}`;
       directTab.innerText = '📞 1対1通話';
-      directTab.onclick = () => window.endCall(); // idleに戻る処理
+      directTab.onclick = () => window.endCall();
       wrapper.appendChild(directTab);
 
       // 保存されたグループタブ
@@ -434,11 +440,13 @@
     window.doRegister = async () => {
       const id = $('reg-id').value.trim().toLowerCase(), name = $('reg-name').value.trim(), pass = $('reg-pass').value.trim();
       if (!id || !name || !pass) return $('reg-error').innerText = '全て入力してください。';
+      if (containsNGWord(id) || containsNGWord(name)) return $('reg-error').innerText = '不適切な単語が含まれています。';
       $('btn-reg').disabled = true; $('reg-error').innerText = '登録中...';
       try {
         const userC = await createUserWithEmailAndPassword(auth, `${id}@naisy.nc`, pass);
         await updateProfile(userC.user, { displayName: JSON.stringify({ name, customId: id }) });
         showToast('登録完了！');
+        window.executeLogin(id, pass);
       } catch (e) { $('reg-error').innerText = '登録失敗（ID重複など）。'; }
       $('btn-reg').disabled = false;
     };
@@ -446,8 +454,15 @@
     window.doLogin = async () => {
       const id = $('login-id').value.trim().toLowerCase(), pass = $('login-pass').value.trim();
       if (!id || !pass) return $('auth-error').innerText = '入力してください。';
+      window.executeLogin(id, pass);
+    };
+
+    window.executeLogin = async (id, pass) => {
       $('btn-login').disabled = true;
-      try { await signInWithEmailAndPassword(auth, `${id}@naisy.nc`, pass); } 
+      try { 
+        const userC = await signInWithEmailAndPassword(auth, `${id}@naisy.nc`, pass); 
+        currentUser = userC.user; parseUserData(currentUser); startMainApp();
+      } 
       catch (e) { $('auth-error').innerText = 'ログイン失敗'; $('btn-login').disabled = false; }
     };
 
@@ -479,12 +494,12 @@
     async function startMainApp() {
       $('auth-view').style.display = 'none'; $('main-view').style.display = 'block';
       $('setting-my-name').value = myName; if (isGuestMode) $('setting-my-name').disabled = true;
-      $('my-name-display').innerText = myName; $('my-id-display').innerText = myCustomId;
+      $('my-id-display').innerText = myCustomId;
 
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
         audioTrack = localStream.getAudioTracks()[0]; audioTrack.enabled = false;
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)(); // マイクOKならAudioContext作成
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         $('status-display').innerText = '通信サーバーに接続中...';
       } catch (e) {
         showToast('マイクがありません（聞き専モード）');
@@ -498,10 +513,12 @@
     }
 
     function initPeerJS() {
+      if (typeof Peer === 'undefined') return $('status-display').innerText = '⚠️ PeerJSがブロックされています。';
       peer = new Peer(myCustomId);
       peer.on('open', () => {
         $('status-display').innerText = '通信準備完了！';
         $('status-display').style.color = '#28a745';
+        $('talk-btn').innerText = '長押しで発言';
       });
       peer.on('error', err => {
         if (err.type === 'unavailable-id') alert('このIDは使用中です。');
@@ -534,7 +551,7 @@
           screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
           isScreenSharing = true;
           $('share-screen-btn').innerHTML = '⏹️<br>共有停止'; $('share-screen-btn').className = 'btn-danger';
-          $('screen-share-video').srcObject = screenStream; $('screen-share-container').style.display = 'block';
+          $('screen-share-video').srcObject = screenStream; $('screen-share-label').innerText = 'あなたの画面'; $('screen-share-container').style.display = 'block';
           screenStream.getVideoTracks()[0].onended = () => window.toggleScreenShare();
           reconnectAllWithScreen();
         } catch (e) {}
@@ -570,7 +587,7 @@
     window.joinGroupFromInput = () => {
       const id = $('room-id').value.trim();
       if(!id) return alert('ルームIDを入力してください');
-      // リストになければ追加して保存
+      if(containsNGWord(id)) return alert('不適切な単語が含まれています。');
       if(!savedGroups.find(g => g.id === id)) { savedGroups.push({id}); saveGroupsToLocal(); renderTabs(); }
       window.joinGroup(id);
     };
@@ -581,6 +598,8 @@
       uiGroupConnected(); renderTabs();
 
       if (mqttClient) { try { mqttClient.end(true); } catch(e){} }
+      if (typeof mqtt === 'undefined') return alert('MQTTライブラリがブロックされています。');
+      
       mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
       mqttClient.on('connect', () => {
         mqttClient.subscribe(currentGroupTopic);
@@ -594,7 +613,7 @@
           if (activeDataConns[d.peerId]) { activeDataConns[d.peerId].close(); delete activeDataConns[d.peerId]; }
           updateGroupMemberCount();
         }
-        handleDataMessage(d); // チャットやゲームの受信処理へ流す
+        handleDataMessage(d); 
       });
     };
     window.leaveGroup = () => {
@@ -627,29 +646,25 @@
       conn.on('close', () => delete activeDataConns[conn.peer]);
     }
 
-    // MQTT(グループ)とDataConn(1対1)のデータ受信を共通処理
     function handleDataMessage(d) {
+      if(!d) return;
       if(d.type === 'chat' && d.senderId !== myCustomId) { addChatLog(d.senderName, d.text, false); showToast(`💬 ${d.senderName} からメッセージ`); }
       else if(d.type === 'quiz_push' && d.senderId !== myCustomId) { handleQuizPush(d.senderName); }
       else if(d.type === 'se' && d.senderId !== myCustomId) { playSE(d.sound); }
-      else if(d.type === 'draw_batch' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='block'; initWhiteboard(); setTimeout(()=>d.lines.forEach(l=>drawLine(l.x0,l.y0,l.x1,l.y1,l.c,false)),100); }
+      else if(d.type === 'draw_batch' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='block'; initWhiteboard(); setTimeout(()=>d.lines.forEach(l=>window.drawLine(l.x0,l.y0,l.x1,l.y1,l.c,false)),100); }
       else if(d.type === 'draw_clear' && d.senderId !== myCustomId) { if(wbCtx) wbCtx.clearRect(0,0,300,300); }
       else if(d.type === 'wb_close' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='none'; }
-      
-      // アンケート
+      else if(d.type === 'wb_open' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='block'; initWhiteboard(); showToast(`🎨 ${d.senderName}がお絵かき開始`); }
+      else if(d.type === 'draw' && d.senderId !== myCustomId) { $('whiteboard-section').style.display='block'; initWhiteboard(); setTimeout(() => window.drawLine(d.x0, d.y0, d.x1, d.y1, d.color, false), 150); }
       else if(d.type === 'poll_start') { startPollUI(d); showToast(`📊 アンケート開始`); }
       else if(d.type === 'poll_vote') { handlePollVote(d); }
-      
-      // リバーシ
       else if(d.type === 'reversi_req') { pendingGameType = 'reversi'; pendingReversiConn = activeDataConns[d.senderId]; $('game-invite-msg').innerText = `🎮 ${d.senderName}さんからリバーシの対戦！`; $('game-invite-modal').style.display='flex'; }
       else if(d.type === 'reversi_acc') { window.startReversi(2); showToast(`🎮 対戦承諾！`); }
       else if(d.type === 'reversi_dec') { showToast(`🎮 対戦を断られました。`); }
       else if(d.type === 'reversi_move') { window.applyReversiMove(d.r, d.c, d.color); }
       else if(d.type === 'reversi_pass') { showToast('相手はパスしました。'); reversiCurrentTurn = reversiMyColor; window.updateReversiUI(); window.checkReversiPassOrEnd(); }
       else if(d.type === 'reversi_quit') { showToast('🎮 相手が終了しました。'); window.endReversi(); }
-      
-      // スマッシュ
-      else if(d.type === 'smash_req') { pendingGameType = 'smash'; pendingSmashConn = activeDataConns[d.senderId]; $('game-invite-msg').innerText = `⚡ ${d.senderName}さんから早撃ちの対戦！`; $('game-invite-modal').style.display='flex'; }
+      else if(d.type === 'smash_req') { pendingGameType = 'smash'; pendingSmashConn = activeDataConns[d.senderId]; $('game-invite-msg').innerText = `⚡ ${d.senderName}さんから早撃ち対戦！`; $('game-invite-modal').style.display='flex'; }
       else if(d.type === 'smash_acc') { window.startSmash(true); showToast(`⚡ 対戦承諾！`); }
       else if(d.type === 'smash_dec') { showToast(`⚡ 対戦を断られました。`); }
       else if(d.type === 'smash_spawn') { showSmashTarget(d.spawnData); }
@@ -657,7 +672,6 @@
       else if(d.type === 'smash_quit') { showToast('⚡ 相手が終了しました。'); window.endSmash(); }
     }
 
-    // データ送信の共通関数 (1対1ならDataConn、グループならMQTT)
     function broadcastData(msgObj) {
       if(currentMode === 'group' && mqttClient) mqttClient.publish(currentGroupTopic, JSON.stringify(msgObj));
       else if(currentMode === 'direct') Object.values(activeDataConns).forEach(c => c.send(msgObj));
@@ -836,7 +850,8 @@
       let cM=false; for(let r=0;r<8;r++)for(let c=0;c<8;c++) if(getFlips(r,c,reversiCurrentTurn).length>0) cM=true;
       if(!cM){
         const nT=reversiCurrentTurn===1?2:1; let oM=false; for(let r=0;r<8;r++)for(let c=0;c<8;c++) if(getFlips(r,c,nT).length>0) oM=true;
-        if(!oM) setTimeout(()=>{ let b=0,w=0; for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(reversiBoard[r][c]===1)b++;if(reversiBoard[r][c]===2)w++;} alert(`終了! 黒:${b} 白:${w}\n${b>w?'黒の勝ち':w>b?'白の勝ち':'引き分け'}`); window.endReversi(); }, 500);
+        if(!oM) setTimeout(()=>{ let b=0,w=0; for(let r=0;r<8;r++)for(let c=0;c<8;c++){if(reversiBoard[r][c]===1)b++;if(reversiBoard[r][c]===2)w++;} alert(`終了! 黒:${b} 白:${w}
+${b>w?'黒の勝ち':w>b?'白の勝ち':'引き分け'}`); window.endReversi(); }, 500);
         else if(reversiCurrentTurn===reversiMyColor) { showToast('パスしました'); reversiCurrentTurn=nT; window.updateReversiUI(); broadcastData({type:'reversi_pass'}); }
       }
     };
