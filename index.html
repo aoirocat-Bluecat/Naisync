@@ -132,11 +132,18 @@
 </head>
 <body>
 
-  <!-- 認証画面 -->
+  <!-- ログイン画面 -->
   <div id="auth-overlay">
     <div class="card" style="width: 90%; max-width: 360px; text-align: center; border-radius: 16px; padding: 32px 24px;">
+      
       <img src="https://pbs.twimg.com/media/HRW8uGjbgAAiKB2?format=jpg&name=medium" alt="Naisync Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
       <div class="app-title" style="font-size: 28px; margin-bottom: 24px;">Naisync</div>
+
+      <div id="invite-alert" style="display: none; background: #eef2f5; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; font-weight: bold; color: #007bff; border: 1px solid #007bff;">
+        ✉️ 「<span id="invite-group-name"></span>」への招待が届いています！<br>
+        <span style="font-size: 11px; color: #555; font-weight: normal;">ログインするか、一時的なゲストとして参加してください。</span>
+      </div>
+      
       <div id="login-panel">
         <h3 style="margin-top:0; color: inherit;">ログイン</h3>
         <input type="text" id="login-id" placeholder="内線ID (半角英数字)">
@@ -144,6 +151,7 @@
         <button class="btn-action" id="login-btn" onclick="window.doLogin()" style="margin-top: 12px;">ログイン</button>
         <p style="font-size:12px; margin-top:16px;">初めての方は <a href="#" onclick="window.toggleAuth('register')" style="color:#007bff; font-weight:bold; text-decoration: none;">新規登録</a></p>
       </div>
+
       <div id="register-panel" style="display: none;">
         <h3 style="margin-top:0; color: inherit;">新規アカウント作成</h3>
         <input type="text" id="reg-id" placeholder="希望する内線ID (半角英数字)">
@@ -152,7 +160,9 @@
         <button class="btn-action" id="reg-btn" onclick="window.doRegister()" style="margin-top: 12px;">登録して始める</button>
         <p style="font-size:12px; margin-top:16px;">すでにIDをお持ちの方は <a href="#" onclick="window.toggleAuth('login')" style="color:#007bff; font-weight:bold; text-decoration: none;">ログイン</a></p>
       </div>
+      
       <div id="auth-error" style="color: #dc3545; font-size: 13px; margin-top: 12px; font-weight: bold; min-height: 20px;"></div>
+
       <div style="margin-top: 20px; border-top: 1px solid #ddd; padding-top: 16px;">
         <p style="font-size: 11px; color: #888; margin-bottom: 8px; font-weight: bold;">アカウントを作らずに参加</p>
         <button class="btn-action btn-secondary" onclick="window.doGuestLogin()">👤 ゲストとして参加</button>
